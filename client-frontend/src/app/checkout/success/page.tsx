@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { getApiUrl } from "@/lib/api";
 
 type OrderState = {
   _id: string;
@@ -21,7 +22,7 @@ function SuccessContent() {
   const isPrototype = searchParams.get("prototype") === "true";
   const { clearCart } = useCart();
   const { user } = useAuth();
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
+  const apiUrl = getApiUrl();
 
   const [loading, setLoading] = useState(true);
   const [order, setOrder] = useState<OrderState | null>(null);

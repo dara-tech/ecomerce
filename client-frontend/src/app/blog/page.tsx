@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import ProductImage from '@/components/ui/ProductImage';
+import { getApiUrl } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Blog - News & Updates',
@@ -9,8 +10,7 @@ export const metadata: Metadata = {
 
 async function getBlogs() {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
-    const res = await fetch(`${apiUrl}/cms/blogs`, { next: { revalidate: 60 } });
+    const res = await fetch(`${getApiUrl()}/cms/blogs`, { next: { revalidate: 60 } });
     if (!res.ok) return [];
     return await res.json();
   } catch (error) {

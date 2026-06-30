@@ -7,6 +7,7 @@ import { Wallet, Gift } from "lucide-react";
 import { useStore } from "@/context/StoreContext";
 import PriceDisplay from "@/components/features/PriceDisplay";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/api";
 
 export default function WalletPage() {
   const { user } = useAuth();
@@ -15,7 +16,7 @@ export default function WalletPage() {
   const [data, setData] = useState<any>(null);
   const [topUpAmount, setTopUpAmount] = useState("10");
   const [redeemPoints, setRedeemPoints] = useState("100");
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5001/api";
+  const apiUrl = getApiUrl();
 
   const load = () => {
     if (!user?.token) return;

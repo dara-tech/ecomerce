@@ -3,10 +3,11 @@ import ProductImage from "@/components/ui/ProductImage";
 import { ArrowRight } from "lucide-react";
 import BannerCarousel from "@/components/ui/BannerCarousel";
 import HomeClientSections from "@/components/features/HomeClientSections";
+import { getApiUrl } from "@/lib/api";
 
 async function getFeaturedProducts() {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
+    const apiUrl = getApiUrl();
     // Fetch 8 products for the featured section
     const res = await fetch(`${apiUrl}/products?pageSize=8`, {
       next: { revalidate: 60 } // Revalidate every 60 seconds
@@ -25,7 +26,7 @@ async function getFeaturedProducts() {
 
 async function getBanners() {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
+    const apiUrl = getApiUrl();
     const res = await fetch(`${apiUrl}/cms/banners`, { next: { revalidate: 60 } });
     if (!res.ok) return [];
     return await res.json();

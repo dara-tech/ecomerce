@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getApiUrl } from '@/lib/api';
 
 export const metadata: Metadata = {
   title: 'Frequently Asked Questions',
@@ -7,8 +8,7 @@ export const metadata: Metadata = {
 
 async function getFaqs() {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
-    const res = await fetch(`${apiUrl}/cms/faqs`, { next: { revalidate: 60 } });
+    const res = await fetch(`${getApiUrl()}/cms/faqs`, { next: { revalidate: 60 } });
     if (!res.ok) return [];
     return await res.json();
   } catch (error) {

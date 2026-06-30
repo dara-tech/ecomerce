@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { X, Tag } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 
 type Popup = {
   _id: string;
@@ -15,12 +16,12 @@ type Popup = {
 export default function MarketingPopup() {
   const [popup, setPopup] = useState<Popup | null>(null);
   const [open, setOpen] = useState(false);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
 
   useEffect(() => {
     const dismissed = sessionStorage.getItem('popup_dismissed');
     if (dismissed) return;
 
+    const apiUrl = getApiUrl();
     fetch(`${apiUrl}/marketing/popups/active`)
       .then((r) => (r.ok ? r.json() : []))
       .then((items: Popup[]) => {
@@ -30,7 +31,7 @@ export default function MarketingPopup() {
         }
       })
       .catch(() => {});
-  }, [apiUrl]);
+  }, []);
 
   if (!open || !popup) return null;
 

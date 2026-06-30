@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
+import { getApiUrl } from "@/lib/api";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -21,7 +22,7 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
+      const apiUrl = getApiUrl();
       const res = await fetch(`${apiUrl}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

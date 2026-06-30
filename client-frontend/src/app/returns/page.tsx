@@ -4,10 +4,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { getApiUrl } from '@/lib/api';
 
 export default function ReturnsPage() {
   const { user } = useAuth();
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
+  const apiUrl = getApiUrl();
   const [orderId, setOrderId] = useState('');
   const [reason, setReason] = useState('');
   const [guestEmail, setGuestEmail] = useState('');

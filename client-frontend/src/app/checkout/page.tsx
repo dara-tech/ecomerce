@@ -10,6 +10,7 @@ import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Suspense } from "react";
+import { getApiUrl } from "@/lib/api";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -17,7 +18,7 @@ function CheckoutContent() {
   const isBuyNow = searchParams.get("buyNow") === "1";
   const { cartItems, cartTotal, clearCart } = useCart();
   const { user } = useAuth();
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+  const apiUrl = getApiUrl();
   const [buyNowItem, setBuyNowItem] = useState<any>(null);
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'khqr' | 'aba' | 'wing' | 'acleda' | 'cod' | 'wallet'>('stripe');
   const [isProcessing, setIsProcessing] = useState(false);

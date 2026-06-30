@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Package, ArrowLeft, Loader2, Clock, CheckCircle2, CreditCard, ChevronDown, Truck, MapPin } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { getApiUrl } from '@/lib/api';
 
 type FilterType = 'all' | 'paid' | 'pending';
 
@@ -39,7 +40,7 @@ function buildTimeline(order: any) {
 }
 
 export default function OrdersPage() {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+  const apiUrl = getApiUrl();
   const { user } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState<any[]>([]);

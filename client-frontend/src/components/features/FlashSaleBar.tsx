@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Zap } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 
 type FlashSale = {
   _id: string;
@@ -14,16 +15,15 @@ type FlashSale = {
 
 export default function FlashSaleBar() {
   const [sale, setSale] = useState<FlashSale | null>(null);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
-
   useEffect(() => {
+    const apiUrl = getApiUrl();
     fetch(`${apiUrl}/marketing/flash-sales/active`)
       .then((r) => (r.ok ? r.json() : []))
       .then((items: FlashSale[]) => {
         if (items?.length) setSale(items[0]);
       })
       .catch(() => {});
-  }, [apiUrl]);
+  }, []);
 
   if (!sale) return null;
 

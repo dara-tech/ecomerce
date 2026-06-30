@@ -5,9 +5,11 @@ import { Star } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
+import { getApiUrl } from '@/lib/api';
+
 export default function ProductReviews({ productId }: { productId: string }) {
   const { user } = useAuth();
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
+  const apiUrl = getApiUrl();
   const [reviews, setReviews] = useState<any[]>([]);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import ProductImage from "@/components/ui/ProductImage";
 import { Filter } from "lucide-react";
+import { getApiUrl } from "@/lib/api";
 
 async function getProducts(category?: string) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
+    const apiUrl = getApiUrl();
     let url = `${apiUrl}/products?pageSize=12`;
     if (category) {
       url += `&category=${encodeURIComponent(category)}`;

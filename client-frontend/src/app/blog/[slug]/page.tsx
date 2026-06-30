@@ -1,11 +1,11 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import ProductImage from '@/components/ui/ProductImage';
+import { getApiUrl } from '@/lib/api';
 
 async function getBlog(slug: string) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001/api';
-    const res = await fetch(`${apiUrl}/cms/blogs/${slug}`, { next: { revalidate: 60 } });
+    const res = await fetch(`${getApiUrl()}/cms/blogs/${slug}`, { next: { revalidate: 60 } });
     
     if (!res.ok) {
       if (res.status === 404) return null;

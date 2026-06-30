@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { FolderTree } from "lucide-react";
+import { getApiUrl } from "@/lib/api";
 
 interface Category {
   _id: string;
@@ -10,11 +11,9 @@ interface Category {
   isActive: boolean;
 }
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-
 async function getCategories(): Promise<Category[]> {
   try {
-    const res = await fetch(`${apiUrl}/categories`, {
+    const res = await fetch(`${getApiUrl()}/categories`, {
       next: { revalidate: 60 } // Revalidate every 60 seconds
     });
     

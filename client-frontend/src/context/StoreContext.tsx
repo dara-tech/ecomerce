@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Locale, t as translate } from "@/lib/i18n";
+import { getApiUrl } from "@/lib/api";
 
 interface StoreSettings {
   storeName: string;
@@ -33,7 +34,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (savedLocale) setLocaleState(savedLocale);
     if (savedCurrency) setCurrencyState(savedCurrency);
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5001/api";
+    const apiUrl = getApiUrl();
     fetch(`${apiUrl}/settings/public`)
       .then((r) => r.json())
       .then((data) => {

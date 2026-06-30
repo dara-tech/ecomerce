@@ -14,6 +14,7 @@ import PriceDisplay from "@/components/features/PriceDisplay";
 import ProductRecommendations from "@/components/features/ProductRecommendations";
 import ProductReviews from "@/components/features/ProductReviews";
 import { toast } from "sonner";
+import { getApiUrl } from "@/lib/api";
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -30,7 +31,7 @@ export default function ProductDetailsPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5001/api";
+        const apiUrl = getApiUrl();
         const res = await fetch(`${apiUrl}/products/${id}`);
         if (res.ok) {
           const data = await res.json();

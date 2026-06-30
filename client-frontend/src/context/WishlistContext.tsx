@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { useAuth } from "./AuthContext";
+import { getApiUrl } from "@/lib/api";
 
 export interface WishlistProduct {
   _id: string;
@@ -25,7 +26,7 @@ const STORAGE_KEY = "wishlist";
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [items, setItems] = useState<WishlistProduct[]>([]);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5001/api";
+  const apiUrl = getApiUrl();
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY);

@@ -6,6 +6,7 @@ import { ShieldCheck, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useCart } from "@/context/CartContext";
+import { getApiUrl } from "@/lib/api";
 
 function MockGatewayContent() {
   const router = useRouter();
@@ -26,7 +27,7 @@ function MockGatewayContent() {
   const handleSimulatePayment = async (status: 'success' | 'failed') => {
     setIsProcessing(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+      const apiUrl = getApiUrl();
       // Simulate the webhook being called by the bank
       await fetch(`${apiUrl}/payments/webhook/${encodeURIComponent(gateway || 'Unknown')}`, {
         method: 'POST',

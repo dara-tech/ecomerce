@@ -5,13 +5,14 @@ import Link from "next/link";
 import ProductImage from "@/components/ui/ProductImage";
 import PriceDisplay from "./PriceDisplay";
 import { useStore } from "@/context/StoreContext";
+import { getApiUrl } from "@/lib/api";
 
 export default function ProductRecommendations({ productId = "home" }: { productId?: string }) {
   const { t } = useStore();
   const [products, setProducts] = useState<any[]>([]);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5001/api";
 
   useEffect(() => {
+    const apiUrl = getApiUrl();
     const url = productId === "home"
       ? `${apiUrl}/customer/recommendations`
       : `${apiUrl}/customer/recommendations/${productId}`;
@@ -19,7 +20,7 @@ export default function ProductRecommendations({ productId = "home" }: { product
       .then((r) => r.json())
       .then(setProducts)
       .catch(() => setProducts([]));
-  }, [productId, apiUrl]);
+  }, [productId]);
 
   if (!products.length) return null;
 
