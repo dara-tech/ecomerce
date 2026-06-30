@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import ProductImage from "@/components/ui/ProductImage";
 import { Filter } from "lucide-react";
 import { getApiUrl } from "@/lib/api";
-import { Select, SelectItem } from "@/components/ui/select";
+import ProductSortSelect from "@/components/features/ProductSortSelect";
 
 async function getProducts(category?: string) {
   try {
@@ -64,12 +64,7 @@ export default async function ProductsPage({
             <Filter className="w-4 h-4" />
             Filters
           </button>
-          <Select className="px-4 py-2 border rounded-md text-sm font-medium bg-transparent outline-none cursor-pointer">
-            <SelectItem value="Featured">Sort by: Featured</SelectItem>
-            <SelectItem value="Price: Low to High">Price: Low to High</SelectItem>
-            <SelectItem value="Price: High to Low">Price: High to Low</SelectItem>
-            <SelectItem value="Newest Arrivals">Newest Arrivals</SelectItem>
-          </Select>
+          <ProductSortSelect />
         </div>
       </div>
 
