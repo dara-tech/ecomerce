@@ -1,0 +1,149 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: "Google Sans Variable", ui-sans-serif, system-ui, sans-serif;
+    --font-heading: var(--font-sans);
+  }
+  .theme {
+    --font-sans: "Google Sans Variable", ui-sans-serif, system-ui, sans-serif;
+    --font-heading: var(--font-sans);
+  }
+  :root {
+    --app-topbar-h: 2.5rem;
+    /* Warm paper surface — matches ART Web */
+    --background: oklch(0.995 0.004 82);
+    --foreground: oklch(0.28 0.022 55);
+    --card: oklch(0.995 0.004 82);
+    --card-foreground: oklch(0.28 0.022 55);
+    --popover: oklch(0.993 0.005 82);
+    --popover-foreground: oklch(0.28 0.022 55);
+    /* Muted terracotta CTA */
+    --primary: oklch(0.5 0.13 46);
+    --primary-foreground: oklch(0.985 0.006 82);
+    --secondary: oklch(0.945 0.012 78);
+    --secondary-foreground: oklch(0.32 0.02 58);
+    --muted: oklch(0.94 0.01 80);
+    --muted-foreground: oklch(0.46 0.024 58);
+    --accent: oklch(0.94 0.014 76);
+    --accent-foreground: oklch(0.32 0.02 58);
+    --destructive: oklch(0.52 0.2 25);
+    --destructive-foreground: oklch(0.985 0.006 82);
+    --border: oklch(0.9 0.014 76);
+    --input: oklch(0.925 0.012 78);
+    --ring: oklch(0.52 0.12 48);
+    --radius: 0.625rem;
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.985 0.004 82);
+    --sidebar-foreground: oklch(0.28 0.022 55);
+    --sidebar-primary: oklch(0.5 0.13 46);
+    --sidebar-primary-foreground: oklch(0.985 0.006 82);
+    --sidebar-accent: oklch(0.94 0.01 80);
+    --sidebar-accent-foreground: oklch(0.28 0.022 55);
+    --sidebar-border: var(--border);
+    --sidebar-ring: oklch(0.52 0.12 48);
+  }
+  .dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.95 0 0);
+    --card: oklch(0.145 0 0);
+    --card-foreground: oklch(0.95 0 0);
+    --popover: oklch(0.18 0 0);
+    --popover-foreground: oklch(0.95 0 0);
+    --primary: oklch(0.72 0.11 52);
+    --primary-foreground: oklch(0.15 0 0);
+    --secondary: oklch(0.22 0 0);
+    --secondary-foreground: oklch(0.92 0 0);
+    --muted: oklch(0.2 0 0);
+    --muted-foreground: oklch(0.6 0 0);
+    --accent: oklch(0.22 0 0);
+    --accent-foreground: oklch(0.95 0 0);
+    --destructive: oklch(0.62 0.18 22);
+    --destructive-foreground: oklch(0.98 0 0);
+    --border: oklch(0.32 0 0);
+    --input: oklch(0.24 0 0);
+    --ring: oklch(0.72 0.11 52);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.12 0 0);
+    --sidebar-foreground: oklch(0.95 0 0);
+    --sidebar-primary: oklch(0.72 0.11 52);
+    --sidebar-primary-foreground: oklch(0.15 0 0);
+    --sidebar-accent: oklch(0.22 0 0);
+    --sidebar-accent-foreground: oklch(0.95 0 0);
+    --sidebar-border: var(--border);
+    --sidebar-ring: oklch(0.72 0.11 52);
+  }
+  * {
+    @apply border-border;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    @apply bg-card text-foreground antialiased;
+    font-family: var(--font-sans);
+    margin: 0;
+  }
+  html {
+    @apply antialiased;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@layer components {
+  [data-slot="sidebar-wrapper"] {
+    display: flex;
+    height: 100vh;
+    max-height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  [data-slot="sidebar-container"] {
+    width: var(--sidebar-width, 16rem);
+  }
+
+  [data-slot="sidebar-gap"] {
+    width: var(--sidebar-width, 16rem);
+    flex-shrink: 0;
+  }
+
+  [data-slot="sidebar-content"] {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .group[data-collapsible="icon"] [data-slot="sidebar-gap"] {
+    width: var(--sidebar-width-icon, 3.5rem);
+  }
+
+  .group[data-collapsible="icon"] [data-slot="sidebar-container"] {
+    width: var(--sidebar-width-icon, 3.5rem);
+  }
+}
