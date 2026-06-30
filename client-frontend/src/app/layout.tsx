@@ -11,6 +11,11 @@ const googleSans = Google_Sans({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
   title: {
     template: '%s | Modern E-Commerce',
     default: 'Modern E-Commerce | Premium Tech Essentials',

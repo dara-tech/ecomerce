@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/favicon.ico',
+        destination: '/favicon.svg',
+        permanent: false,
+      },
+    ];
+  },
   async rewrites() {
     const backend =
       process.env.BACKEND_PROXY_URL || 'http://107.175.91.211/ecomerce/api';
