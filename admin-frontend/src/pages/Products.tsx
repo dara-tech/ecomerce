@@ -186,17 +186,17 @@ const Products = () => {
                 placeholder="Search products..."
                 value={keyword}
                 onChange={handleSearch}
-                className="w-full pl-8 pr-3 h-8 text-[13px] font-medium bg-input border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                className="w-full pl-8 pr-3 h-8 text-[13px] font-medium bg-input border border-border rounded-none focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
               />
             </div>
             {/* Filter Button */}
             <button
               onClick={() => setIsFilterModalOpen(true)}
-              className="md:hidden h-8 px-3 rounded-md border border-border/80 bg-input flex items-center justify-center gap-2 text-muted-foreground hover:bg-muted transition-colors relative shrink-0"
+              className="md:hidden h-8 px-3 rounded-none border border-border/80 bg-input flex items-center justify-center gap-2 text-muted-foreground hover:bg-muted transition-colors relative shrink-0"
             >
               <Filter className="size-4" />
               {(category !== 'All Categories' || brand !== 'All Brands' || sort !== 'Newest First') && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-none" />
               )}
             </button>
           </div>
@@ -222,7 +222,7 @@ const Products = () => {
 
         <button
           onClick={openAddModal}
-          className="hidden md:block shrink-0 h-8 px-4 rounded-md bg-primary text-primary-foreground text-[12px] font-semibold shadow-sm hover:opacity-95 transition-all w-full sm:w-auto mt-2 sm:mt-0"
+          className="hidden md:block shrink-0 h-8 px-4 rounded-none bg-primary text-primary-foreground text-[12px] font-semibold shadow-sm hover:opacity-95 transition-all w-full sm:w-auto mt-2 sm:mt-0"
         >
           Add Product
         </button>
@@ -230,7 +230,7 @@ const Products = () => {
 
       <div className={PAGE_LIST_BODY_CLASS}>
       {error && (
-        <div className="shrink-0 p-3 bg-destructive/10 text-destructive text-[11px] font-medium text-center rounded-lg">
+        <div className="shrink-0 p-3 bg-destructive/10 text-destructive text-[11px] font-medium text-center rounded-none">
           {error}
         </div>
       )}
@@ -247,7 +247,7 @@ const Products = () => {
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="p-1 rounded-md text-muted-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-1 rounded-none text-muted-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
@@ -256,7 +256,7 @@ const Products = () => {
                     <button
                       key={x + 1}
                       onClick={() => setPage(x + 1)}
-                      className={`flex h-6 w-6 items-center justify-center rounded-md text-[11px] font-medium transition-colors ${
+                      className={`flex h-6 w-6 items-center justify-center rounded-none text-[11px] font-medium transition-colors ${
                         page === x + 1
                           ? 'bg-primary text-primary-foreground'
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -269,7 +269,7 @@ const Products = () => {
                 <button
                   onClick={() => setPage(p => Math.min(pages, p + 1))}
                   disabled={page === pages}
-                  className="p-1 rounded-md text-muted-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="p-1 rounded-none text-muted-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight className="size-4" />
                 </button>
@@ -307,14 +307,14 @@ const Products = () => {
                         <img 
                           src={product.image} 
                           alt={product.name} 
-                          className="w-9 h-9 object-cover rounded-md mx-auto border border-border/50 group-hover:border-primary/30 transition-colors"
+                          className="w-9 h-9 object-cover rounded-none mx-auto border border-border/50 group-hover:border-primary/30 transition-colors"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = 'https://placehold.co/100x100/1d1b1c/ffffff?text=No+Img';
                           }}
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-md bg-muted/50 border border-border/50 mx-auto flex items-center justify-center text-[8px] text-muted-foreground uppercase">
+                        <div className="w-9 h-9 rounded-none bg-muted/50 border border-border/50 mx-auto flex items-center justify-center text-[8px] text-muted-foreground uppercase">
                           No Img
                         </div>
                       )}
@@ -327,7 +327,7 @@ const Products = () => {
                       ${product.price.toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                      <span className={`px-2 py-0.5 rounded-none text-[9px] font-semibold uppercase tracking-wider ${
                         product.countInStock > 0 
                           ? 'bg-green-500/10 text-green-500 border border-green-500/20' 
                           : 'bg-destructive/10 text-destructive border border-destructive/20'
@@ -341,7 +341,7 @@ const Products = () => {
                           e.stopPropagation();
                           requestDelete(product._id);
                         }}
-                        className="text-destructive hover:text-destructive/80 font-medium px-2 py-1 transition-colors cursor-pointer bg-destructive/5 hover:bg-destructive/10 rounded-md"
+                        className="text-destructive hover:text-destructive/80 font-medium px-2 py-1 transition-colors cursor-pointer bg-destructive/5 hover:bg-destructive/10 rounded-none"
                       >
                         Delete
                       </button>
@@ -358,7 +358,7 @@ const Products = () => {
         {loading ? (
           <Loading variant="panel" label="Loading products…" />
         ) : products.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground bg-card rounded-lg border border-border/80">
+          <div className="py-12 text-center text-muted-foreground bg-card rounded-none border border-border/80">
             No products found matching your criteria.
           </div>
         ) : (
@@ -366,7 +366,7 @@ const Products = () => {
             <div 
               key={product._id} 
               onClick={() => openEditModal(product)}
-              className="bg-card border border-border/80 rounded-xl p-3 shadow-sm flex items-start gap-3 cursor-pointer hover:border-primary/50 transition-colors relative group"
+              className="bg-card border border-border/80 rounded-none p-3 shadow-sm flex items-start gap-3 cursor-pointer hover:border-primary/50 transition-colors relative group"
             >
               {/* Image */}
               <div className="shrink-0">
@@ -374,14 +374,14 @@ const Products = () => {
                   <img 
                     src={product.image} 
                     alt={product.name} 
-                    className="w-16 h-16 object-cover rounded-lg border border-border/50"
+                    className="w-16 h-16 object-cover rounded-none border border-border/50"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = 'https://placehold.co/100x100/1d1b1c/ffffff?text=No+Img';
                     }}
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center text-[10px] text-muted-foreground uppercase">
+                  <div className="w-16 h-16 rounded-none bg-muted/50 border border-border/50 flex items-center justify-center text-[10px] text-muted-foreground uppercase">
                     No Img
                   </div>
                 )}
@@ -394,7 +394,7 @@ const Products = () => {
                 
                 <div className="flex items-center justify-between mt-2">
                   <div className="font-bold text-primary text-[13px]">${product.price.toFixed(2)}</div>
-                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                  <span className={`px-2 py-0.5 rounded-none text-[9px] font-bold uppercase tracking-wider ${
                     product.countInStock > 0 
                       ? 'bg-green-500/10 text-green-500' 
                       : 'bg-rose-500/10 text-rose-500'
@@ -410,7 +410,7 @@ const Products = () => {
                   e.stopPropagation();
                   requestDelete(product._id);
                 }}
-                className="absolute top-2 right-2 text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-md hover:bg-destructive/10"
+                className="absolute top-2 right-2 text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-none hover:bg-destructive/10"
               >
                 <X className="size-4" />
               </button>
@@ -420,13 +420,13 @@ const Products = () => {
 
         {/* Mobile Pagination */}
         {!loading && pages > 1 && (
-          <div className="flex items-center justify-between bg-card border border-border/80 rounded-xl px-4 py-3">
+          <div className="flex items-center justify-between bg-card border border-border/80 rounded-none px-4 py-3">
             <span className="text-[11px] text-muted-foreground">{total} products</span>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="h-7 w-7 flex items-center justify-center rounded-md border border-border/80 text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-none border border-border/80 text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="size-3.5" />
               </button>
@@ -434,7 +434,7 @@ const Products = () => {
               <button
                 onClick={() => setPage(p => Math.min(pages, p + 1))}
                 disabled={page === pages}
-                className="h-7 w-7 flex items-center justify-center rounded-md border border-border/80 text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-none border border-border/80 text-muted-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="size-3.5" />
               </button>
@@ -465,10 +465,10 @@ const Products = () => {
       {/* Filter Modal */}
       {isFilterModalOpen && createPortal(
         <div className="fixed inset-0 z-[100] bg-black/40 flex items-end sm:items-center justify-center">
-          <div className="w-full sm:max-w-[320px] bg-card border-t sm:border border-border/60 sm:rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
+          <div className="w-full sm:max-w-[320px] bg-card border-t sm:border border-border/60 sm:rounded-none shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200">
             <div className="px-5 py-4 border-b border-border/40 flex items-center justify-between">
               <h3 className="font-semibold text-[15px] tracking-tight">Filters & Sort</h3>
-              <button onClick={() => setIsFilterModalOpen(false)} className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted transition-colors">
+              <button onClick={() => setIsFilterModalOpen(false)} className="text-muted-foreground hover:text-foreground p-1.5 rounded-none hover:bg-muted transition-colors">
                 <X className="size-4" strokeWidth={2.5} />
               </button>
             </div>
@@ -487,7 +487,7 @@ const Products = () => {
 
       <button
         onClick={openAddModal}
-        className="md:hidden fixed bottom-6 right-6 z-40 size-14 bg-primary text-primary-foreground rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.2)] flex items-center justify-center hover:scale-105 hover:-translate-y-1 active:scale-95 transition-all duration-200"
+        className="md:hidden fixed bottom-6 right-6 z-40 size-14 bg-primary text-primary-foreground rounded-none shadow-[0_8px_30px_rgba(0,0,0,0.2)] flex items-center justify-center hover:scale-105 hover:-translate-y-1 active:scale-95 transition-all duration-200"
       >
         <Plus className="size-6" strokeWidth={2.5} />
       </button>

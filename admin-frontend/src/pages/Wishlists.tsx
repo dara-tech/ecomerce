@@ -28,7 +28,7 @@ export default function Wishlists() {
 
       <div className={PAGE_BODY_CLASS}>
         {tab === 'all' ? (
-          <div className="border border-border/80 rounded-lg overflow-hidden bg-card overflow-x-auto no-scrollbar">
+          <div className="border border-border/80 rounded-none overflow-hidden bg-card overflow-x-auto no-scrollbar">
             <table className={opsTableClass}>
               <thead className="bg-muted/30"><tr>{['Customer', 'Product', 'Price', 'Added'].map((h) => <th key={h} className={opsThClass}>{h}</th>)}</tr></thead>
               <tbody>
@@ -46,8 +46,8 @@ export default function Wishlists() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {popular.map((p) => (
-              <div key={p.product._id} className="bg-card border border-border/80 rounded-xl p-4 flex gap-3">
-                {p.product.image && <img src={p.product.image} alt="" className="w-14 h-14 rounded-lg object-cover" />}
+              <div key={p.product._id} className="bg-card border border-border/80 rounded-none p-4 flex gap-3">
+                {p.product.image && <img src={p.product.image} alt="" className="w-14 h-14 rounded-none object-cover" />}
                 <div>
                   <p className="font-medium text-sm">{p.product.name}</p>
                   <p className="text-xs text-muted-foreground">{p.count} wishlists</p>

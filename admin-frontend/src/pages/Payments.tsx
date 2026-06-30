@@ -140,7 +140,7 @@ export default function Payments() {
       ) : activeTab === 'logs' ? (
         <>
           {/* Desktop Table View */}
-          <div className="hidden md:block bg-card border border-border/80 rounded-xl overflow-hidden shadow-sm">
+          <div className="hidden md:block bg-card border border-border/80 rounded-none overflow-hidden shadow-sm">
             <div className="overflow-x-auto no-scrollbar">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
@@ -167,7 +167,7 @@ export default function Payments() {
                         <td className="px-4 py-3 text-[12px] font-semibold text-primary">{log.gateway}</td>
                         <td className="px-4 py-3 text-[12px] font-bold text-right">${log.amount?.toFixed(2)}</td>
                         <td className="px-4 py-3 text-center">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-none text-[9px] font-semibold uppercase tracking-wider ${
                             log.status === 'success' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' :
                             log.status === 'failed' ? 'bg-destructive/10 text-destructive border border-destructive/20' :
                             'bg-amber-500/10 text-amber-600 border border-amber-500/20'
@@ -186,16 +186,16 @@ export default function Payments() {
           {/* Mobile Card View */}
           <div className="md:hidden flex flex-col gap-3">
             {filteredLogs.length === 0 ? (
-              <div className="py-12 text-center text-muted-foreground bg-card rounded-lg border border-border/80">No logs found</div>
+              <div className="py-12 text-center text-muted-foreground bg-card rounded-none border border-border/80">No logs found</div>
             ) : (
               filteredLogs.map(log => (
-                <div key={log._id} className="bg-card border border-border/80 rounded-xl p-3 shadow-sm flex flex-col gap-2">
+                <div key={log._id} className="bg-card border border-border/80 rounded-none p-3 shadow-sm flex flex-col gap-2">
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="font-medium text-[13px]">{log.user?.name || 'Unknown'}</div>
                       <div className="text-[11px] text-muted-foreground font-mono mt-0.5">{log.transactionId || 'N/A'}</div>
                     </div>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-none text-[9px] font-semibold uppercase tracking-wider ${
                       log.status === 'success' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' :
                       log.status === 'failed' ? 'bg-destructive/10 text-destructive border border-destructive/20' :
                       'bg-amber-500/10 text-amber-600 border border-amber-500/20'
@@ -215,7 +215,7 @@ export default function Payments() {
       ) : (
         <>
           {/* Desktop Table View */}
-          <div className="hidden md:block bg-card border border-border/80 rounded-xl overflow-hidden shadow-sm">
+          <div className="hidden md:block bg-card border border-border/80 rounded-none overflow-hidden shadow-sm">
             <div className="overflow-x-auto no-scrollbar">
               <table className="w-full text-left border-collapse min-w-[800px]">
                 <thead>
@@ -241,7 +241,7 @@ export default function Payments() {
                         <td className="px-4 py-3 text-[12px] max-w-[200px] truncate" title={refund.reason}>{refund.reason}</td>
                         <td className="px-4 py-3 text-[12px] font-bold text-right text-primary">${refund.amount?.toFixed(2)}</td>
                         <td className="px-4 py-3 text-center">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-none text-[9px] font-semibold uppercase tracking-wider ${
                             refund.status === 'approved' || refund.status === 'processed' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' :
                             refund.status === 'rejected' ? 'bg-destructive/10 text-destructive border border-destructive/20' :
                             'bg-amber-500/10 text-amber-600 border border-amber-500/20'
@@ -277,17 +277,17 @@ export default function Payments() {
           {/* Mobile Card View */}
           <div className="md:hidden flex flex-col gap-3">
             {filteredRefunds.length === 0 ? (
-              <div className="py-12 text-center text-muted-foreground bg-card rounded-lg border border-border/80">No refund requests found</div>
+              <div className="py-12 text-center text-muted-foreground bg-card rounded-none border border-border/80">No refund requests found</div>
             ) : (
               filteredRefunds.map(refund => (
-                <div key={refund._id} className="bg-card border border-border/80 rounded-xl p-3 shadow-sm flex flex-col gap-2">
+                <div key={refund._id} className="bg-card border border-border/80 rounded-none p-3 shadow-sm flex flex-col gap-2">
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="font-medium text-[13px]">{refund.user?.name || 'Unknown'}</div>
                       <div className="text-[11px] text-muted-foreground mt-0.5">{new Date(refund.createdAt).toLocaleDateString()}</div>
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider ${
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-none text-[9px] font-semibold uppercase tracking-wider ${
                         refund.status === 'approved' || refund.status === 'processed' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' :
                         refund.status === 'rejected' ? 'bg-destructive/10 text-destructive border border-destructive/20' :
                         'bg-amber-500/10 text-amber-600 border border-amber-500/20'
@@ -297,16 +297,16 @@ export default function Payments() {
                       <div className="font-bold text-primary text-[13px]">${refund.amount?.toFixed(2)}</div>
                     </div>
                   </div>
-                  <div className="text-[12px] mt-1 bg-muted/30 p-2 rounded-md border border-border/40">
+                  <div className="text-[12px] mt-1 bg-muted/30 p-2 rounded-none border border-border/40">
                     <span className="font-medium text-muted-foreground text-[10px] uppercase tracking-wider mb-1 block">Reason</span>
                     {refund.reason}
                   </div>
                   {refund.status === 'pending' && (
                     <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border/40">
-                      <button onClick={() => handleUpdateRefund(refund._id, 'approved')} className="flex-1 py-1.5 text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-md transition-colors flex items-center justify-center gap-1 text-[11px] font-medium">
+                      <button onClick={() => handleUpdateRefund(refund._id, 'approved')} className="flex-1 py-1.5 text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-none transition-colors flex items-center justify-center gap-1 text-[11px] font-medium">
                         <Check className="size-3.5" /> Approve
                       </button>
-                      <button onClick={() => handleUpdateRefund(refund._id, 'rejected')} className="flex-1 py-1.5 text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-md transition-colors flex items-center justify-center gap-1 text-[11px] font-medium">
+                      <button onClick={() => handleUpdateRefund(refund._id, 'rejected')} className="flex-1 py-1.5 text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-none transition-colors flex items-center justify-center gap-1 text-[11px] font-medium">
                         <X className="size-3.5" /> Reject
                       </button>
                     </div>

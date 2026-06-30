@@ -261,6 +261,7 @@ function NavCollapsibleButton({ item }: { item: NavCollapsibleItem }) {
             {item.children.map((child) => (
               <SidebarMenuSubItem key={child.path}>
                 <SidebarMenuSubButton
+                  size="sm"
                   isActive={location.pathname === child.path}
                   render={<NavLink to={child.path} end />}
                 >
@@ -281,7 +282,7 @@ export default function AppSidebar() {
     <Sidebar collapsible="icon" variant="sidebar">
       <SidebarHeader className="border-b border-border px-2 py-3 group-data-[collapsible=icon]:px-1.5">
         <div className="flex items-center gap-2 px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-[10px] font-black tracking-wider text-primary-foreground group-data-[collapsible=icon]:size-8">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-none bg-primary text-[10px] font-black tracking-wider text-primary-foreground group-data-[collapsible=icon]:size-8">
             AD
           </span>
           <div className="min-w-0 group-data-[collapsible=icon]:hidden">

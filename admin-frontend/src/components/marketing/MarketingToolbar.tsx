@@ -55,7 +55,7 @@ export function StatusBadge({ status }: { status: string }) {
   };
   return (
     <span
-      className={`inline-flex px-2 py-0.5 rounded-full border text-[9px] font-semibold uppercase tracking-wider ${colors[status] || colors.draft}`}
+      className={`inline-flex px-2 py-0.5 rounded-none border text-[9px] font-semibold uppercase tracking-wider ${colors[status] || colors.draft}`}
     >
       {status}
     </span>
@@ -63,7 +63,7 @@ export function StatusBadge({ status }: { status: string }) {
 }
 
 export const inputClass =
-  'w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary';
+  'w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary';
 
 export const labelClass =
   'block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5';

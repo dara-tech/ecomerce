@@ -74,7 +74,7 @@ export default function Inventory() {
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-amber-600 text-sm font-medium"><AlertTriangle className="size-4" /> Threshold: {alerts.threshold} units</div>
             {alerts.products?.map((p: any) => (
-              <div key={p._id} className="flex items-center justify-between bg-card border border-border/80 rounded-lg px-4 py-3">
+              <div key={p._id} className="flex items-center justify-between bg-card border border-border/80 rounded-none px-4 py-3">
                 <span className="text-sm font-medium">{p.name}</span>
                 <span className="text-xs text-destructive font-bold">{p.countInStock} left</span>
               </div>
@@ -83,7 +83,7 @@ export default function Inventory() {
           </div>
         )}
         {tab === 'history' && (
-          <div className="border border-border/80 rounded-lg overflow-hidden bg-card overflow-x-auto no-scrollbar">
+          <div className="border border-border/80 rounded-none overflow-hidden bg-card overflow-x-auto no-scrollbar">
             <table className={opsTableClass}>
               <thead className="bg-muted/30"><tr>{['Product', 'Change', 'Balance', 'Reason', 'Date'].map((h) => <th key={h} className={opsThClass}>{h}</th>)}</tr></thead>
               <tbody>
@@ -109,7 +109,7 @@ export default function Inventory() {
 
 function Table({ headers, rows, onDelete, onAction, actionLabel }: { headers: string[]; rows: (string | number)[][]; onDelete?: (id: string) => void; onAction?: (id: string) => void; actionLabel?: string }) {
   return (
-    <div className="border border-border/80 rounded-lg overflow-hidden bg-card overflow-x-auto no-scrollbar">
+    <div className="border border-border/80 rounded-none overflow-hidden bg-card overflow-x-auto no-scrollbar">
       <table className={opsTableClass}>
         <thead className="bg-muted/30"><tr>{headers.map((h) => <th key={h} className={opsThClass}>{h}</th>)}</tr></thead>
         <tbody>

@@ -124,7 +124,7 @@ export default function EmailCampaigns() {
   const modal = isModalOpen
     ? createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
+          <div className="w-full max-w-lg bg-card border border-border rounded-none shadow-xl overflow-hidden">
             <div className="p-5 border-b border-border/80 flex items-center gap-2">
               <Mail className="size-4 text-primary" />
               <h2 className="text-sm font-bold">{editing ? 'Edit Campaign' : 'New Email Campaign'}</h2>
@@ -156,8 +156,8 @@ export default function EmailCampaigns() {
               </div>
             </form>
             <div className="p-4 border-t border-border/80 flex justify-end gap-2 bg-muted/20">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="h-8 px-4 rounded-md text-[12px] font-medium hover:bg-muted">Cancel</button>
-              <button type="submit" form="email-form" onClick={handleSubmit} disabled={isSubmitting} className="h-8 px-4 rounded-md bg-primary text-primary-foreground text-[12px] font-medium disabled:opacity-50">
+              <button type="button" onClick={() => setIsModalOpen(false)} className="h-8 px-4 rounded-none text-[12px] font-medium hover:bg-muted">Cancel</button>
+              <button type="submit" form="email-form" onClick={handleSubmit} disabled={isSubmitting} className="h-8 px-4 rounded-none bg-primary text-primary-foreground text-[12px] font-medium disabled:opacity-50">
                 {isSubmitting ? 'Saving...' : 'Save'}
               </button>
             </div>
@@ -179,7 +179,7 @@ export default function EmailCampaigns() {
       />
 
       <div className={PAGE_BODY_CLASS}>
-      <div className="border border-border/80 rounded-lg overflow-hidden bg-card shadow-sm">
+      <div className="border border-border/80 rounded-none overflow-hidden bg-card shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead className="bg-muted/30">
             <tr>
@@ -205,12 +205,12 @@ export default function EmailCampaigns() {
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       {item.status !== 'sent' && (
-                        <button type="button" onClick={() => handleSend(item._id)} className="p-1.5 text-primary hover:bg-primary/10 rounded-md" title="Send now">
+                        <button type="button" onClick={() => handleSend(item._id)} className="p-1.5 text-primary hover:bg-primary/10 rounded-none" title="Send now">
                           <Send className="size-3.5" />
                         </button>
                       )}
-                      <button type="button" onClick={() => openEdit(item)} className="p-1.5 text-muted-foreground hover:text-primary rounded-md"><Edit2 className="size-3.5" /></button>
-                      <button type="button" onClick={() => setDeleteId(item._id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-md"><Trash2 className="size-3.5" /></button>
+                      <button type="button" onClick={() => openEdit(item)} className="p-1.5 text-muted-foreground hover:text-primary rounded-none"><Edit2 className="size-3.5" /></button>
+                      <button type="button" onClick={() => setDeleteId(item._id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-none"><Trash2 className="size-3.5" /></button>
                     </div>
                   </td>
                 </tr>

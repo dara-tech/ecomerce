@@ -169,7 +169,7 @@ export default function Security() {
   return (
     <div className={PAGE_ROOT_CLASS}>
       <PageStickyHeader
-        toolbar={<h1 className="text-sm font-semibold text-foreground">Security</h1>}
+        toolbar={<h1 className="text-xs font-semibold text-foreground">Security</h1>}
         subTabs={
           <div className={PAGE_TAB_GROUP_CLASS}>
             {TABS.map((tab) => {
@@ -192,16 +192,16 @@ export default function Security() {
 
       <div className={PAGE_BODY_CLASS}>
       {error && (
-        <div className="p-3 bg-destructive/10 text-destructive text-[13px] rounded-lg border border-destructive/20">{error}</div>
+        <div className="p-3 bg-destructive/10 text-destructive text-[13px] rounded-none border border-destructive/20">{error}</div>
       )}
       {success && (
-        <div className="p-3 bg-emerald-500/10 text-emerald-600 text-[13px] rounded-lg border border-emerald-500/20">{success}</div>
+        <div className="p-3 bg-emerald-500/10 text-emerald-600 text-[13px] rounded-none border border-emerald-500/20">{success}</div>
       )}
 
       {activeTab === '2fa' && (
-        <div className="bg-card rounded-xl border border-border/80 shadow-sm p-5 space-y-4 max-w-2xl">
+        <div className="bg-card rounded-none border border-border/80 shadow-sm p-3 space-y-3 max-w-2xl">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <div className="p-2 rounded-none bg-primary/10 text-primary">
               <Shield className="size-5" />
             </div>
             <div>
@@ -222,12 +222,12 @@ export default function Security() {
           )}
 
           {setupData && (
-            <div className="space-y-3 border border-border/80 rounded-lg p-4 bg-muted/20">
+            <div className="space-y-3 border border-border/80 rounded-none p-4 bg-muted/20">
               <p className="text-[13px] text-muted-foreground">
                 Add this secret to Google Authenticator, Authy, or 1Password:
               </p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 text-[12px] font-mono bg-background border border-border/80 rounded-md px-3 py-2 break-all">
+                <code className="flex-1 text-[12px] font-mono bg-background border border-border/80 rounded-none px-3 py-2 break-all">
                   {setupData.secret}
                 </code>
                 <button type="button" onClick={copySecret} className={PAGE_SECONDARY_BTN_CLASS}>
@@ -242,7 +242,7 @@ export default function Security() {
                     value={enableCode}
                     onChange={(e) => setEnableCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="000000"
-                    className="mt-1 w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md"
+                    className="mt-1 w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none"
                   />
                 </div>
                 <button type="button" onClick={confirmEnable2FA} className={PAGE_PRIMARY_BTN_CLASS}>
@@ -253,7 +253,7 @@ export default function Security() {
           )}
 
           {backupCodes.length > 0 && (
-            <div className="border border-amber-500/30 bg-amber-500/5 rounded-lg p-4">
+            <div className="border border-amber-500/30 bg-amber-500/5 rounded-none p-4">
               <p className="text-[13px] font-medium text-amber-700 mb-2">Save these backup codes — shown once:</p>
               <div className="grid grid-cols-2 gap-2 font-mono text-[12px]">
                 {backupCodes.map((c) => (
@@ -271,13 +271,13 @@ export default function Security() {
                 placeholder="Password"
                 value={disablePassword}
                 onChange={(e) => setDisablePassword(e.target.value)}
-                className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md"
+                className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none"
               />
               <input
                 placeholder="Authenticator or backup code"
                 value={disableCode}
                 onChange={(e) => setDisableCode(e.target.value)}
-                className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md"
+                className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none"
               />
               <button type="button" onClick={disable2FA} className={PAGE_SECONDARY_BTN_CLASS}>
                 Disable 2FA
@@ -288,7 +288,7 @@ export default function Security() {
       )}
 
       {activeTab === 'sessions' && (
-        <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border/80 flex justify-between items-center">
             <h2 className="text-sm font-semibold">Active sessions</h2>
             <button type="button" onClick={logoutAll} className={PAGE_SECONDARY_BTN_CLASS}>
@@ -309,7 +309,7 @@ export default function Security() {
                   </div>
                   <div className="flex items-center gap-2">
                     {s.isCurrent && (
-                      <span className="text-[10px] uppercase font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">Current</span>
+                      <span className="text-[10px] uppercase font-semibold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-none">Current</span>
                     )}
                     {!s.isCurrent && (
                       <button type="button" onClick={() => revokeSession(s._id)} className="text-[12px] text-destructive hover:underline">
@@ -325,7 +325,7 @@ export default function Security() {
       )}
 
       {activeTab === 'login-history' && (
-        <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
           <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-left text-[12px]">
               <thead className="bg-muted/30">
@@ -358,7 +358,7 @@ export default function Security() {
       )}
 
       {activeTab === 'activity' && (
-        <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+        <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
           <div className="overflow-x-auto no-scrollbar">
             <table className="w-full text-left text-[12px]">
               <thead className="bg-muted/30">
@@ -387,9 +387,9 @@ export default function Security() {
       )}
 
       {activeTab === 'rbac' && rolesInfo && (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2">
           {Object.entries(rolesInfo.rolePermissions as Record<string, string[]>).map(([role, perms]) => (
-            <div key={role} className="bg-card rounded-xl border border-border/80 shadow-sm p-4">
+            <div key={role} className="bg-card rounded-none border border-border/80 shadow-sm p-4">
               <h3 className="text-sm font-semibold capitalize mb-2">{role}</h3>
               <p className="text-[11px] text-muted-foreground mb-3">{perms.length} permissions</p>
               <ul className="space-y-1 max-h-48 overflow-y-auto">

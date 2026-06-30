@@ -156,7 +156,7 @@ const Brands = () => {
       {/* Simple Add Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="flex w-full max-w-sm flex-col overflow-hidden bg-card text-foreground rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-border relative animate-in zoom-in-95 duration-200">
+          <div className="flex w-full max-w-sm flex-col overflow-hidden bg-card text-foreground rounded-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-border relative animate-in zoom-in-95 duration-200">
             
             <div className="flex shrink-0 items-center justify-between gap-3 bg-muted border-b border-border px-5 py-3.5">
               <h3 className="text-sm font-bold flex items-center gap-2 text-foreground">
@@ -165,7 +165,7 @@ const Brands = () => {
               <button
                 type="button"
                 onClick={() => { setIsModalOpen(false); setEditingId(null); }}
-                className="inline-flex size-7 shrink-0 items-center justify-center rounded-md cursor-pointer text-muted-foreground hover:text-foreground hover:bg-black/5 transition-colors outline-none focus:outline-none"
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-none cursor-pointer text-muted-foreground hover:text-foreground hover:bg-black/5 transition-colors outline-none focus:outline-none"
               >
                 ✕
               </button>
@@ -180,7 +180,7 @@ const Brands = () => {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="bg-input border border-border rounded-lg px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
+                    className="bg-input border border-border rounded-none px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -189,7 +189,7 @@ const Brands = () => {
                     rows={2}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="bg-input border border-border rounded-lg px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full resize-none"
+                    className="bg-input border border-border rounded-none px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full resize-none"
                   />
                 </div>
               </div>
@@ -199,14 +199,14 @@ const Brands = () => {
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   disabled={isSaving}
-                  className="px-4 py-1.5 rounded-lg text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus:outline-none"
+                  className="px-4 py-1.5 rounded-none text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus:outline-none"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-4 py-1.5 rounded-lg text-[11px] font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity outline-none focus:outline-none"
+                  className="px-4 py-1.5 rounded-none text-[11px] font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity outline-none focus:outline-none"
                 >
                   {isSaving ? 'Saving...' : editingId ? 'Update Brand' : 'Save Brand'}
                 </button>

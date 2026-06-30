@@ -9,6 +9,8 @@ import {
   PAGE_ROOT_CLASS,
   PAGE_BODY_CLASS,
   PAGE_TABLE_HEAD_CLASS,
+  PAGE_TAB_GROUP_CLASS,
+  pageTabButtonClass,
 } from '../lib/pageToolbar';
 import { PageStickyHeader } from '../components/layout/PageSubTabs';
 import Loading from '../components/ui/Loading';
@@ -82,7 +84,7 @@ export default function Returns() {
               <RotateCcw className="size-4 text-primary" />
               <h1 className="text-sm font-semibold">Returns & RMA</h1>
               {pendingCount > 0 && (
-                <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
+                <span className="rounded-none bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-600">
                   {pendingCount} pending
                 </span>
               )}
@@ -94,18 +96,13 @@ export default function Returns() {
           </div>
         }
         subTabs={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={PAGE_TAB_GROUP_CLASS}>
             {STATUS_FILTER.map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => setStatusFilter(s)}
-                className={cn(
-                  'rounded-full border px-2.5 py-1 text-[11px] font-medium capitalize transition-colors',
-                  statusFilter === s
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground hover:bg-muted/50'
-                )}
+                className={pageTabButtonClass(statusFilter === s)}
               >
                 {s}
               </button>
@@ -129,7 +126,7 @@ export default function Returns() {
         {loading ? (
           <Loading variant="page" label="Loading return requests…" />
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
+          <div className="overflow-hidden rounded-none border border-border/80 bg-card shadow-sm">
             <div className="hidden md:block overflow-auto no-scrollbar max-h-[calc(100vh-16rem)]">
               <table className="w-full border-collapse text-left">
                 <thead className={PAGE_TABLE_HEAD_CLASS}>
@@ -176,7 +173,7 @@ export default function Returns() {
                         <td className="px-4 py-3 text-center">
                           <span
                             className={cn(
-                              'inline-flex rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase',
+                              'inline-flex rounded-none border px-2 py-0.5 text-[9px] font-semibold uppercase',
                               refund.status === 'approved' || refund.status === 'processed'
                                 ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
                                 : refund.status === 'rejected'
@@ -236,13 +233,13 @@ export default function Returns() {
                       <div className="flex gap-2 pt-1">
                         <button
                           onClick={() => handleUpdateRefund(refund._id, 'approved')}
-                          className="flex-1 py-1.5 text-emerald-600 bg-emerald-500/10 rounded-md text-[11px] font-medium"
+                          className="flex-1 py-1.5 text-emerald-600 bg-emerald-500/10 rounded-none text-[11px] font-medium"
                         >
                           Approve
                         </button>
                         <button
                           onClick={() => handleUpdateRefund(refund._id, 'rejected')}
-                          className="flex-1 py-1.5 text-destructive bg-destructive/10 rounded-md text-[11px] font-medium"
+                          className="flex-1 py-1.5 text-destructive bg-destructive/10 rounded-none text-[11px] font-medium"
                         >
                           Reject
                         </button>

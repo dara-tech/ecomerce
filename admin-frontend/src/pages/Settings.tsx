@@ -148,7 +148,7 @@ export default function Settings() {
       <PageStickyHeader
         toolbar={
           <>
-            <h1 className="text-sm font-semibold text-foreground shrink-0">Settings</h1>
+            <h1 className="text-xs font-semibold text-foreground shrink-0">Settings</h1>
             <button
               type="button"
               onClick={handleSave}
@@ -182,38 +182,38 @@ export default function Settings() {
 
       <div className={PAGE_BODY_CLASS}>
       {error && (
-        <div className="p-3 bg-destructive/10 text-destructive text-[13px] font-medium rounded-lg border border-destructive/20">
+        <div className="p-3 bg-destructive/10 text-destructive text-[13px] font-medium rounded-none border border-destructive/20">
           {error}
         </div>
       )}
       {success && (
-        <div className="p-3 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[13px] font-medium rounded-lg">
+        <div className="p-3 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[13px] font-medium rounded-none">
           {success}
         </div>
       )}
 
       <div className="space-y-6 animate-in fade-in duration-300">
         {activeTab === 'store' && (
-          <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+          <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
             <div className="p-4 border-b border-border/80 bg-muted/30">
-              <h2 className="text-sm font-semibold text-foreground">Basic Information</h2>
+              <h2 className="text-xs font-semibold text-foreground">Basic Information</h2>
             </div>
             <div className="p-5 space-y-4">
               <div>
                 <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Store Name</label>
-                <input type="text" value={settings.storeInfo.name} onChange={e => updateNested('storeInfo', 'name', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
+                <input type="text" value={settings.storeInfo.name} onChange={e => updateNested('storeInfo', 'name', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
               <div>
                 <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Email Address</label>
-                <input type="email" value={settings.storeInfo.email} onChange={e => updateNested('storeInfo', 'email', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
+                <input type="email" value={settings.storeInfo.email} onChange={e => updateNested('storeInfo', 'email', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
               <div>
                 <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Phone Number</label>
-                <input type="text" value={settings.storeInfo.phone} onChange={e => updateNested('storeInfo', 'phone', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
+                <input type="text" value={settings.storeInfo.phone} onChange={e => updateNested('storeInfo', 'phone', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" />
               </div>
               <div>
                 <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Physical Address</label>
-                <textarea rows={3} value={settings.storeInfo.address} onChange={e => updateNested('storeInfo', 'address', e.target.value)} className="w-full p-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary resize-none" />
+                <textarea rows={3} value={settings.storeInfo.address} onChange={e => updateNested('storeInfo', 'address', e.target.value)} className="w-full p-3 text-[13px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary resize-none" />
               </div>
             </div>
           </div>
@@ -221,50 +221,50 @@ export default function Settings() {
 
         {activeTab === 'payments' && (
           <>
-            <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+            <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border/80 bg-muted/30">
-                <h2 className="text-sm font-semibold text-foreground">Currency Settings</h2>
+                <h2 className="text-xs font-semibold text-foreground">Currency Settings</h2>
               </div>
               <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Default Currency (ISO)</label>
-                  <input type="text" value={settings.currency.default} onChange={e => updateNested('currency', 'default', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" placeholder="USD" />
+                  <input type="text" value={settings.currency.default} onChange={e => updateNested('currency', 'default', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" placeholder="USD" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Symbol / Format</label>
-                  <input type="text" value={settings.currency.format} onChange={e => updateNested('currency', 'format', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" placeholder="$" />
+                  <input type="text" value={settings.currency.format} onChange={e => updateNested('currency', 'format', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" placeholder="$" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+            <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border/80 bg-muted/30">
-                <h2 className="text-sm font-semibold text-foreground">Stripe Integration</h2>
+                <h2 className="text-xs font-semibold text-foreground">Stripe Integration</h2>
               </div>
               <div className="p-5 space-y-4">
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Public Key</label>
-                  <input type="text" value={settings.paymentGateways.stripe.publicKey} onChange={e => updateDeepNested('paymentGateways', 'stripe', 'publicKey', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
+                  <input type="text" value={settings.paymentGateways.stripe.publicKey} onChange={e => updateDeepNested('paymentGateways', 'stripe', 'publicKey', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Secret Key</label>
-                  <input type="password" value={settings.paymentGateways.stripe.secretKey} onChange={e => updateDeepNested('paymentGateways', 'stripe', 'secretKey', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
+                  <input type="password" value={settings.paymentGateways.stripe.secretKey} onChange={e => updateDeepNested('paymentGateways', 'stripe', 'secretKey', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+            <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border/80 bg-muted/30">
-                <h2 className="text-sm font-semibold text-foreground">PayPal Integration</h2>
+                <h2 className="text-xs font-semibold text-foreground">PayPal Integration</h2>
               </div>
               <div className="p-5 space-y-4">
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Client ID</label>
-                  <input type="text" value={settings.paymentGateways.paypal.clientId} onChange={e => updateDeepNested('paymentGateways', 'paypal', 'clientId', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
+                  <input type="text" value={settings.paymentGateways.paypal.clientId} onChange={e => updateDeepNested('paymentGateways', 'paypal', 'clientId', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Secret</label>
-                  <input type="password" value={settings.paymentGateways.paypal.secret} onChange={e => updateDeepNested('paymentGateways', 'paypal', 'secret', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
+                  <input type="password" value={settings.paymentGateways.paypal.secret} onChange={e => updateDeepNested('paymentGateways', 'paypal', 'secret', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
                 </div>
               </div>
             </div>
@@ -273,9 +273,9 @@ export default function Settings() {
 
         {activeTab === 'shipping' && (
           <>
-            <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+            <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border/80 bg-muted/30 flex justify-between items-center">
-                <h2 className="text-sm font-semibold text-foreground">Taxes</h2>
+                <h2 className="text-xs font-semibold text-foreground">Taxes</h2>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <span className="text-[11px] font-medium text-muted-foreground uppercase">Enable Tax</span>
                   <input type="checkbox" checked={settings.taxes.enabled} onChange={e => updateNested('taxes', 'enabled', e.target.checked)} className="rounded border-border text-primary focus:ring-primary bg-background" />
@@ -283,13 +283,13 @@ export default function Settings() {
               </div>
               <div className="p-5">
                 <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Global Tax Rate (%)</label>
-                <input type="number" step="0.01" value={settings.taxes.rate} onChange={e => updateNested('taxes', 'rate', parseFloat(e.target.value) || 0)} className="w-full md:w-1/3 h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" disabled={!settings.taxes.enabled} />
+                <input type="number" step="0.01" value={settings.taxes.rate} onChange={e => updateNested('taxes', 'rate', parseFloat(e.target.value) || 0)} className="w-full md:w-1/3 h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" disabled={!settings.taxes.enabled} />
               </div>
             </div>
 
-            <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+            <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border/80 bg-muted/30 flex justify-between items-center">
-                <h2 className="text-sm font-semibold text-foreground">Shipping Providers & Methods</h2>
+                <h2 className="text-xs font-semibold text-foreground">Shipping Providers & Methods</h2>
                 <button type="button" onClick={addShippingMethod} className="text-[12px] font-medium text-primary hover:text-primary/80 flex items-center gap-1">
                   <Plus className="size-3.5" /> Add Method
                 </button>
@@ -299,7 +299,7 @@ export default function Settings() {
                   <p className="text-sm text-muted-foreground text-center py-4">No shipping methods configured.</p>
                 ) : (
                   settings.shippingProviders.methods.map((method: any, index: number) => (
-                    <div key={index} className="flex items-center gap-3 bg-background p-3 rounded-lg border border-border/50">
+                    <div key={index} className="flex items-center gap-3 bg-background p-3 rounded-none border border-border/50">
                       <div className="flex-1">
                         <input type="text" value={method.name} onChange={e => updateShippingMethod(index, 'name', e.target.value)} placeholder="Method Name (e.g. Standard Shipping)" className="w-full h-8 px-2 text-[13px] bg-transparent border-b border-border/50 focus:border-primary outline-none transition-colors" />
                       </div>
@@ -307,7 +307,7 @@ export default function Settings() {
                         <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                         <input type="number" step="0.01" value={method.rate} onChange={e => updateShippingMethod(index, 'rate', parseFloat(e.target.value) || 0)} placeholder="Rate" className="w-full h-8 pl-7 pr-2 text-[13px] bg-transparent border-b border-border/50 focus:border-primary outline-none transition-colors" />
                       </div>
-                      <button type="button" onClick={() => removeShippingMethod(index)} className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors">
+                      <button type="button" onClick={() => removeShippingMethod(index)} className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-none transition-colors">
                         <Trash2 className="size-4" />
                       </button>
                     </div>
@@ -320,17 +320,17 @@ export default function Settings() {
 
         {activeTab === 'themes' && (
           <>
-            <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+            <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border/80 bg-muted/30">
-                <h2 className="text-sm font-semibold text-foreground">Branding</h2>
+                <h2 className="text-xs font-semibold text-foreground">Branding</h2>
               </div>
               <div className="p-5 space-y-4">
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Logo URL</label>
-                  <div className="flex gap-4 items-start">
-                    <input type="url" value={settings.logoUrl} onChange={e => setSettings({ ...settings, logoUrl: e.target.value })} className="flex-1 h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" placeholder="https://..." />
+                  <div className="flex gap-3 items-start">
+                    <input type="url" value={settings.logoUrl} onChange={e => setSettings({ ...settings, logoUrl: e.target.value })} className="flex-1 h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" placeholder="https://..." />
                     {settings.logoUrl && (
-                      <div className="w-12 h-12 bg-muted/50 rounded-lg border border-border flex items-center justify-center shrink-0">
+                      <div className="w-12 h-12 bg-muted/50 rounded-none border border-border flex items-center justify-center shrink-0">
                         <img src={settings.logoUrl} alt="Logo preview" className="max-w-[40px] max-h-[40px] object-contain" />
                       </div>
                     )}
@@ -338,10 +338,10 @@ export default function Settings() {
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Favicon URL</label>
-                  <div className="flex gap-4 items-start">
-                    <input type="url" value={settings.faviconUrl} onChange={e => setSettings({ ...settings, faviconUrl: e.target.value })} className="flex-1 h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" placeholder="https://..." />
+                  <div className="flex gap-3 items-start">
+                    <input type="url" value={settings.faviconUrl} onChange={e => setSettings({ ...settings, faviconUrl: e.target.value })} className="flex-1 h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" placeholder="https://..." />
                     {settings.faviconUrl && (
-                      <div className="w-9 h-9 bg-muted/50 rounded-lg border border-border flex items-center justify-center shrink-0">
+                      <div className="w-9 h-9 bg-muted/50 rounded-none border border-border flex items-center justify-center shrink-0">
                         <img src={settings.faviconUrl} alt="Favicon preview" className="max-w-[24px] max-h-[24px] object-contain" />
                       </div>
                     )}
@@ -350,16 +350,16 @@ export default function Settings() {
               </div>
             </div>
 
-            <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+            <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border/80 bg-muted/30">
-                <h2 className="text-sm font-semibold text-foreground">Theme Configuration</h2>
+                <h2 className="text-xs font-semibold text-foreground">Theme Configuration</h2>
               </div>
               <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Primary Color (Hex)</label>
                   <div className="flex items-center gap-2">
                     <input type="color" value={settings.themes.primaryColor} onChange={e => updateNested('themes', 'primaryColor', e.target.value)} className="w-9 h-9 rounded cursor-pointer border-0 p-0 bg-transparent" />
-                    <input type="text" value={settings.themes.primaryColor} onChange={e => updateNested('themes', 'primaryColor', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary font-mono uppercase" />
+                    <input type="text" value={settings.themes.primaryColor} onChange={e => updateNested('themes', 'primaryColor', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary font-mono uppercase" />
                   </div>
                 </div>
               </div>
@@ -369,46 +369,46 @@ export default function Settings() {
 
         {activeTab === 'smtp' && (
           <>
-            <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+            <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border/80 bg-muted/30">
-                <h2 className="text-sm font-semibold text-foreground">SMTP Email Server</h2>
+                <h2 className="text-xs font-semibold text-foreground">SMTP Email Server</h2>
               </div>
               <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">SMTP Host</label>
-                  <input type="text" value={settings.smtp.host} onChange={e => updateNested('smtp', 'host', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" placeholder="smtp.gmail.com" />
+                  <input type="text" value={settings.smtp.host} onChange={e => updateNested('smtp', 'host', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" placeholder="smtp.gmail.com" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">SMTP Port</label>
-                  <input type="number" value={settings.smtp.port} onChange={e => updateNested('smtp', 'port', parseInt(e.target.value) || 587)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
+                  <input type="number" value={settings.smtp.port} onChange={e => updateNested('smtp', 'port', parseInt(e.target.value) || 587)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">SMTP Username / Email</label>
-                  <input type="text" value={settings.smtp.user} onChange={e => updateNested('smtp', 'user', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" />
+                  <input type="text" value={settings.smtp.user} onChange={e => updateNested('smtp', 'user', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" />
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">SMTP Password</label>
-                  <input type="password" value={settings.smtp.pass} onChange={e => updateNested('smtp', 'pass', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
+                  <input type="password" value={settings.smtp.pass} onChange={e => updateNested('smtp', 'pass', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary font-mono" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-card rounded-xl border border-border/80 shadow-sm overflow-hidden">
+            <div className="bg-card rounded-none border border-border/80 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border/80 bg-muted/30">
-                <h2 className="text-sm font-semibold text-foreground">Social Links</h2>
+                <h2 className="text-xs font-semibold text-foreground">Social Links</h2>
               </div>
               <div className="p-5 space-y-4">
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Facebook URL</label>
-                  <input type="url" value={settings.socialLinks.facebook} onChange={e => updateNested('socialLinks', 'facebook', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" placeholder="https://facebook.com/..." />
+                  <input type="url" value={settings.socialLinks.facebook} onChange={e => updateNested('socialLinks', 'facebook', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" placeholder="https://facebook.com/..." />
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Instagram URL</label>
-                  <input type="url" value={settings.socialLinks.instagram} onChange={e => updateNested('socialLinks', 'instagram', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" placeholder="https://instagram.com/..." />
+                  <input type="url" value={settings.socialLinks.instagram} onChange={e => updateNested('socialLinks', 'instagram', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" placeholder="https://instagram.com/..." />
                 </div>
                 <div>
                   <label className="block text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Twitter URL</label>
-                  <input type="url" value={settings.socialLinks.twitter} onChange={e => updateNested('socialLinks', 'twitter', e.target.value)} className="w-full h-9 px-3 text-[13px] bg-background border border-border/80 rounded-md focus:outline-none focus:ring-1 focus:ring-primary" placeholder="https://twitter.com/..." />
+                  <input type="url" value={settings.socialLinks.twitter} onChange={e => updateNested('socialLinks', 'twitter', e.target.value)} className="w-full h-7 px-2.5 text-[12px] bg-background border border-border/80 rounded-none focus:outline-none focus:ring-1 focus:ring-primary" placeholder="https://twitter.com/..." />
                 </div>
               </div>
             </div>

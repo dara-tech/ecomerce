@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { ShoppingCart, Star, Plus, Minus, ArrowLeft, Heart, GitCompare, Zap } from "lucide-react";
+import { ShoppingCart, ShoppingBag, Star, Plus, Minus, ArrowLeft, Heart, GitCompare } from "lucide-react";
 import Link from "next/link";
 import ProductImage from "@/components/ui/ProductImage";
 import { useState, useEffect } from "react";
@@ -184,7 +184,7 @@ export default function ProductDetailsPage() {
               disabled={product.countInStock === 0}
               className="flex-1 h-12 rounded-full border-2 border-primary text-primary hover:bg-primary/5 gap-2 px-8"
             >
-              <Zap className="w-5 h-5" /> {t("buyNow")}
+              <ShoppingBag className="w-5 h-5" /> {t("buyNow")}
             </Button>
           </div>
 

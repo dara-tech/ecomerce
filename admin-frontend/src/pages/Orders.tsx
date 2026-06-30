@@ -188,7 +188,7 @@ const Orders = () => {
   };
 
   const ORDER_PILL_CLASS =
-    'inline-flex h-auto min-h-0 w-auto items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider';
+    'inline-flex h-auto min-h-0 w-auto items-center gap-1 rounded-none border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider';
 
   const StatusDropdown = ({ order }: { order: Order }) => {
     const isToggling = togglingId === order._id;
@@ -241,17 +241,17 @@ const Orders = () => {
                 placeholder="Search orders..."
                 value={keyword}
                 onChange={handleSearch}
-                className="w-full pl-8 pr-3 h-8 text-[13px] font-medium bg-input border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                className="w-full pl-8 pr-3 h-8 text-[13px] font-medium bg-input border border-border rounded-none focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
               />
             </div>
             {/* Mobile filter button */}
             <button
               onClick={() => setIsFilterModalOpen(true)}
-              className="md:hidden h-8 px-3 rounded-md border border-border/80 bg-input flex items-center justify-center gap-1.5 text-muted-foreground hover:bg-muted transition-colors shrink-0 relative"
+              className="md:hidden h-8 px-3 rounded-none border border-border/80 bg-input flex items-center justify-center gap-1.5 text-muted-foreground hover:bg-muted transition-colors shrink-0 relative"
             >
               <Filter className="size-4" />
               {(filterPaid !== 'All Payments' || filterStatus !== 'All Statuses' || sort !== 'Newest First') && (
-                <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-none" />
               )}
             </button>
           </div>
@@ -299,7 +299,7 @@ const Orders = () => {
         {selected.size > 0 && (
           <button
             onClick={() => setShowBulkConfirm(true)}
-            className="shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-md bg-destructive text-destructive-foreground text-[12px] font-semibold hover:opacity-90 transition-opacity"
+            className="shrink-0 flex items-center gap-1.5 h-8 px-3 rounded-none bg-destructive text-destructive-foreground text-[12px] font-semibold hover:opacity-90 transition-opacity"
           >
             <Trash2 className="size-3.5" />
             Delete {selected.size} Selected
@@ -309,7 +309,7 @@ const Orders = () => {
 
       <div className={PAGE_LIST_BODY_CLASS}>
       {error && (
-        <div className="shrink-0 p-3 bg-destructive/10 text-destructive text-[11px] font-medium text-center rounded-lg">
+        <div className="shrink-0 p-3 bg-destructive/10 text-destructive text-[11px] font-medium text-center rounded-none">
           {error}
         </div>
       )}
@@ -327,7 +327,7 @@ const Orders = () => {
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
                   aria-label="Previous page"
-                  className="flex h-7 w-7 items-center justify-center rounded-md border border-border/80 text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-7 w-7 items-center justify-center rounded-none border border-border/80 text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronLeft className="size-3.5" />
                 </button>
@@ -336,7 +336,7 @@ const Orders = () => {
                   onClick={() => setPage(p => Math.min(pages, p + 1))}
                   disabled={page === pages}
                   aria-label="Next page"
-                  className="flex h-7 w-7 items-center justify-center rounded-md border border-border/80 text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-7 w-7 items-center justify-center rounded-none border border-border/80 text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronRight className="size-3.5" />
                 </button>
@@ -393,14 +393,14 @@ const Orders = () => {
                         <img
                           src={order.orderItems[0].image}
                           alt="Order item"
-                          className="w-9 h-9 object-cover rounded-md mx-auto border border-border/50 group-hover:border-primary/30 transition-colors"
+                          className="w-9 h-9 object-cover rounded-none mx-auto border border-border/50 group-hover:border-primary/30 transition-colors"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = 'https://placehold.co/100x100/1d1b1c/ffffff?text=No+Img';
                           }}
                         />
                       ) : (
-                        <div className="w-9 h-9 rounded-md bg-muted/50 border border-border/50 mx-auto flex items-center justify-center text-[8px] text-muted-foreground uppercase">
+                        <div className="w-9 h-9 rounded-none bg-muted/50 border border-border/50 mx-auto flex items-center justify-center text-[8px] text-muted-foreground uppercase">
                           No Img
                         </div>
                       )}
@@ -441,7 +441,7 @@ const Orders = () => {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={(e) => { e.stopPropagation(); setDeleteId(order._id); }}
-                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-md hover:bg-destructive/10"
+                        className="p-1.5 text-muted-foreground hover:text-destructive transition-colors rounded-none hover:bg-destructive/10"
                         title="Delete order"
                       >
                         <Trash2 className="size-3.5" />
@@ -458,7 +458,7 @@ const Orders = () => {
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto md:hidden">
         {/* Bulk select bar */}
         {selected.size > 0 && (
-          <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-xl px-4 py-2.5">
+          <div className="flex items-center justify-between bg-primary/10 border border-primary/20 rounded-none px-4 py-2.5">
             <span className="text-[12px] font-semibold text-primary">{selected.size} selected</span>
             <button
               onClick={() => setShowBulkConfirm(true)}
@@ -470,9 +470,9 @@ const Orders = () => {
         )}
 
         {loading ? (
-          <Loading variant="panel" label="Loading orders…" className="rounded-xl" />
+          <Loading variant="panel" label="Loading orders…" className="rounded-none" />
         ) : paginatedOrders.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground bg-card rounded-xl border border-border/80">
+          <div className="py-12 text-center text-muted-foreground bg-card rounded-none border border-border/80">
             No orders found matching your criteria.
           </div>
         ) : (
@@ -480,7 +480,7 @@ const Orders = () => {
             <div
               key={order._id}
               onClick={() => setSelectedOrder(order)}
-              className={`bg-card border rounded-xl p-3 shadow-sm flex items-start gap-3 transition-colors relative cursor-pointer ${selected.has(order._id) ? 'border-primary/40 bg-primary/5' : 'border-border/80 hover:border-primary/30'}`}
+              className={`bg-card border rounded-none p-3 shadow-sm flex items-start gap-3 transition-colors relative cursor-pointer ${selected.has(order._id) ? 'border-primary/40 bg-primary/5' : 'border-border/80 hover:border-primary/30'}`}
             >
               {/* Checkbox */}
               <div className="pt-1 shrink-0" onClick={e => e.stopPropagation()}>
@@ -499,14 +499,14 @@ const Orders = () => {
                   <img
                     src={order.orderItems[0].image}
                     alt="Order"
-                    className="w-14 h-14 object-cover rounded-lg border border-border/50"
+                    className="w-14 h-14 object-cover rounded-none border border-border/50"
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = 'https://placehold.co/100x100/1d1b1c/ffffff?text=No+Img';
                     }}
                   />
                 ) : (
-                  <div className="w-14 h-14 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center text-[9px] text-muted-foreground uppercase">No Img</div>
+                  <div className="w-14 h-14 rounded-none bg-muted/50 border border-border/50 flex items-center justify-center text-[9px] text-muted-foreground uppercase">No Img</div>
                 )}
               </div>
 
@@ -531,11 +531,11 @@ const Orders = () => {
                   <div className="font-bold text-primary text-[13px]">${order.totalPrice.toFixed(2)}</div>
                   <div className="flex items-center gap-1.5">
                     {order.isPaid ? (
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-semibold uppercase">
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-none bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[9px] font-semibold uppercase">
                         <CheckCircle2 className="w-2.5 h-2.5" /> Paid
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[9px] font-semibold uppercase">
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-none bg-amber-500/10 text-amber-600 border border-amber-500/20 text-[9px] font-semibold uppercase">
                         <Clock className="w-2.5 h-2.5" /> Pending
                       </span>
                     )}
@@ -548,7 +548,7 @@ const Orders = () => {
               <button
                 onClick={(e) => { e.stopPropagation(); setDeleteId(order._id); }}
                 aria-label="Delete order"
-                className="absolute top-2 right-2 text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-md hover:bg-destructive/10"
+                className="absolute top-2 right-2 text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-none hover:bg-destructive/10"
               >
                 <X className="size-4" />
               </button>
@@ -558,14 +558,14 @@ const Orders = () => {
 
         {/* Mobile Pagination */}
         {!loading && pages > 1 && (
-          <div className="flex items-center justify-between bg-card border border-border/80 rounded-xl px-4 py-3">
+          <div className="flex items-center justify-between bg-card border border-border/80 rounded-none px-4 py-3">
             <span className="text-[11px] text-muted-foreground">{total} orders</span>
             <div className="flex items-center gap-1">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Previous page" className="h-7 w-7 flex items-center justify-center rounded-md border border-border/80 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-colors">
+              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} aria-label="Previous page" className="h-7 w-7 flex items-center justify-center rounded-none border border-border/80 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-colors">
                 <ChevronLeft className="size-3.5" />
               </button>
               <span className="px-2 text-[12px] font-medium">{page}/{pages}</span>
-              <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} aria-label="Next page" className="h-7 w-7 flex items-center justify-center rounded-md border border-border/80 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-colors">
+              <button onClick={() => setPage(p => Math.min(pages, p + 1))} disabled={page === pages} aria-label="Next page" className="h-7 w-7 flex items-center justify-center rounded-none border border-border/80 text-muted-foreground hover:bg-muted disabled:opacity-40 transition-colors">
                 <ChevronRight className="size-3.5" />
               </button>
             </div>
@@ -610,7 +610,7 @@ const Orders = () => {
           >
             <div className="sticky top-0 bg-card z-10 px-4 py-3 border-b border-border/80 flex items-center justify-between">
               <h3 className="font-semibold text-foreground text-[15px]">Filters & Sort</h3>
-              <button onClick={() => setIsFilterModalOpen(false)} aria-label="Close filters" className="p-1.5 text-muted-foreground hover:bg-muted rounded-full transition-colors">
+              <button onClick={() => setIsFilterModalOpen(false)} aria-label="Close filters" className="p-1.5 text-muted-foreground hover:bg-muted rounded-none transition-colors">
                 <X className="size-5" />
               </button>
             </div>
@@ -638,7 +638,7 @@ const Orders = () => {
                       key={status}
                       onClick={() => setFilterStatus(status)}
                       className={cn(
-                        "px-3 py-2 rounded-lg border text-[12px] font-medium transition-colors",
+                        "px-3 py-2 rounded-none border text-[12px] font-medium transition-colors",
                         filterStatus === status
                           ? "bg-primary/10 border-primary text-primary"
                           : "bg-card border-border/80 text-muted-foreground hover:bg-muted"
@@ -675,14 +675,14 @@ const Orders = () => {
                     setSort('Newest First');
                     setPage(1);
                   }}
-                  className="flex-1 h-11 rounded-lg border border-border/80 text-foreground font-medium text-[13px] hover:bg-muted transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 h-11 rounded-none border border-border/80 text-foreground font-medium text-[13px] hover:bg-muted transition-colors flex items-center justify-center gap-2"
                 >
                   <RotateCcw className="size-3.5" /> Reset
                 </button>
               )}
               <button
                 onClick={() => setIsFilterModalOpen(false)}
-                className="flex-[2] h-11 rounded-lg bg-primary text-primary-foreground font-medium text-[13px] hover:opacity-90 transition-opacity"
+                className="flex-[2] h-11 rounded-none bg-primary text-primary-foreground font-medium text-[13px] hover:opacity-90 transition-opacity"
               >
                 Apply Filters
               </button>

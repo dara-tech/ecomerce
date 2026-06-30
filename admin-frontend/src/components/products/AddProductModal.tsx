@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Package, DollarSign, Image } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { cn } from '../../lib/utils';
+import { PAGE_MODAL_TABS_ROW_CLASS, pageTabButtonClass } from '../../lib/pageToolbar';
 import api from '../../lib/axios';
 
 interface AddProductModalProps {
@@ -83,12 +83,12 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
 
   return createPortal(
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="flex w-full max-w-md flex-col overflow-hidden bg-card text-foreground rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-border relative animate-in zoom-in-95 duration-200">
+      <div className="flex w-full max-w-md flex-col overflow-hidden bg-card text-foreground rounded-none shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-border relative animate-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-border/80">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+            <div className="w-8 h-8 rounded-none bg-primary/10 flex items-center justify-center text-primary">
               <Package className="size-4" />
             </div>
             <div>
@@ -99,33 +99,25 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
           </div>
           <button
             onClick={onClose}
-            className="inline-flex size-7 shrink-0 items-center justify-center rounded-md cursor-pointer text-muted-foreground hover:text-foreground hover:bg-black/5 transition-colors outline-none focus:outline-none"
+            className="inline-flex size-7 shrink-0 items-center justify-center rounded-none cursor-pointer text-muted-foreground hover:text-foreground hover:bg-black/5 transition-colors outline-none focus:outline-none"
           >
             <X className="size-4" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex px-4 pt-2 bg-muted border-b border-border gap-1 items-end">
+        <div className={PAGE_MODAL_TABS_ROW_CLASS}>
           <button
+            type="button"
             onClick={() => setActiveTab('basic')}
-            className={cn(
-              "inline-flex shrink-0 items-center justify-center h-8 px-4 text-[11px] font-medium transition-all relative rounded-t-[10px] select-none border-t border-l border-r outline-none focus:outline-none focus:ring-0",
-              activeTab === 'basic' 
-                ? "bg-card text-foreground border-border z-10 -mb-[1px]" 
-                : "bg-transparent text-muted-foreground border-transparent hover:bg-foreground/5 hover:text-foreground border-b-transparent"
-            )}
+            className={pageTabButtonClass(activeTab === 'basic')}
           >
             Basic Info
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('inventory')}
-            className={cn(
-              "inline-flex shrink-0 items-center justify-center h-8 px-4 text-[11px] font-medium transition-all relative rounded-t-[10px] select-none border-t border-l border-r outline-none focus:outline-none focus:ring-0",
-              activeTab === 'inventory' 
-                ? "bg-card text-foreground border-border z-10 -mb-[1px]" 
-                : "bg-transparent text-muted-foreground border-transparent hover:bg-foreground/5 hover:text-foreground border-b-transparent"
-            )}
+            className={pageTabButtonClass(activeTab === 'inventory')}
           >
             Inventory & Pricing
           </button>
@@ -141,7 +133,7 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
                   <label className="text-[11px] font-semibold text-muted-foreground">Product Image</label>
                   <div className="flex items-center gap-3">
                     {formData.image ? (
-                      <div className="relative size-16 rounded-md overflow-hidden border border-border">
+                      <div className="relative size-16 rounded-none overflow-hidden border border-border">
                         <img 
                           src={formData.image} 
                           alt="Product" 
@@ -153,7 +145,7 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
                         />
                       </div>
                     ) : (
-                      <div className="size-16 rounded-md border border-dashed border-border bg-muted/20 flex flex-col items-center justify-center text-muted-foreground">
+                      <div className="size-16 rounded-none border border-dashed border-border bg-muted/20 flex flex-col items-center justify-center text-muted-foreground">
                         <Image className="size-5 mb-1 opacity-50" />
                         <span className="text-[8px] font-medium">No Image</span>
                       </div>
@@ -164,7 +156,7 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
                         accept="image/*"
                         onChange={handleImageUpload}
                         disabled={uploading}
-                        className="block w-full text-[11px] text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-primary file:text-primary-foreground hover:file:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
+                        className="block w-full text-[11px] text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-none file:border-0 file:text-[10px] file:font-semibold file:bg-primary file:text-primary-foreground hover:file:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
                       />
                       {uploading && <p className="text-[10px] text-primary mt-1">Uploading...</p>}
                     </div>
@@ -179,7 +171,7 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="e.g. Wireless Headphones"
-                    className="bg-input border border-border rounded-lg px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
+                    className="bg-input border border-border rounded-none px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -190,7 +182,7 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
                       required
                       value={formData.brand}
                       onChange={handleChange}
-                      className="bg-input border border-border rounded-lg px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
+                      className="bg-input border border-border rounded-none px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
                     >
                       <option value="" disabled>Select a brand</option>
                       {brands.map((b, i) => (
@@ -205,7 +197,7 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
                       required
                       value={formData.category}
                       onChange={handleChange}
-                      className="bg-input border border-border rounded-lg px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
+                      className="bg-input border border-border rounded-none px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
                     >
                       <option value="" disabled>Select a category</option>
                       {categories.map((c, i) => (
@@ -222,7 +214,7 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
                     value={formData.description}
                     onChange={handleChange}
                     placeholder="Describe the product..."
-                    className="bg-input border border-border rounded-lg px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full resize-none"
+                    className="bg-input border border-border rounded-none px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full resize-none"
                   />
                 </div>
               </div>
@@ -242,7 +234,7 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
                       required
                       value={formData.price}
                       onChange={handleChange}
-                      className="bg-input border border-border rounded-lg pl-8 pr-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
+                      className="bg-input border border-border rounded-none pl-8 pr-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
                     />
                   </div>
                 </div>
@@ -255,7 +247,7 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
                     required
                     value={formData.countInStock}
                     onChange={handleChange}
-                    className="bg-input border border-border rounded-lg px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
+                    className="bg-input border border-border rounded-none px-3 py-2 text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary w-full"
                   />
                 </div>
               </div>
@@ -269,14 +261,14 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-1.5 rounded-lg text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus:outline-none"
+              className="px-4 py-1.5 rounded-none text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors outline-none focus:outline-none"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-1.5 rounded-lg text-[11px] font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity flex items-center gap-2 outline-none focus:outline-none"
+              className="px-4 py-1.5 rounded-none text-[11px] font-semibold bg-primary text-primary-foreground hover:opacity-90 transition-opacity flex items-center gap-2 outline-none focus:outline-none"
             >
               {loading ? 'Saving...' : 'Save Product'}
             </button>

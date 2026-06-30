@@ -82,7 +82,7 @@ const Login = () => {
           </p>
         </div>
 
-        <form className="grid gap-4 p-4 sm:p-5" onSubmit={requires2FA ? handle2FASubmit : handleSubmit}>
+        <form className="grid gap-3 p-4 sm:p-5" onSubmit={requires2FA ? handle2FASubmit : handleSubmit}>
           {error && (
             <div className="border border-destructive/30 bg-destructive/10 px-3 py-2">
               <p className="text-xs font-medium text-destructive text-center">{error}</p>

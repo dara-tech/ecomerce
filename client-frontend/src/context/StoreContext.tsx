@@ -6,6 +6,7 @@ import { getApiUrl } from "@/lib/api";
 
 interface StoreSettings {
   storeName: string;
+  logoUrl?: string;
   currency: { default: string; format: string };
   languages: { supported: string[]; default: string };
 }
@@ -39,6 +40,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       .then((r) => r.json())
       .then((data) => {
         setSettings(data);
+        if (data.storeName) {
+          document.title = data.storeName;
+        }
         if (!savedCurrency && data.currency?.default) {
           setCurrencyState(data.currency.default);
           setCurrencySymbol(data.currency.format || "$");

@@ -22,7 +22,7 @@ export function LoadingSpinner({
       role="status"
       aria-hidden="true"
       className={cn(
-        'inline-block shrink-0 animate-spin rounded-full border-primary/30 border-t-primary',
+        'inline-block shrink-0 animate-spin rounded-none border-primary/30 border-t-primary',
         spinnerSizes[size],
         className
       )}
@@ -100,7 +100,7 @@ export default function Loading({
         aria-live="polite"
         aria-label={label}
         className={cn(
-          'flex flex-col items-center justify-center gap-3 rounded-lg border border-border/80 bg-card py-12 text-center text-muted-foreground',
+          'flex flex-col items-center justify-center gap-3 rounded-none border border-border/80 bg-card py-12 text-center text-muted-foreground',
           className
         )}
       >

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
   ShoppingCart,
   User,
@@ -44,7 +45,8 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const { items: wishlistItems } = useWishlist();
   const { items: compareItems } = useCompare();
-  const { t } = useStore();
+  const { t, settings } = useStore();
+  const storeName = settings?.storeName || "Store";
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -102,9 +104,18 @@ export default function Navbar() {
             <Menu className="size-5" />
           </button>
           <Link href="/" className="flex items-center">
-            <span className="bg-foreground text-background text-xs font-black px-3 py-1 rounded-full tracking-wider">
-              LUMINA
-            </span>
+            {settings?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={settings.logoUrl}
+                alt={storeName}
+                className="h-6 max-w-[120px] object-contain"
+              />
+            ) : (
+              <span className="bg-foreground text-background text-xs font-black px-3 py-1 rounded-full tracking-wider uppercase">
+                {storeName}
+              </span>
+            )}
           </Link>
         </header>
 
@@ -152,7 +163,7 @@ export default function Navbar() {
           <div className="relative hidden sm:flex items-center" ref={userRef}>
             {user ? (
               <>
-                <button
+                <Button
                   type="button"
                   onClick={() => setUserOpen((v) => !v)}
                   className="flex items-center gap-1.5 pl-1.5 pr-2 h-9 rounded-full hover:bg-muted transition-colors"
@@ -167,7 +178,7 @@ export default function Navbar() {
                   <ChevronRight
                     className={`size-3 text-muted-foreground transition-transform hidden lg:block ${userOpen ? "rotate-90" : ""}`}
                   />
-                </button>
+                </Button>
                 {userOpen && (
                   <div className="absolute right-0 top-12 min-w-[200px] bg-popover/95 backdrop-blur-md border border-border/50 rounded-2xl shadow-xl p-1.5 z-50">
                     <p className="px-3 py-2 text-xs text-muted-foreground truncate border-b border-border/50 mb-1">

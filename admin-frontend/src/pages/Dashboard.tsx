@@ -87,7 +87,7 @@ function OrderStatusBadge({ status }: { status?: string }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider',
+        'inline-flex items-center rounded-none border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider',
         STATUS_STYLES[key] || 'bg-muted text-muted-foreground border-border'
       )}
     >
@@ -138,8 +138,8 @@ const Dashboard = () => {
   if (error || !stats) {
     return (
       <div className={PAGE_ROOT_CLASS}>
-        <div className={PAGE_BODY_CLASS}>
-          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border/80 bg-card py-16 text-center">
+        <div className={cn(PAGE_BODY_CLASS, 'no-scrollbar')}>
+          <div className="flex flex-col items-center justify-center gap-3 rounded-none border border-border/80 bg-card py-16 text-center">
             <AlertTriangle className="size-8 text-destructive" />
             <p className="text-[13px] text-muted-foreground">{error || 'Something went wrong.'}</p>
             <button type="button" onClick={() => fetchStats()} className={PAGE_SECONDARY_BTN_CLASS}>
@@ -190,7 +190,7 @@ const Dashboard = () => {
       <div className={PAGE_TOOLBAR_CLASS}>
         <div className={PAGE_TOOLBAR_ROW_CLASS}>
           <div>
-            <h1 className="text-sm font-semibold text-foreground">Dashboard</h1>
+            <h1 className="text-xs font-semibold text-foreground">Dashboard</h1>
             <p className="text-[11px] text-muted-foreground mt-0.5">{todayLabel}</p>
           </div>
         </div>
@@ -211,13 +211,13 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className={`${PAGE_BODY_CLASS} animate-in fade-in duration-300`}>
+      <div className={cn(PAGE_BODY_CLASS, 'no-scrollbar animate-in fade-in duration-300')}>
         {/* Stat cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {statCards.map((stat) => (
             <div
               key={stat.label}
-              className="rounded-xl border border-border/80 bg-card p-4 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
+              className="rounded-none border border-border/80 bg-card p-3 shadow-sm transition-all hover:border-primary/40 hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 space-y-1.5">
@@ -227,7 +227,7 @@ const Dashboard = () => {
                   <h3 className="text-xl font-bold tracking-tight text-foreground">{stat.value}</h3>
                   <p className="text-[11px] text-muted-foreground">{stat.hint}</p>
                 </div>
-                <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-full', stat.accent)}>
+                <div className={cn('flex size-10 shrink-0 items-center justify-center rounded-none', stat.accent)}>
                   <stat.Icon className="size-5" />
                 </div>
               </div>
@@ -237,7 +237,7 @@ const Dashboard = () => {
 
         {/* Order status pills */}
         {statusEntries.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/80 bg-card px-4 py-3 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2 rounded-none border border-border/80 bg-card px-4 py-3 shadow-sm">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mr-1">
               Orders by status
             </span>
@@ -245,7 +245,7 @@ const Dashboard = () => {
               <span
                 key={status}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium',
+                  'inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-[11px] font-medium',
                   STATUS_STYLES[status] || 'bg-muted text-muted-foreground border-border'
                 )}
               >
@@ -256,9 +256,9 @@ const Dashboard = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
           {/* Revenue chart */}
-          <div className="col-span-1 overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm lg:col-span-2">
+          <div className="col-span-1 overflow-hidden rounded-none border border-border/80 bg-card shadow-sm lg:col-span-2">
             <div className="flex items-center justify-between border-b border-border/50 px-5 py-3.5">
               <div className="flex items-center gap-2">
                 <Activity className="size-4 text-primary" />
@@ -323,7 +323,7 @@ const Dashboard = () => {
           </div>
 
           {/* Recent orders */}
-          <div className="col-span-1 flex min-h-[320px] flex-col overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm lg:max-h-[360px]">
+          <div className="col-span-1 flex min-h-[320px] flex-col overflow-hidden rounded-none border border-border/80 bg-card shadow-sm lg:max-h-[360px]">
             <div className="flex shrink-0 items-center justify-between border-b border-border/50 px-5 py-3.5">
               <div className="flex items-center gap-2">
                 <Clock className="size-4 text-primary" />
@@ -396,8 +396,8 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="flex min-h-[220px] flex-col overflow-hidden rounded-xl border border-border/80 bg-card shadow-sm">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex min-h-[220px] flex-col overflow-hidden rounded-none border border-border/80 bg-card shadow-sm">
             <div className="flex shrink-0 items-center justify-between border-b border-border/50 px-5 py-3.5">
               <div className="flex items-center gap-2">
                 <TrendingUp className="size-4 text-primary" />
@@ -429,9 +429,9 @@ const Dashboard = () => {
 
           <Link
             to="/returns"
-            className="flex items-center gap-3 rounded-xl border border-border/80 bg-card px-5 py-5 shadow-sm transition-colors hover:border-primary/40"
+            className="flex items-center gap-3 rounded-none border border-border/80 bg-card px-3 py-3 shadow-sm transition-colors hover:border-primary/40"
           >
-            <div className="flex size-10 items-center justify-center rounded-full bg-amber-500/10">
+            <div className="flex size-10 items-center justify-center rounded-none bg-amber-500/10">
               <RotateCcw className="size-5 text-amber-600" />
             </div>
             <div>
@@ -442,9 +442,9 @@ const Dashboard = () => {
 
           <Link
             to="/coupons"
-            className="flex items-center gap-3 rounded-xl border border-border/80 bg-card px-5 py-5 shadow-sm transition-colors hover:border-primary/40"
+            className="flex items-center gap-3 rounded-none border border-border/80 bg-card px-3 py-3 shadow-sm transition-colors hover:border-primary/40"
           >
-            <div className="flex size-10 items-center justify-center rounded-full bg-primary/10">
+            <div className="flex size-10 items-center justify-center rounded-none bg-primary/10">
               <Ticket className="size-5 text-primary" />
             </div>
             <div>
@@ -460,7 +460,7 @@ const Dashboard = () => {
             {stats.pendingOrders > 0 && (
               <Link
                 to="/orders"
-                className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 transition-colors hover:bg-amber-500/10"
+                className="flex items-center gap-3 rounded-none border border-amber-500/20 bg-amber-500/5 px-4 py-3 transition-colors hover:bg-amber-500/10"
               >
                 <Clock className="size-4 shrink-0 text-amber-600" />
                 <div>
@@ -472,7 +472,7 @@ const Dashboard = () => {
             {stats.unpaidOrders > 0 && (
               <Link
                 to="/orders"
-                className="flex items-center gap-3 rounded-xl border border-blue-500/20 bg-blue-500/5 px-4 py-3 transition-colors hover:bg-blue-500/10"
+                className="flex items-center gap-3 rounded-none border border-blue-500/20 bg-blue-500/5 px-4 py-3 transition-colors hover:bg-blue-500/10"
               >
                 <DollarSign className="size-4 shrink-0 text-blue-600" />
                 <div>
@@ -484,7 +484,7 @@ const Dashboard = () => {
             {stats.lowStockCount > 0 && (
               <Link
                 to="/products"
-                className="flex items-center gap-3 rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 transition-colors hover:bg-destructive/10"
+                className="flex items-center gap-3 rounded-none border border-destructive/20 bg-destructive/5 px-4 py-3 transition-colors hover:bg-destructive/10"
               >
                 <AlertTriangle className="size-4 shrink-0 text-destructive" />
                 <div>
@@ -496,7 +496,7 @@ const Dashboard = () => {
             {(stats.pendingRefunds ?? 0) > 0 && (
               <Link
                 to="/returns"
-                className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 transition-colors hover:bg-amber-500/10"
+                className="flex items-center gap-3 rounded-none border border-amber-500/20 bg-amber-500/5 px-4 py-3 transition-colors hover:bg-amber-500/10"
               >
                 <RotateCcw className="size-4 shrink-0 text-amber-600" />
                 <div>

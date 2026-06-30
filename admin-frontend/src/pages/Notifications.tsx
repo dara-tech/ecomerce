@@ -44,7 +44,7 @@ export default function Notifications() {
         toolbar={
           <div className={PAGE_TOOLBAR_ROW_CLASS}>
             <h1 className="text-sm font-semibold flex items-center gap-2"><Bell className="size-4" /> Notifications</h1>
-            {inbox.unread > 0 && <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">{inbox.unread} unread</span>}
+            {inbox.unread > 0 && <span className="text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-none">{inbox.unread} unread</span>}
           </div>
         }
         subTabs={
@@ -60,7 +60,7 @@ export default function Notifications() {
           <>
             <button type="button" className="text-xs text-primary font-medium" onClick={() => api.put('/ops/notifications/all/read').then(loadInbox)}>Mark all read</button>
             {inbox.items.map((n) => (
-              <div key={n._id} className={`bg-card border rounded-xl p-4 ${n.isRead ? 'border-border/60 opacity-70' : 'border-primary/30'}`}>
+              <div key={n._id} className={`bg-card border rounded-none p-4 ${n.isRead ? 'border-border/60 opacity-70' : 'border-primary/30'}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <span className="text-[10px] uppercase font-semibold text-muted-foreground">{TYPE_LABELS[n.type] || n.type}</span>
@@ -77,7 +77,7 @@ export default function Notifications() {
         )}
 
         {tab === 'settings' && (
-          <div className="max-w-lg bg-card border border-border/80 rounded-xl p-5 space-y-5">
+          <div className="max-w-lg bg-card border border-border/80 rounded-none p-5 space-y-5">
             <section>
               <p className="text-xs font-semibold uppercase text-muted-foreground mb-3">Alert types</p>
               {[

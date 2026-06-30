@@ -105,7 +105,7 @@ export default function FlashSales() {
       <MarketingToolbar title="Flash Sales" searchPlaceholder="Search flash sales..." searchValue={search} onSearchChange={setSearch} actionLabel="New Flash Sale" onAction={() => { setEditing(null); setFormData(emptyForm); setIsModalOpen(true); }} />
 
       <div className={PAGE_BODY_CLASS}>
-      <div className="border border-border/80 rounded-lg overflow-hidden bg-card shadow-sm">
+      <div className="border border-border/80 rounded-none overflow-hidden bg-card shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead className="bg-muted/30">
             <tr>
@@ -131,8 +131,8 @@ export default function FlashSales() {
                   <td className="px-4 py-3">{Array.isArray(item.products) ? item.products.length : 0}</td>
                   <td className="px-4 py-3"><StatusBadge status={item.isActive ? 'active' : 'inactive'} /></td>
                   <td className="px-4 py-3 text-right">
-                    <button type="button" onClick={() => { setEditing(item); setFormData({ name: item.name, description: item.description || '', discountType: item.discountType, discountValue: item.discountValue, products: (item.products as Product[]).map((p) => typeof p === 'string' ? p : p._id), startDate: item.startDate.slice(0, 16), endDate: item.endDate.slice(0, 16), isActive: item.isActive, badgeText: item.badgeText }); setIsModalOpen(true); }} className="p-1.5 text-muted-foreground hover:text-primary rounded-md mr-1"><Edit2 className="size-3.5" /></button>
-                    <button type="button" onClick={() => setDeleteId(item._id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-md"><Trash2 className="size-3.5" /></button>
+                    <button type="button" onClick={() => { setEditing(item); setFormData({ name: item.name, description: item.description || '', discountType: item.discountType, discountValue: item.discountValue, products: (item.products as Product[]).map((p) => typeof p === 'string' ? p : p._id), startDate: item.startDate.slice(0, 16), endDate: item.endDate.slice(0, 16), isActive: item.isActive, badgeText: item.badgeText }); setIsModalOpen(true); }} className="p-1.5 text-muted-foreground hover:text-primary rounded-none mr-1"><Edit2 className="size-3.5" /></button>
+                    <button type="button" onClick={() => setDeleteId(item._id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-none"><Trash2 className="size-3.5" /></button>
                   </td>
                 </tr>
               ))
@@ -144,7 +144,7 @@ export default function FlashSales() {
 
       {isModalOpen && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-lg bg-card border border-border rounded-none shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="p-5 border-b flex items-center gap-2 shrink-0"><Zap className="size-4 text-primary" /><h2 className="text-sm font-bold">{editing ? 'Edit' : 'New'} Flash Sale</h2></div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
               <div><label className={labelClass}>Sale Name</label><input required className={inputClass} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} /></div>
@@ -159,7 +159,7 @@ export default function FlashSales() {
               </div>
               <div>
                 <label className={labelClass}>Products</label>
-                <div className="max-h-32 overflow-y-auto border border-border/80 rounded-md p-2 space-y-1">
+                <div className="max-h-32 overflow-y-auto border border-border/80 rounded-none p-2 space-y-1">
                   {products.map((p) => (
                     <label key={p._id} className="flex items-center gap-2 text-[12px] cursor-pointer hover:bg-muted/30 p-1 rounded">
                       <input type="checkbox" checked={formData.products.includes(p._id)} onChange={() => toggleProduct(p._id)} />
@@ -171,8 +171,8 @@ export default function FlashSales() {
               <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} /> Active</label>
             </form>
             <div className="p-4 border-t flex justify-end gap-2 bg-muted/20 shrink-0">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="h-8 px-4 rounded-md text-[12px]">Cancel</button>
-              <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="h-8 px-4 rounded-md bg-primary text-primary-foreground text-[12px] disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="h-8 px-4 rounded-none text-[12px]">Cancel</button>
+              <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="h-8 px-4 rounded-none bg-primary text-primary-foreground text-[12px] disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
         </div>,

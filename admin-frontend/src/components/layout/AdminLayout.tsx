@@ -83,7 +83,7 @@ export default function AdminLayout() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset className="flex h-screen min-h-0 flex-col overflow-hidden">
-          <header className="z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border bg-background px-6">
+          <header className="z-30 flex h-10 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
             <Tooltip>
               <TooltipTrigger render={<SidebarTrigger className="-ml-1" />} />
               <TooltipContent side="bottom">Toggle sidebar</TooltipContent>
@@ -98,7 +98,7 @@ export default function AdminLayout() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="size-8 text-muted-foreground"
+                      className="size-7 text-muted-foreground"
                     />
                   }
                 >
@@ -117,13 +117,13 @@ export default function AdminLayout() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-8 rounded-full p-0"
+                            className="size-7 rounded-none p-0"
                           />
                         }
                       />
                     }
                   >
-                    <span className="flex size-8 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+                    <span className="flex size-7 items-center justify-center rounded-none bg-primary text-[10px] font-bold text-primary-foreground">
                       {getInitials(displayName)}
                     </span>
                   </TooltipTrigger>
@@ -134,7 +134,7 @@ export default function AdminLayout() {
                   <DropdownMenuGroup>
                     <DropdownMenuLabel className="font-normal">
                       <div className="flex items-center gap-3 py-1">
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-none bg-primary text-[10px] font-bold text-primary-foreground">
                           {getInitials(displayName)}
                         </span>
                         <div className="min-w-0 flex-1">
@@ -179,14 +179,14 @@ export default function AdminLayout() {
                     Dark mode
                     <span
                       className={cn(
-                        'ml-auto inline-flex h-5 w-9 shrink-0 rounded-full border-2 border-transparent transition-colors',
+                        'ml-auto inline-flex h-4 w-7 shrink-0 rounded-none border-2 border-transparent transition-colors',
                         theme === 'dark' ? 'bg-primary' : 'bg-muted'
                       )}
                     >
                       <span
                         className={cn(
-                          'inline-block size-4 translate-x-0 rounded-full bg-white shadow-sm transition-transform',
-                          theme === 'dark' && 'translate-x-4'
+                          'inline-block size-3 translate-x-0 rounded-none bg-white shadow-sm transition-transform',
+                          theme === 'dark' && 'translate-x-3'
                         )}
                       />
                     </span>
@@ -206,7 +206,7 @@ export default function AdminLayout() {
                           onClick={() => setSelectedColor(color.id)}
                           title={color.name}
                           className={cn(
-                            'size-5 rounded-full border-2 transition-transform hover:scale-110',
+                            'size-4 rounded-none border-2 transition-transform hover:scale-110',
                             selectedColor === color.id
                               ? 'border-foreground scale-110'
                               : 'border-transparent'

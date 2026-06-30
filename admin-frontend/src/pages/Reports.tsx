@@ -53,11 +53,11 @@ export default function Reports() {
             <div className="flex items-center gap-2 text-[11px]">
               <label className="flex items-center gap-1.5 text-muted-foreground">
                 From
-                <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-md border border-border bg-background px-2 py-1 text-foreground" />
+                <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="rounded-none border border-border bg-background px-2 py-1 text-foreground" />
               </label>
               <label className="flex items-center gap-1.5 text-muted-foreground">
                 To
-                <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-md border border-border bg-background px-2 py-1 text-foreground" />
+                <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="rounded-none border border-border bg-background px-2 py-1 text-foreground" />
               </label>
               <button type="button" className={PAGE_SECONDARY_BTN_CLASS} onClick={() => { setFrom(defaultFromDate()); setTo(defaultToDate()); }}>
                 Last 30 days
@@ -72,7 +72,7 @@ export default function Reports() {
         {loading ? (
           <Loading variant="page" label="Loading report…" />
         ) : (
-          <div className="bg-card border border-border/80 rounded-xl p-6">
+          <div className="bg-card border border-border/80 rounded-none p-6">
             <ReportView type={tab} data={data} />
           </div>
         )}
@@ -170,7 +170,7 @@ function ReportView({ type, data }: { type: ReportTab; data: any }) {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="bg-muted/30 rounded-xl p-4">
+    <div className="bg-muted/30 rounded-none p-4">
       <p className="text-[10px] uppercase text-muted-foreground font-semibold">{label}</p>
       <p className="text-2xl font-bold mt-1">{value}</p>
     </div>

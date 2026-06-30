@@ -74,7 +74,7 @@ export default function Coupons() {
 
       <div className={PAGE_BODY_CLASS}>
         {showForm && (
-          <form onSubmit={handleSubmit} className="bg-card border border-border/80 rounded-xl p-5 grid md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="bg-card border border-border/80 rounded-none p-5 grid md:grid-cols-2 gap-4">
             <div><label className={opsLabelClass}>Code</label><input required className={opsInputClass} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} /></div>
             <div><label className={opsLabelClass}>Name</label><input required className={opsInputClass} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div><label className={opsLabelClass}>Type</label>
@@ -93,12 +93,12 @@ export default function Coupons() {
             <div><label className={opsLabelClass}>Expiration</label><input type="date" className={opsInputClass} value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} /></div>
             <div className="md:col-span-2 flex gap-2">
               <button type="submit" className={PAGE_PRIMARY_BTN_CLASS}>{editingId ? 'Update Coupon' : 'Save Coupon'}</button>
-              <button type="button" className="h-8 px-4 text-[12px] border rounded-md" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancel</button>
+              <button type="button" className="h-8 px-4 text-[12px] border rounded-none" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancel</button>
             </div>
           </form>
         )}
 
-        <div className="border border-border/80 rounded-lg overflow-hidden bg-card overflow-x-auto no-scrollbar">
+        <div className="border border-border/80 rounded-none overflow-hidden bg-card overflow-x-auto no-scrollbar">
           <table className={opsTableClass}>
             <thead className="bg-muted/30"><tr>{['Code', 'Type', 'Value', 'Used', 'Limit', 'Expires', 'Customer', 'Active', ''].map((h) => <th key={h} className={opsThClass}>{h}</th>)}</tr></thead>
             <tbody>

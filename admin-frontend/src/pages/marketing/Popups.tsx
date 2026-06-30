@@ -81,7 +81,7 @@ export default function Popups() {
       <MarketingToolbar title="Popups" searchPlaceholder="Search popups..." searchValue={search} onSearchChange={setSearch} actionLabel="New Popup" onAction={() => { setEditing(null); setFormData(emptyForm); setIsModalOpen(true); }} />
 
       <div className={PAGE_BODY_CLASS}>
-      <div className="border border-border/80 rounded-lg overflow-hidden bg-card shadow-sm">
+      <div className="border border-border/80 rounded-none overflow-hidden bg-card shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead className="bg-muted/30">
             <tr>
@@ -105,8 +105,8 @@ export default function Popups() {
                   <td className="px-4 py-3 capitalize">{item.trigger.replace('_', ' ')}</td>
                   <td className="px-4 py-3"><StatusBadge status={item.isActive ? 'active' : 'inactive'} /></td>
                   <td className="px-4 py-3 text-right">
-                    <button type="button" onClick={() => { setEditing(item); setFormData({ name: item.name, title: item.title, content: item.content, image: '', ctaText: item.ctaText || '', ctaUrl: item.ctaUrl || '', trigger: item.trigger, delaySeconds: 3, displayFrequency: item.displayFrequency, isActive: item.isActive, sortOrder: 0 }); setIsModalOpen(true); }} className="p-1.5 text-muted-foreground hover:text-primary rounded-md mr-1"><Edit2 className="size-3.5" /></button>
-                    <button type="button" onClick={() => setDeleteId(item._id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-md"><Trash2 className="size-3.5" /></button>
+                    <button type="button" onClick={() => { setEditing(item); setFormData({ name: item.name, title: item.title, content: item.content, image: '', ctaText: item.ctaText || '', ctaUrl: item.ctaUrl || '', trigger: item.trigger, delaySeconds: 3, displayFrequency: item.displayFrequency, isActive: item.isActive, sortOrder: 0 }); setIsModalOpen(true); }} className="p-1.5 text-muted-foreground hover:text-primary rounded-none mr-1"><Edit2 className="size-3.5" /></button>
+                    <button type="button" onClick={() => setDeleteId(item._id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-none"><Trash2 className="size-3.5" /></button>
                   </td>
                 </tr>
               ))
@@ -118,7 +118,7 @@ export default function Popups() {
 
       {isModalOpen && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-lg bg-card border border-border rounded-none shadow-xl overflow-hidden max-h-[90vh] flex flex-col">
             <div className="p-5 border-b flex items-center gap-2 shrink-0"><MessageSquare className="size-4 text-primary" /><h2 className="text-sm font-bold">{editing ? 'Edit' : 'New'} Popup</h2></div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
               <div><label className={labelClass}>Internal Name</label><input required className={inputClass} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} /></div>
@@ -135,8 +135,8 @@ export default function Popups() {
               <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} /> Active</label>
             </form>
             <div className="p-4 border-t flex justify-end gap-2 bg-muted/20 shrink-0">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="h-8 px-4 rounded-md text-[12px]">Cancel</button>
-              <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="h-8 px-4 rounded-md bg-primary text-primary-foreground text-[12px] disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="h-8 px-4 rounded-none text-[12px]">Cancel</button>
+              <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="h-8 px-4 rounded-none bg-primary text-primary-foreground text-[12px] disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
         </div>,

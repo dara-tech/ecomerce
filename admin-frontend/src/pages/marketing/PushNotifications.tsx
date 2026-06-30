@@ -97,7 +97,7 @@ export default function PushNotifications() {
       />
 
       <div className={PAGE_BODY_CLASS}>
-      <div className="border border-border/80 rounded-lg overflow-hidden bg-card shadow-sm">
+      <div className="border border-border/80 rounded-none overflow-hidden bg-card shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead className="bg-muted/30">
             <tr>
@@ -121,10 +121,10 @@ export default function PushNotifications() {
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       {item.status !== 'sent' && (
-                        <button type="button" onClick={() => handleSend(item._id)} className="p-1.5 text-primary hover:bg-primary/10 rounded-md"><Send className="size-3.5" /></button>
+                        <button type="button" onClick={() => handleSend(item._id)} className="p-1.5 text-primary hover:bg-primary/10 rounded-none"><Send className="size-3.5" /></button>
                       )}
-                      <button type="button" onClick={() => { setEditing(item); setFormData({ title: item.title, message: item.message, linkUrl: item.linkUrl || '', audience: item.audience, status: item.status, isActive: item.isActive }); setIsModalOpen(true); }} className="p-1.5 text-muted-foreground hover:text-primary rounded-md"><Edit2 className="size-3.5" /></button>
-                      <button type="button" onClick={() => setDeleteId(item._id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-md"><Trash2 className="size-3.5" /></button>
+                      <button type="button" onClick={() => { setEditing(item); setFormData({ title: item.title, message: item.message, linkUrl: item.linkUrl || '', audience: item.audience, status: item.status, isActive: item.isActive }); setIsModalOpen(true); }} className="p-1.5 text-muted-foreground hover:text-primary rounded-none"><Edit2 className="size-3.5" /></button>
+                      <button type="button" onClick={() => setDeleteId(item._id)} className="p-1.5 text-muted-foreground hover:text-destructive rounded-none"><Trash2 className="size-3.5" /></button>
                     </div>
                   </td>
                 </tr>
@@ -137,7 +137,7 @@ export default function PushNotifications() {
 
       {isModalOpen && createPortal(
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
+          <div className="w-full max-w-lg bg-card border border-border rounded-none shadow-xl overflow-hidden">
             <div className="p-5 border-b flex items-center gap-2"><Bell className="size-4 text-primary" /><h2 className="text-sm font-bold">{editing ? 'Edit' : 'New'} Push Notification</h2></div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div><label className={labelClass}>Title</label><input required className={inputClass} value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} /></div>
@@ -146,8 +146,8 @@ export default function PushNotifications() {
               <div><label className={labelClass}>Audience</label><select className={inputClass} value={formData.audience} onChange={(e) => setFormData({ ...formData, audience: e.target.value })}><option value="all">All users</option><option value="subscribers">Subscribers</option><option value="customers">Customers</option></select></div>
             </form>
             <div className="p-4 border-t flex justify-end gap-2 bg-muted/20">
-              <button type="button" onClick={() => setIsModalOpen(false)} className="h-8 px-4 rounded-md text-[12px]">Cancel</button>
-              <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="h-8 px-4 rounded-md bg-primary text-primary-foreground text-[12px] disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
+              <button type="button" onClick={() => setIsModalOpen(false)} className="h-8 px-4 rounded-none text-[12px]">Cancel</button>
+              <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="h-8 px-4 rounded-none bg-primary text-primary-foreground text-[12px] disabled:opacity-50">{isSubmitting ? 'Saving...' : 'Save'}</button>
             </div>
           </div>
         </div>,

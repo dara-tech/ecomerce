@@ -50,7 +50,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
   return createPortal(
     <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center p-4 sm:p-6">
       <div 
-        className="w-full max-w-2xl bg-card border border-border/60 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]"
+        className="w-full max-w-2xl bg-card border border-border/60 rounded-none shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh]"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -61,7 +61,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
           </div>
           <button 
             onClick={onClose} 
-            className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted transition-colors"
+            className="text-muted-foreground hover:text-foreground p-1.5 rounded-none hover:bg-muted transition-colors"
           >
             <X className="size-4" strokeWidth={2.5} />
           </button>
@@ -73,7 +73,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
           {/* Top Info Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Customer Info */}
-            <div className="p-4 rounded-xl border border-border/60 bg-muted/10 space-y-3">
+            <div className="p-4 rounded-none border border-border/60 bg-muted/10 space-y-3">
               <div className="flex items-center gap-2 text-foreground font-semibold text-[13px]">
                 <UserIcon className="size-4 text-primary" />
                 Customer
@@ -85,7 +85,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
             </div>
 
             {/* Payment & Shipping Status */}
-            <div className="p-4 rounded-xl border border-border/60 bg-muted/10 space-y-3">
+            <div className="p-4 rounded-none border border-border/60 bg-muted/10 space-y-3">
               <div className="flex items-center gap-2 text-foreground font-semibold text-[13px]">
                 <CreditCard className="size-4 text-primary" />
                 Payment & Delivery
@@ -99,7 +99,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
                 </p>
                 <p>
                   <span className="font-medium text-foreground">Status:</span>{' '}
-                  <span className="font-semibold uppercase tracking-wider text-[11px] px-2 py-0.5 rounded-full bg-muted border border-border">
+                  <span className="font-semibold uppercase tracking-wider text-[11px] px-2 py-0.5 rounded-none bg-muted border border-border">
                     {order.status || 'pending'}
                   </span>
                 </p>
@@ -114,7 +114,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
           {/* Timeline & Notes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Timeline */}
-            <div className="p-4 rounded-xl border border-border/60 bg-muted/5 space-y-3">
+            <div className="p-4 rounded-none border border-border/60 bg-muted/5 space-y-3">
               <div className="flex items-center gap-2 text-foreground font-semibold text-[13px]">
                 <Calendar className="size-4 text-primary" />
                 Order Timeline
@@ -122,8 +122,8 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
               <div className="text-[11px] relative pl-4 border-l-2 border-border/60 ml-2 space-y-4 mt-2">
                 {order.timeline && order.timeline.length > 0 ? order.timeline.map((event, i) => (
                   <div key={i} className="relative">
-                    <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full border-2 border-primary bg-background shadow-sm" />
-                    <div className="p-3 rounded-lg border border-border/80 bg-card shadow-sm">
+                    <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-none border-2 border-primary bg-background shadow-sm" />
+                    <div className="p-3 rounded-none border border-border/80 bg-card shadow-sm">
                       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-1 mb-1">
                         <h4 className="font-bold text-foreground capitalize text-[12px]">{event.status}</h4>
                         <time className="text-[10px] text-muted-foreground shrink-0">{new Date(event.timestamp).toLocaleString()}</time>
@@ -140,13 +140,13 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
             {/* Notes */}
             <div className="space-y-4">
               {order.customerNotes && (
-                <div className="p-4 rounded-xl border border-border/60 bg-amber-500/5 space-y-2">
+                <div className="p-4 rounded-none border border-border/60 bg-amber-500/5 space-y-2">
                   <h4 className="font-semibold text-[12px] text-amber-600">Customer Note</h4>
                   <p className="text-[12px] text-muted-foreground italic">"{order.customerNotes}"</p>
                 </div>
               )}
               {order.adminNotes && (
-                <div className="p-4 rounded-xl border border-border/60 bg-blue-500/5 space-y-2">
+                <div className="p-4 rounded-none border border-border/60 bg-blue-500/5 space-y-2">
                   <h4 className="font-semibold text-[12px] text-blue-600">Admin Note</h4>
                   <p className="text-[12px] text-muted-foreground">"{order.adminNotes}"</p>
                 </div>
@@ -156,7 +156,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
 
           {/* Shipping Address */}
           {order.shippingAddress && (
-            <div className="p-4 rounded-xl border border-border/60 bg-muted/10 space-y-3">
+            <div className="p-4 rounded-none border border-border/60 bg-muted/10 space-y-3">
               <div className="flex items-center gap-2 text-foreground font-semibold text-[13px]">
                 <MapPin className="size-4 text-primary" />
                 Shipping Address
@@ -176,14 +176,14 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
               Order Items ({order.orderItems.length})
             </div>
             
-            <div className="border border-border/60 rounded-xl overflow-hidden divide-y divide-border/40">
+            <div className="border border-border/60 rounded-none overflow-hidden divide-y divide-border/40">
               {order.orderItems.map((item, index) => (
                 <div key={index} className="p-3 flex items-center gap-3 bg-card hover:bg-muted/30 transition-colors">
                   <div className="shrink-0">
                     <img 
                       src={item.image} 
                       alt={item.name}
-                      className="w-12 h-12 rounded-lg object-cover border border-border/50 bg-muted"
+                      className="w-12 h-12 rounded-none object-cover border border-border/50 bg-muted"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = 'https://placehold.co/100x100/1d1b1c/ffffff?text=No+Img';
@@ -230,7 +230,7 @@ export default function OrderDetailsModal({ isOpen, onClose, order }: OrderDetai
         <div className="px-5 py-4 border-t border-border/40 flex justify-end bg-muted/20 shrink-0">
           <button
             onClick={onClose}
-            className="h-9 px-6 rounded-lg bg-primary text-primary-foreground text-[13px] font-semibold hover:opacity-90 transition-opacity"
+            className="h-9 px-6 rounded-none bg-primary text-primary-foreground text-[13px] font-semibold hover:opacity-90 transition-opacity"
           >
             Close
           </button>

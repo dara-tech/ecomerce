@@ -35,7 +35,7 @@ export default function Reviews() {
       />
 
       <div className={PAGE_BODY_CLASS}>
-        <div className="border border-border/80 rounded-lg overflow-hidden bg-card overflow-x-auto no-scrollbar">
+        <div className="border border-border/80 rounded-none overflow-hidden bg-card overflow-x-auto no-scrollbar">
           <table className={opsTableClass}>
             <thead className="bg-muted/30"><tr>{['Product', 'Customer', 'Rating', 'Comment', 'Images', 'Spam', 'Status', 'Actions'].map((h) => <th key={h} className={opsThClass}>{h}</th>)}</tr></thead>
             <tbody>

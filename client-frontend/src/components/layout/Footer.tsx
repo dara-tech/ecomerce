@@ -1,12 +1,18 @@
+"use client";
+
 import Link from "next/link";
+import { useStore } from "@/context/StoreContext";
 
 const Footer = () => {
+  const { settings } = useStore();
+  const storeName = settings?.storeName || "Store";
+
   return (
     <footer className="border-t bg-muted/40">
       <div className="container mx-auto px-4 py-12 md:py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <h3 className="font-bold text-lg tracking-tight">E-COMMERCE</h3>
+            <h3 className="font-bold text-lg tracking-tight uppercase">{storeName}</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Minimalist, advanced, and ready for all screens. We provide the best products with top-tier quality.
             </p>
@@ -37,7 +43,7 @@ const Footer = () => {
           </div>
         </div>
         <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} E-Commerce. All rights reserved.
+          &copy; {new Date().getFullYear()} {storeName}. All rights reserved.
         </div>
       </div>
     </footer>

@@ -136,7 +136,7 @@ const Users = () => {
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-8 pr-3 h-8 text-[13px] font-medium bg-input border border-border rounded-md focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
+                className="w-full pl-8 pr-3 h-8 text-[13px] font-medium bg-input border border-border rounded-none focus:outline-none focus:ring-1 focus:ring-primary text-foreground"
               />
             </div>
           </div>
@@ -146,7 +146,7 @@ const Users = () => {
           <div className="flex items-center gap-2 w-full lg:w-auto mt-2 lg:mt-0">
             <button
               onClick={() => setShowBulkConfirm(true)}
-              className="h-8 px-3 rounded-md border border-destructive/20 bg-destructive/5 text-destructive text-[12px] font-semibold flex items-center gap-2 hover:bg-destructive/10 transition-colors w-full lg:w-auto"
+              className="h-8 px-3 rounded-none border border-destructive/20 bg-destructive/5 text-destructive text-[12px] font-semibold flex items-center gap-2 hover:bg-destructive/10 transition-colors w-full lg:w-auto"
             >
               <Trash2 className="size-4" />
               Delete ({selectedIds.size})
@@ -157,7 +157,7 @@ const Users = () => {
 
       <div className={PAGE_LIST_BODY_CLASS}>
       {error && (
-        <div className="p-3 bg-destructive/10 text-destructive text-[11px] font-medium text-center rounded-lg">
+        <div className="p-3 bg-destructive/10 text-destructive text-[11px] font-medium text-center rounded-none">
           {error}
         </div>
       )}
@@ -191,7 +191,7 @@ const Users = () => {
                 <tr>
                   <td colSpan={6} className="px-4 py-16 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-none bg-muted/50 flex items-center justify-center">
                         <UsersIcon className="size-6 text-muted-foreground/50" />
                       </div>
                       <p className="text-[14px] font-medium text-foreground">No users found</p>
@@ -219,9 +219,9 @@ const Users = () => {
                     </td>
                     <td className="px-4 py-3 text-center">
                       {user.avatar ? (
-                        <img src={user.avatar} alt="Avatar" className="w-8 h-8 rounded-full mx-auto object-cover border border-border" />
+                        <img src={user.avatar} alt="Avatar" className="w-8 h-8 rounded-none mx-auto object-cover border border-border" />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 mx-auto flex items-center justify-center text-primary">
+                        <div className="w-8 h-8 rounded-none bg-primary/10 border border-primary/20 mx-auto flex items-center justify-center text-primary">
                           {user.role === 'admin' ? <ShieldCheck className="size-4" /> : <UserIcon className="size-4" />}
                         </div>
                       )}
@@ -229,7 +229,7 @@ const Users = () => {
                     <td className="px-4 py-3">
                       <div className="font-semibold text-foreground text-[13px] flex items-center gap-2">
                         {user.name}
-                        {user.isEmailVerified && <span className="w-1.5 h-1.5 rounded-full bg-green-500" title="Verified Email"></span>}
+                        {user.isEmailVerified && <span className="w-1.5 h-1.5 rounded-none bg-green-500" title="Verified Email"></span>}
                       </div>
                       <div className="text-muted-foreground text-[11px] mt-0.5 flex flex-col gap-0.5">
                         <span>{user.email}</span>
@@ -238,7 +238,7 @@ const Users = () => {
                     </td>
                     <td className="px-4 py-3">
                       <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider border",
+                        "px-2 py-0.5 rounded-none text-[9px] font-semibold uppercase tracking-wider border",
                         user.status === 'banned' 
                           ? "bg-destructive/10 text-destructive border-destructive/20" 
                           : "bg-green-500/10 text-green-600 border-green-500/20"
@@ -248,7 +248,7 @@ const Users = () => {
                     </td>
                     <td className="px-4 py-3">
                       <span className={cn(
-                        "px-2 py-0.5 rounded-full text-[9px] font-semibold uppercase tracking-wider border",
+                        "px-2 py-0.5 rounded-none text-[9px] font-semibold uppercase tracking-wider border",
                         user.role === 'admin' 
                           ? "bg-primary/20 text-primary border-primary/30" 
                           : "bg-muted text-muted-foreground border-border"
@@ -266,13 +266,13 @@ const Users = () => {
                           <>
                             <button
                               onClick={() => handleUpdateStatus(user._id, user.status === 'banned' ? 'active' : 'banned')}
-                              className="px-2 py-1 text-[10px] font-medium border border-border/80 bg-input hover:bg-muted rounded-md transition-colors mr-1"
+                              className="px-2 py-1 text-[10px] font-medium border border-border/80 bg-input hover:bg-muted rounded-none transition-colors mr-1"
                             >
                               {user.status === 'banned' ? 'Unban' : 'Ban'}
                             </button>
                             <button
                               onClick={() => setDeleteId(user._id)}
-                              className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                              className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-none transition-colors"
                               title="Delete User"
                             >
                               <Trash2 className="size-4" />
@@ -297,22 +297,22 @@ const Users = () => {
         {loading ? (
           <Loading variant="panel" label="Loading users…" />
         ) : filteredUsers.length === 0 ? (
-          <div className="py-12 text-center text-muted-foreground bg-card rounded-lg border border-border/80">
+          <div className="py-12 text-center text-muted-foreground bg-card rounded-none border border-border/80">
             No users found matching your search.
           </div>
         ) : (
           filteredUsers.map((user) => (
             <div 
               key={user._id} 
-              className="bg-card border border-border/80 rounded-xl p-3 shadow-sm flex flex-col gap-3 relative group"
+              className="bg-card border border-border/80 rounded-none p-3 shadow-sm flex flex-col gap-3 relative group"
             >
               <div className="flex items-start gap-3">
                 {/* Avatar */}
                 <div className="shrink-0">
                   {user.avatar ? (
-                    <img src={user.avatar} alt="Avatar" className="size-12 rounded-full object-cover border border-border" />
+                    <img src={user.avatar} alt="Avatar" className="size-12 rounded-none object-cover border border-border" />
                   ) : (
-                    <div className="size-12 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                    <div className="size-12 rounded-none bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
                       {user.role === 'admin' ? <ShieldCheck className="size-5" /> : <UserIcon className="size-5" />}
                     </div>
                   )}
@@ -322,7 +322,7 @@ const Users = () => {
                 <div className="flex-1 min-w-0 pt-0.5">
                   <div className="font-semibold text-[14px] text-foreground truncate flex items-center gap-1.5">
                     {user.name}
-                    {user.isEmailVerified && <span className="w-1.5 h-1.5 rounded-full bg-green-500" title="Verified Email"></span>}
+                    {user.isEmailVerified && <span className="w-1.5 h-1.5 rounded-none bg-green-500" title="Verified Email"></span>}
                   </div>
                   <div className="flex flex-col gap-0.5 text-[12px] text-muted-foreground mt-0.5">
                     <div className="flex items-center gap-1.5 truncate">
@@ -333,7 +333,7 @@ const Users = () => {
                   </div>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     <span className={cn(
-                      "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                      "px-2 py-0.5 rounded-none text-[10px] font-bold uppercase tracking-wider border",
                       user.role === 'admin' 
                         ? "bg-primary/20 text-primary border-primary/30" 
                         : "bg-muted text-muted-foreground border-border"
@@ -341,7 +341,7 @@ const Users = () => {
                       {user.role}
                     </span>
                     <span className={cn(
-                      "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                      "px-2 py-0.5 rounded-none text-[10px] font-bold uppercase tracking-wider border",
                       user.status === 'banned' 
                         ? "bg-destructive/10 text-destructive border-destructive/20" 
                         : "bg-green-500/10 text-green-600 border-green-500/20"
@@ -370,7 +370,7 @@ const Users = () => {
                   {user.role !== 'admin' && (
                     <button
                       onClick={() => handleUpdateStatus(user._id, user.status === 'banned' ? 'active' : 'banned')}
-                      className="px-2 py-1 text-[11px] font-medium border border-border/80 bg-input hover:bg-muted rounded-md transition-colors"
+                      className="px-2 py-1 text-[11px] font-medium border border-border/80 bg-input hover:bg-muted rounded-none transition-colors"
                     >
                       {user.status === 'banned' ? 'Unban' : 'Ban'}
                     </button>
@@ -378,7 +378,7 @@ const Users = () => {
                   <button 
                     onClick={() => setDeleteId(user._id)}
                     disabled={user.role === 'admin'}
-                    className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-md hover:bg-destructive/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                    className="text-muted-foreground hover:text-destructive transition-colors p-1.5 rounded-none hover:bg-destructive/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
                   >
                     <Trash2 className="size-4" />
                   </button>

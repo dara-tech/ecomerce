@@ -69,14 +69,14 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
   return (
     <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center p-4">
       <div 
-        className="w-full max-w-md bg-card border border-border/60 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="w-full max-w-md bg-card border border-border/60 rounded-none shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={e => e.stopPropagation()}
       >
         <div className="px-5 py-4 border-b border-border/40 flex items-center justify-between bg-muted/20">
           <h3 className="font-semibold text-[15px] tracking-tight">Edit Profile</h3>
           <button 
             onClick={onClose} 
-            className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted transition-colors"
+            className="text-muted-foreground hover:text-foreground p-1.5 rounded-none hover:bg-muted transition-colors"
           >
             <X className="size-4" strokeWidth={2.5} />
           </button>
@@ -84,12 +84,12 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
         
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
           {error && (
-            <div className="p-3 bg-destructive/10 text-destructive text-[12px] font-medium rounded-lg">
+            <div className="p-3 bg-destructive/10 text-destructive text-[12px] font-medium rounded-none">
               {error}
             </div>
           )}
           {success && (
-            <div className="p-3 bg-emerald-500/10 text-emerald-600 text-[12px] font-medium rounded-lg">
+            <div className="p-3 bg-emerald-500/10 text-emerald-600 text-[12px] font-medium rounded-none">
               {success}
             </div>
           )}
@@ -101,7 +101,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full h-9 px-3 text-[13px] bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
+              className="w-full h-9 px-3 text-[13px] bg-input border border-border rounded-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
             />
           </div>
           
@@ -112,7 +112,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-9 px-3 text-[13px] bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
+              className="w-full h-9 px-3 text-[13px] bg-input border border-border rounded-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
             />
           </div>
 
@@ -125,7 +125,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Leave blank to keep current"
-              className="w-full h-9 px-3 text-[13px] bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
+              className="w-full h-9 px-3 text-[13px] bg-input border border-border rounded-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
             />
           </div>
 
@@ -137,7 +137,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
                 required={!!password}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full h-9 px-3 text-[13px] bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
+                className="w-full h-9 px-3 text-[13px] bg-input border border-border rounded-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
               />
             </div>
           )}
@@ -146,14 +146,14 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-4 rounded-lg text-[13px] font-medium text-muted-foreground hover:bg-muted transition-colors"
+              className="h-9 px-4 rounded-none text-[13px] font-medium text-muted-foreground hover:bg-muted transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="h-9 px-6 rounded-lg bg-primary text-primary-foreground text-[13px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+              className="h-9 px-6 rounded-none bg-primary text-primary-foreground text-[13px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
             >
               {loading && <LoadingSpinner size="xs" className="border-primary-foreground/30 border-t-primary-foreground" />}
               Save Changes
