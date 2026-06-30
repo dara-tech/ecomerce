@@ -1,7 +1,9 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import ProductImage from "@/components/ui/ProductImage";
 import { Filter } from "lucide-react";
 import { getApiUrl } from "@/lib/api";
+import { Select, SelectItem } from "@/components/ui/select";
 
 async function getProducts(category?: string) {
   try {
@@ -24,8 +26,6 @@ async function getProducts(category?: string) {
     return { products: [], total: 0 };
   }
 }
-
-import type { Metadata } from 'next';
 
 export async function generateMetadata({
   searchParams,
@@ -64,12 +64,12 @@ export default async function ProductsPage({
             <Filter className="w-4 h-4" />
             Filters
           </button>
-          <select className="px-4 py-2 border rounded-md text-sm font-medium bg-transparent outline-none cursor-pointer">
-            <option>Sort by: Featured</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-            <option>Newest Arrivals</option>
-          </select>
+          <Select className="px-4 py-2 border rounded-md text-sm font-medium bg-transparent outline-none cursor-pointer">
+            <SelectItem value="Featured">Sort by: Featured</SelectItem>
+            <SelectItem value="Price: Low to High">Price: Low to High</SelectItem>
+            <SelectItem value="Price: High to Low">Price: High to Low</SelectItem>
+            <SelectItem value="Newest Arrivals">Newest Arrivals</SelectItem>
+          </Select>
         </div>
       </div>
 

@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001/api';
+
 const api = axios.create({
-  baseURL: 'http://localhost:5001/api',
+  baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -53,7 +55,7 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const { data } = await axios.post('http://localhost:5001/api/auth/refresh', { refreshToken });
+      const { data } = await axios.post(`${API_BASE}/auth/refresh`, { refreshToken });
       localStorage.setItem('token', data.accessToken || data.token);
       if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
       if (data.sessionId) localStorage.setItem('sessionId', data.sessionId);

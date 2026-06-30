@@ -15,6 +15,8 @@ import ProductRecommendations from "@/components/features/ProductRecommendations
 import ProductReviews from "@/components/features/ProductReviews";
 import { toast } from "sonner";
 import { getApiUrl } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -103,60 +105,87 @@ export default function ProductDetailsPage() {
           <p className="text-muted-foreground mb-8 leading-relaxed">{product.description}</p>
 
           <div className="flex items-center gap-2 mb-4">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="icon-lg"
               onClick={() => toggle({ _id: product._id, name: product.name, image: product.image, price: product.price, category: product.category })}
-              className={`h-10 w-10 rounded-full border flex items-center justify-center transition-colors ${isInWishlist(product._id) ? "border-red-500 text-red-500 bg-red-500/10" : "border-border hover:bg-muted"}`}
+              className={cn(
+                "rounded-full",
+                isInWishlist(product._id) && "border-red-500 text-red-500 bg-red-500/10 hover:bg-red-500/15"
+              )}
               aria-label={t("wishlist")}
             >
-              <Heart className={`size-4 ${isInWishlist(product._id) ? "fill-current" : ""}`} />
-            </button>
-            <button
+              <Heart className={cn("size-4", isInWishlist(product._id) && "fill-current")} />
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              size="icon-lg"
               onClick={() => {
                 const ok = addCompare({ _id: product._id, name: product.name, image: product.image, price: product.price, category: product.category });
                 toast[ok ? "success" : "error"](ok ? "Added to compare" : "Compare list full (max 4)");
               }}
-              className={`h-10 w-10 rounded-full border flex items-center justify-center ${isCompared(product._id) ? "border-primary text-primary bg-primary/10" : "border-border hover:bg-muted"}`}
+              className={cn(
+                "rounded-full",
+                isCompared(product._id) && "border-primary text-primary bg-primary/10 hover:bg-primary/15"
+              )}
               aria-label={t("compare")}
             >
               <GitCompare className="size-4" />
-            </button>
+            </Button>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <div className="flex items-center border border-border/60 rounded-full h-12 w-fit bg-background">
-              <button type="button" onClick={() => setQty(Math.max(1, qty - 1))} className="w-12 h-full flex items-center justify-center" disabled={qty <= 1}>
+            <div className="flex items-center border border-border/60 rounded-full h-12 w-fit bg-background overflow-hidden">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                onClick={() => setQty(Math.max(1, qty - 1))}
+                className="rounded-none w-12 h-12"
+                disabled={qty <= 1}
+              >
                 <Minus className="w-4 h-4" />
-              </button>
+              </Button>
               <span className="w-12 text-center font-medium">{qty}</span>
-              <button type="button" onClick={() => setQty(qty + 1)} className="w-12 h-full flex items-center justify-center" disabled={qty >= product.countInStock}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                onClick={() => setQty(qty + 1)}
+                className="rounded-none w-12 h-12"
+                disabled={qty >= product.countInStock}
+              >
                 <Plus className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
-            <button
+            <Button
               type="button"
+              size="lg"
               onClick={() => {
                 addToCart(cartPayload());
                 toast.success("Added to cart!");
               }}
               disabled={product.countInStock === 0}
-              className="flex-1 flex items-center justify-center gap-2 bg-foreground text-background font-medium h-12 px-8 rounded-full disabled:opacity-50"
+              className="flex-1 h-12 rounded-full bg-foreground text-background hover:bg-foreground/90 gap-2 px-8"
             >
               <ShoppingCart className="w-5 h-5" />
               {product.countInStock > 0 ? t("addToCart") : t("outOfStock")}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              size="lg"
               onClick={handleBuyNow}
               disabled={product.countInStock === 0}
-              className="flex-1 flex items-center justify-center gap-2 border-2 border-primary text-primary font-medium h-12 px-8 rounded-full disabled:opacity-50 hover:bg-primary/5"
+              className="flex-1 h-12 rounded-full border-2 border-primary text-primary hover:bg-primary/5 gap-2 px-8"
             >
               <Zap className="w-5 h-5" /> {t("buyNow")}
-            </button>
+            </Button>
           </div>
 
           <div className="border-t pt-6 space-y-2 text-sm">
