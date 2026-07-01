@@ -75,7 +75,7 @@ export default function LoginPage() {
       <AuthError message={error} />
       <SocialAuth onError={setError} />
 
-      <form onSubmit={handleSubmit} className="space-y-5 md:space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email" className={authLabelClass}>
             Email
@@ -116,7 +116,7 @@ export default function LoginPage() {
           />
         </div>
 
-        <button type="submit" disabled={loading} className={`${authSubmitClass} mt-2`}>
+        <button type="submit" disabled={loading} className={authSubmitClass}>
           {loading ? <InlineLoader /> : "Continue"}
         </button>
       </form>

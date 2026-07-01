@@ -17,6 +17,7 @@ function isAuthRoute(pathname: string) {
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const authScreen = isAuthRoute(pathname);
+  const chatScreen = pathname === "/chat";
 
   return (
     <>
@@ -26,7 +27,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         className={
           authScreen
             ? "flex-grow"
-            : "flex-grow pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0"
+            : chatScreen
+              ? "flex h-[calc(100dvh-var(--mobile-header-h))] min-h-0 flex-col overflow-hidden pb-0 md:h-auto md:grow md:overflow-visible md:pb-0"
+              : "flex-grow pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0"
         }
       >
         {children}

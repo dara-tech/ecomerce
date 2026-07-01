@@ -100,7 +100,12 @@ export default function ChatPanel({ variant = "page", className }: ChatPanelProp
 
       <div
         ref={listRef}
-        className={cn("flex-1 space-y-3 overflow-y-auto px-4 py-4", isPage ? "pb-2" : "max-h-64")}
+        className={cn(
+          "flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-4 touch-pan-y",
+          isPage
+            ? "min-h-0 pb-[calc(var(--mobile-chat-composer-h)+var(--mobile-tab-bar-h))] md:pb-2"
+            : "max-h-64"
+        )}
       >
         {messages.map((msg) => (
           <div
@@ -119,17 +124,19 @@ export default function ChatPanel({ variant = "page", className }: ChatPanelProp
 
       <div
         className={cn(
-          "border-t border-border/60 bg-background p-3",
-          isPage && "pb-[max(0.75rem,env(safe-area-inset-bottom))] md:pb-3"
+          "shrink-0 border-t border-border/60 bg-background",
+          isPage
+            ? "fixed inset-x-0 bottom-[var(--mobile-tab-bar-h)] z-40 px-4 py-3 md:relative md:inset-x-auto md:bottom-auto md:z-auto md:px-3 md:py-3"
+            : "p-3"
         )}
       >
-        <div className="flex gap-2">
+        <div className="mx-auto flex max-w-lg items-center gap-2.5 md:max-w-none">
           <input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && send()}
             placeholder={t("chatPlaceholder")}
-            className="h-11 flex-1 rounded-full border border-border bg-muted/50 px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-foreground/30 focus:bg-background"
+            className="h-11 min-w-0 flex-1 rounded-full border border-border bg-muted/50 px-4 text-sm outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-foreground/30 focus:bg-background"
           />
           <button
             type="button"

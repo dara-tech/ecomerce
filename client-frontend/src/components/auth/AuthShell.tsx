@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { ReactNode } from "react";
+import { useStore } from "@/context/StoreContext";
 
 type AuthShellProps = {
   title: string;
@@ -13,6 +14,9 @@ type AuthShellProps = {
 };
 
 export function AuthShell({ title, subtitle, footer, children, topLink }: AuthShellProps) {
+  const { settings } = useStore();
+  const storeName = settings?.storeName || "Store";
+
   return (
     <div className="relative flex min-h-dvh flex-col bg-background md:min-h-[calc(100dvh-5rem)] md:items-center md:justify-center md:py-14">
       <div className="pointer-events-none absolute inset-0 hidden overflow-hidden md:block">
@@ -21,7 +25,7 @@ export function AuthShell({ title, subtitle, footer, children, topLink }: AuthSh
       </div>
 
       <header
-        className="sticky top-0 z-20 flex min-h-12 items-center justify-between border-b border-border/60 bg-background/95 px-4 pb-3 backdrop-blur-xl md:hidden"
+        className="sticky top-0 z-20 grid shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b border-border/60 bg-background px-4 pb-3 md:hidden"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top, 0px))" }}
       >
         <Link
@@ -31,14 +35,31 @@ export function AuthShell({ title, subtitle, footer, children, topLink }: AuthSh
           <ChevronLeft className="size-5 shrink-0" strokeWidth={2} />
           Back
         </Link>
-        {topLink && (
-          <Link href={topLink.href} className="py-1 text-sm font-semibold text-foreground active:opacity-70">
+
+        <Link href="/" className="justify-self-center">
+          {settings?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={settings.logoUrl} alt={storeName} className="h-5 max-w-[96px] object-contain" />
+          ) : (
+            <span className="rounded-full bg-foreground px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-background">
+              {storeName}
+            </span>
+          )}
+        </Link>
+
+        {topLink ? (
+          <Link
+            href={topLink.href}
+            className="justify-self-end py-1 text-sm font-semibold text-foreground active:opacity-70"
+          >
             {topLink.label}
           </Link>
+        ) : (
+          <span aria-hidden className="min-w-0" />
         )}
       </header>
 
-      <div className="relative flex w-full flex-1 flex-col px-5 py-6 md:max-w-[400px] md:flex-none md:px-4 md:py-0">
+      <div className="relative flex w-full flex-1 flex-col md:max-w-[400px] md:flex-none md:px-4">
         <div className="mb-6 hidden items-center justify-between gap-4 md:mb-8 md:flex">
           <Link
             href="/"
@@ -56,20 +77,22 @@ export function AuthShell({ title, subtitle, footer, children, topLink }: AuthSh
           )}
         </div>
 
-        <div className="mb-6 space-y-1.5 md:mb-8">
-          <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight text-foreground md:text-2xl md:font-semibold">
-            {title}
-          </h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">{subtitle}</p>
+        <div className="flex flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-5 md:overflow-visible md:px-0 md:py-0">
+          <div className="mb-5 space-y-1 md:mb-8">
+            <h1 className="text-[1.625rem] font-bold leading-tight tracking-tight text-foreground md:text-2xl md:font-semibold">
+              {title}
+            </h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">{subtitle}</p>
+          </div>
+
+          {children}
         </div>
 
-        <div className="flex flex-1 flex-col">{children}</div>
-
-        <div
-          className="mt-8 pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-sm text-muted-foreground md:mt-8 md:pb-0"
-        >
-          {footer}
-        </div>
+        <footer className="shrink-0 border-t border-border/60 px-5 py-4 text-center text-sm text-muted-foreground md:mt-8 md:border-t-0 md:px-0 md:py-0 md:pb-0">
+          <div style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom, 0px))" }} className="md:pb-0">
+            {footer}
+          </div>
+        </footer>
       </div>
     </div>
   );
@@ -80,7 +103,7 @@ export function AuthError({ message }: { message: string }) {
   return (
     <div
       role="alert"
-      className="mb-5 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive md:mb-6 md:rounded-xl"
+      className="mb-4 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive md:mb-6 md:rounded-xl"
     >
       {message}
     </div>
@@ -88,9 +111,10 @@ export function AuthError({ message }: { message: string }) {
 }
 
 export const authInputClass =
-  "auth-input h-12 rounded-2xl border border-border bg-background px-4 text-base shadow-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-foreground/40 focus-visible:ring-2 focus-visible:ring-foreground/5 focus-visible:ring-offset-0 md:h-11 md:rounded-xl md:px-3.5 md:text-sm";
+  "auth-input h-12 rounded-xl border border-border bg-background px-4 text-base shadow-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-foreground/40 focus-visible:ring-2 focus-visible:ring-foreground/5 focus-visible:ring-offset-0 md:h-11 md:rounded-xl md:px-3.5 md:text-sm";
 
-export const authLabelClass = "text-xs font-semibold uppercase tracking-wide text-muted-foreground md:font-medium md:normal-case md:tracking-normal md:text-foreground/70";
+export const authLabelClass =
+  "text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground md:font-medium md:normal-case md:tracking-normal md:text-foreground/70";
 
 export const authSubmitClass =
   "flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground text-base font-semibold text-background transition-all hover:bg-foreground/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 md:h-11 md:rounded-xl md:text-sm md:font-medium";

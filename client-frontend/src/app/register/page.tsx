@@ -71,7 +71,7 @@ export default function RegisterPage() {
       <AuthError message={error} />
       <SocialAuth onError={setError} />
 
-      <form onSubmit={handleSubmit} className="space-y-5 md:space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="name" className={authLabelClass}>
             Full name
@@ -121,12 +121,12 @@ export default function RegisterPage() {
           />
         </div>
 
-        <button type="submit" disabled={loading} className={`${authSubmitClass} mt-2`}>
+        <button type="submit" disabled={loading} className={authSubmitClass}>
           {loading ? <InlineLoader /> : "Create account"}
         </button>
       </form>
 
-      <p className="mt-5 text-center text-[11px] leading-relaxed text-muted-foreground/80">
+      <p className="mt-4 text-center text-[11px] leading-relaxed text-muted-foreground/80 md:mt-5">
         By continuing, you agree to our terms and privacy policy.
       </p>
     </AuthShell>

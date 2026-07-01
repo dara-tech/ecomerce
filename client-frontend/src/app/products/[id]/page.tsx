@@ -79,41 +79,63 @@ export default function ProductDetailsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Link href="/products" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-8">
-        <ArrowLeft className="w-4 h-4" /> Back to Products
+    <div className="container mx-auto px-4 pb-8 pt-4 md:py-8 md:pb-8">
+      <Link
+        href="/products"
+        className="mb-6 hidden items-center gap-2 text-sm text-muted-foreground hover:text-foreground md:inline-flex md:mb-8"
+      >
+        <ArrowLeft className="size-4" /> Back to Products
       </Link>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24">
-        <div className="aspect-square bg-muted rounded-2xl relative overflow-hidden">
-          <ProductImage src={product.image} alt={product.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 50vw" priority />
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12 lg:gap-24">
+        <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted md:rounded-2xl">
+          <ProductImage
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
+          />
         </div>
 
         <div className="flex flex-col">
-          <p className="text-sm text-primary font-medium uppercase mb-2">{product.category}</p>
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">{product.name}</h1>
+          <p className="mb-2 text-sm font-medium uppercase text-primary">{product.category}</p>
+          <h1 className="mb-3 text-2xl font-bold leading-tight md:mb-4 md:text-4xl">{product.name}</h1>
 
-          <div className="flex items-center gap-4 mb-6">
+          <div className="mb-4 flex items-center gap-4 md:mb-6">
             <div className="flex text-yellow-500">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-4 h-4 fill-current opacity-20" />
+                <Star key={i} className="size-4 fill-current opacity-20" />
               ))}
             </div>
             <span className="text-sm text-muted-foreground">({product.numReviews || 0} Reviews)</span>
           </div>
 
-          <p className="text-3xl font-bold mb-6"><PriceDisplay amount={product.price} /></p>
-          <p className="text-muted-foreground mb-8 leading-relaxed">{product.description}</p>
+          <p className="mb-4 text-2xl font-bold md:mb-6 md:text-3xl">
+            <PriceDisplay amount={product.price} />
+          </p>
+          <p className="mb-6 text-sm leading-relaxed text-muted-foreground md:mb-8 md:text-base">
+            {product.description}
+          </p>
 
-          <div className="flex items-center gap-2 mb-4">
+          <div className="mb-5 flex items-center gap-2">
             <Button
               type="button"
               variant="outline"
               size="icon-lg"
-              onClick={() => toggle({ _id: product._id, name: product.name, image: product.image, price: product.price, category: product.category })}
+              onClick={() =>
+                toggle({
+                  _id: product._id,
+                  name: product.name,
+                  image: product.image,
+                  price: product.price,
+                  category: product.category,
+                })
+              }
               className={cn(
-                "rounded-full",
-                isInWishlist(product._id) && "border-red-500 text-red-500 bg-red-500/10 hover:bg-red-500/15"
+                "size-11 rounded-full",
+                isInWishlist(product._id) && "border-red-500 bg-red-500/10 text-red-500 hover:bg-red-500/15"
               )}
               aria-label={t("wishlist")}
             >
@@ -124,12 +146,18 @@ export default function ProductDetailsPage() {
               variant="outline"
               size="icon-lg"
               onClick={() => {
-                const ok = addCompare({ _id: product._id, name: product.name, image: product.image, price: product.price, category: product.category });
+                const ok = addCompare({
+                  _id: product._id,
+                  name: product.name,
+                  image: product.image,
+                  price: product.price,
+                  category: product.category,
+                });
                 toast[ok ? "success" : "error"](ok ? "Added to compare" : "Compare list full (max 4)");
               }}
               className={cn(
-                "rounded-full",
-                isCompared(product._id) && "border-primary text-primary bg-primary/10 hover:bg-primary/15"
+                "size-11 rounded-full",
+                isCompared(product._id) && "border-primary bg-primary/10 text-primary hover:bg-primary/15"
               )}
               aria-label={t("compare")}
             >
@@ -137,33 +165,33 @@ export default function ProductDetailsPage() {
             </Button>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <div className="flex items-center border border-border/60 rounded-full h-12 w-fit bg-background overflow-hidden">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-lg"
-                onClick={() => setQty(Math.max(1, qty - 1))}
-                className="rounded-none w-12 h-12"
-                disabled={qty <= 1}
-              >
-                <Minus className="w-4 h-4" />
-              </Button>
-              <span className="w-12 text-center font-medium">{qty}</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-lg"
-                onClick={() => setQty(qty + 1)}
-                className="rounded-none w-12 h-12"
-                disabled={qty >= product.countInStock}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
+          <div className="mb-5 flex h-12 w-full items-center overflow-hidden rounded-full border border-border/60 bg-background sm:w-fit">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-lg"
+              onClick={() => setQty(Math.max(1, qty - 1))}
+              className="size-12 shrink-0 rounded-none"
+              disabled={qty <= 1}
+            >
+              <Minus className="size-4" />
+            </Button>
+            <span className="flex-1 text-center text-base font-semibold tabular-nums sm:w-12 sm:flex-none">
+              {qty}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-lg"
+              onClick={() => setQty(qty + 1)}
+              className="size-12 shrink-0 rounded-none"
+              disabled={qty >= product.countInStock}
+            >
+              <Plus className="size-4" />
+            </Button>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 mb-8">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-3 md:mb-8">
             <Button
               type="button"
               size="lg"
@@ -172,9 +200,9 @@ export default function ProductDetailsPage() {
                 toast.success("Added to cart!");
               }}
               disabled={product.countInStock === 0}
-              className="flex-1 h-12 rounded-full bg-foreground text-background hover:bg-foreground/90 gap-2 px-8"
+              className="h-12 w-full gap-2.5 rounded-full bg-foreground px-6 text-sm font-semibold text-background hover:bg-foreground/90 sm:flex-1"
             >
-              <ShoppingCart className="w-5 h-5" />
+              <ShoppingCart className="size-5 shrink-0" />
               {product.countInStock > 0 ? t("addToCart") : t("outOfStock")}
             </Button>
             <Button
@@ -183,13 +211,14 @@ export default function ProductDetailsPage() {
               size="lg"
               onClick={handleBuyNow}
               disabled={product.countInStock === 0}
-              className="flex-1 h-12 rounded-full border-2 border-primary text-primary hover:bg-primary/5 gap-2 px-8"
+              className="h-12 w-full gap-2.5 rounded-full border-2 border-foreground bg-background px-6 text-sm font-semibold text-foreground hover:bg-muted sm:flex-1"
             >
-              <ShoppingBag className="w-5 h-5" /> {t("buyNow")}
+              <ShoppingBag className="size-5 shrink-0" />
+              {t("buyNow")}
             </Button>
           </div>
 
-          <div className="border-t pt-6 space-y-2 text-sm">
+          <div className="mt-6 space-y-2 border-t pt-6 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Brand:</span>
               <span className="font-medium">{product.brand}</span>

@@ -130,6 +130,9 @@
   .mobile-app-shell {
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
+    --mobile-header-h: calc(max(0.5rem, env(safe-area-inset-top, 0px)) + 3rem + 0.5rem);
+    --mobile-tab-bar-h: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    --mobile-chat-composer-h: 4.75rem;
   }
   @media (max-width: 767px) {
     .mobile-app-shell main {

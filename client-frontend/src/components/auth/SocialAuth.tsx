@@ -118,7 +118,7 @@ export default function SocialAuth({ onError, className = "" }: SocialAuthProps)
         )}
       </div>
 
-      <div className="relative my-5 md:my-6">
+      <div className="relative my-4 md:my-6">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-border" />
         </div>

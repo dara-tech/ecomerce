@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Headphones } from "lucide-react";
 import ChatPanel from "@/components/features/ChatPanel";
 import { useStore } from "@/context/StoreContext";
@@ -7,8 +8,26 @@ import { useStore } from "@/context/StoreContext";
 export default function ChatPage() {
   const { t } = useStore();
 
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const lockScroll = () => {
+      const locked = mq.matches;
+      document.documentElement.style.overflow = locked ? "hidden" : "";
+      document.body.style.overflow = locked ? "hidden" : "";
+      document.body.style.overscrollBehavior = locked ? "none" : "";
+    };
+    lockScroll();
+    mq.addEventListener("change", lockScroll);
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.overscrollBehavior = "";
+      mq.removeEventListener("change", lockScroll);
+    };
+  }, []);
+
   return (
-    <div className="flex min-h-[calc(100dvh-3.5rem-4.25rem-env(safe-area-inset-bottom))] flex-col md:min-h-[calc(100dvh-8rem)] md:container md:mx-auto md:max-w-lg md:px-4 md:py-8">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden overscroll-none md:container md:mx-auto md:h-auto md:min-h-[calc(100dvh-8rem)] md:max-w-lg md:overflow-visible md:px-4 md:py-8">
       <div className="shrink-0 border-b border-border/60 px-4 py-4 md:rounded-2xl md:border md:bg-card md:px-5 md:py-5">
         <div className="flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-full bg-foreground text-background">
