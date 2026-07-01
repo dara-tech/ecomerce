@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Script from "next/script";
 import { ShieldCheck, QrCode, Loader2, MapPin } from "lucide-react";
 import { useCart, type CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -13,17 +12,6 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { getApiUrl } from "@/lib/api";
 import { validateCartItems, formatRemovedCartMessage } from "@/lib/cartValidation";
-
-type PaywayCheckoutForm = {
-  action: string;
-  fields: Record<string, string>;
-};
-
-declare global {
-  interface Window {
-    AbaPayway?: { checkout: () => void };
-  }
-}
 
 function CheckoutContent() {
   const router = useRouter();
@@ -43,7 +31,10 @@ function CheckoutContent() {
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [khqrWaiting, setKhqrWaiting] = useState(false);
   const [khqrProviderIssue, setKhqrProviderIssue] = useState(false);
-  const [paywayCheckout, setPaywayCheckout] = useState<PaywayCheckoutForm | null>(null);
+  const [paywayQrString, setPaywayQrString] = useState<string | null>(null);
+  const [paywayQrImage, setPaywayQrImage] = useState<string | null>(null);
+  const [paywayWaiting, setPaywayWaiting] = useState(false);
+  const [paywayProviderIssue, setPaywayProviderIssue] = useState(false);
 
   const [contactEmail, setContactEmail] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -188,21 +179,6 @@ function CheckoutContent() {
       }
     }
   }, [user]);
-
-  useEffect(() => {
-    if (!paywayCheckout) return;
-
-    const timer = setTimeout(() => {
-      if (window.AbaPayway?.checkout) {
-        window.AbaPayway.checkout();
-      } else {
-        document.getElementById("aba_merchant_request")?.requestSubmit();
-      }
-      setIsProcessing(false);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [paywayCheckout]);
 
   useEffect(() => {
     fetch(`${apiUrl}/store/shipping/methods`)
@@ -362,6 +338,37 @@ function CheckoutContent() {
     return { paid: false as const };
   }, [apiUrl]);
 
+  const checkPaywayPaymentNow = useCallback(async (orderId: string, token: string) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    try {
+      const statusRes = await fetch(`${apiUrl}/payments/payway/check-status/${orderId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        if (statusData.isPaid || statusData.status === 'SUCCESS') {
+          return { paid: true as const };
+        }
+        return {
+          paid: false as const,
+          providerUnavailable: Boolean(statusData.providerUnavailable),
+        };
+      }
+
+      if (statusRes.status === 401) {
+        return { paid: false as const, authExpired: true as const };
+      }
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    return { paid: false as const };
+  }, [apiUrl]);
+
   useEffect(() => {
     if (!khqrString || !createdOrderId || !user?.token) {
       setKhqrWaiting(false);
@@ -430,6 +437,76 @@ function CheckoutContent() {
       clearInterval(intervalId);
     };
   }, [khqrString, createdOrderId, user?.token, checkKhqrPaymentNow, finishCheckout, router]);
+
+  useEffect(() => {
+    if ((!paywayQrString && !paywayQrImage) || !createdOrderId || !user?.token) {
+      setPaywayWaiting(false);
+      return;
+    }
+
+    let cancelled = false;
+    let intervalId: ReturnType<typeof setInterval>;
+    let pollDelayMs = 4000;
+    let errorStreak = 0;
+    const orderId = createdOrderId;
+    const token = user.token;
+
+    setPaywayWaiting(true);
+    setPaywayProviderIssue(false);
+
+    const handlePaymentSuccess = () => {
+      if (cancelled) return;
+      cancelled = true;
+      clearInterval(intervalId);
+      setPaywayWaiting(false);
+      toast.success("Payment successful! Your order is confirmed.");
+      finishCheckout();
+      router.push(`/checkout/success?order_id=${orderId}`);
+    };
+
+    const scheduleNextPoll = () => {
+      clearInterval(intervalId);
+      intervalId = setInterval(poll, pollDelayMs);
+    };
+
+    const poll = async () => {
+      if (cancelled) return;
+      try {
+        const result = await checkPaywayPaymentNow(orderId, token);
+        errorStreak = 0;
+        pollDelayMs = 4000;
+
+        if (result.paid) {
+          handlePaymentSuccess();
+          return;
+        }
+
+        if (result.authExpired) {
+          toast.error("Session expired. Please sign in again.");
+          return;
+        }
+
+        if (result.providerUnavailable) {
+          setPaywayProviderIssue(true);
+        }
+      } catch {
+        errorStreak += 1;
+        if (errorStreak >= 3) {
+          pollDelayMs = Math.min(pollDelayMs * 2, 15000);
+          scheduleNextPoll();
+        }
+      }
+    };
+
+    poll();
+    intervalId = setInterval(poll, pollDelayMs);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [paywayQrString, paywayQrImage, createdOrderId, user?.token, checkPaywayPaymentNow, finishCheckout, router]);
+
   const handleAutoFillLocation = () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser");
@@ -492,18 +569,74 @@ function CheckoutContent() {
 
     if (paymentMethod === "payway") {
       return (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center gap-2 text-sm text-green-600 font-medium mb-2">
-            <ShieldCheck className="w-5 h-5" />
-            ABA PayWay (Sandbox)
-          </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Click &quot;Place Order&quot; to open the ABA PayWay checkout popup. Pay with ABA Pay, cards, or other supported methods.
-          </p>
-          {paywayCheckout && (
-            <p className="text-xs text-amber-600">
-              PayWay window should open automatically. If it did not, refresh and try again.
-            </p>
+        <div className="flex flex-col items-center justify-center space-y-4 py-4 animate-in fade-in zoom-in-95 duration-300">
+          {paywayQrString || paywayQrImage ? (
+            <>
+              <div className="bg-white p-4 rounded-xl shadow-sm border">
+                {paywayQrImage ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={paywayQrImage} alt="ABA PayWay KHQR" className="w-[180px] h-[180px] object-contain" />
+                ) : paywayQrString ? (
+                  <QRCode value={paywayQrString} size={180} />
+                ) : null}
+              </div>
+              <div className="text-center space-y-2">
+                <p className="font-semibold">Scan with ABA / KHQR app</p>
+                <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
+                  PayWay ABA KHQR — open ABA Mobile or any KHQR banking app and scan to pay.
+                </p>
+                {paywayWaiting && (
+                  <div className="flex flex-col items-center gap-3 pt-2">
+                    <div className="flex items-center justify-center gap-2 text-sm text-primary">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Waiting for payment confirmation...
+                    </div>
+                    {paywayProviderIssue && (
+                      <p className="text-xs text-amber-600 max-w-[280px]">
+                        Auto-confirm may be delayed. If you already paid, check status below.
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!createdOrderId || !user?.token) return;
+                        try {
+                          const result = await checkPaywayPaymentNow(createdOrderId, user.token);
+                          if (result.paid) {
+                            toast.success("Payment confirmed!");
+                            finishCheckout();
+                            router.push(`/checkout/success?order_id=${createdOrderId}`);
+                          } else {
+                            toast.info("Payment not detected yet.");
+                          }
+                        } catch {
+                          toast.error("Network error. Try again.");
+                        }
+                      }}
+                      className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
+                    >
+                      I already paid — check now
+                    </button>
+                    <Link
+                      href={`/checkout/success?order_id=${createdOrderId}`}
+                      className="text-xs font-semibold text-primary underline hover:opacity-80"
+                    >
+                      View order status
+                    </Link>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-6">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <QrCode className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <p className="font-semibold text-lg">Generate ABA KHQR</p>
+              <p className="text-sm text-muted-foreground max-w-[250px] mx-auto mt-2">
+                Click &quot;Place Order&quot; to generate a PayWay KHQR code for this order.
+              </p>
+            </div>
           )}
         </div>
       );
@@ -676,7 +809,7 @@ function CheckoutContent() {
           setIsProcessing(false);
         }
       } else if (paymentMethod === "payway") {
-        const res = await fetch(`${apiUrl}/payments/payway/create-purchase`, {
+        const res = await fetch(`${apiUrl}/payments/payway/generate-qr`, {
           method: "POST",
           headers: orderHeaders(),
           body: JSON.stringify({
@@ -685,17 +818,20 @@ function CheckoutContent() {
             lastName,
             email: contactEmail || user?.email,
             phone: phone || "090000000",
-            paymentOption: "abapay",
+            paymentOption: "abapay_khqr",
           }),
         });
         const data = await res.json();
 
-        if (res.ok && data.action && data.fields) {
+        if (res.ok && (data.qrString || data.qrImage)) {
+          setPaywayQrString(data.qrString || null);
+          setPaywayQrImage(data.qrImage || null);
           setCreatedOrderId(data.orderId);
-          setPaywayCheckout({ action: data.action, fields: data.fields });
-          toast.success("Opening ABA PayWay checkout…");
+          setPaywayWaiting(true);
+          setIsProcessing(false);
+          toast.success("ABA KHQR generated. Scan the code to pay.");
         } else {
-          toast.error(data.message || "Failed to initialize ABA PayWay.");
+          toast.error(data.message || "Failed to generate ABA PayWay QR.");
           setIsProcessing(false);
         }
       }
@@ -905,7 +1041,7 @@ function CheckoutContent() {
                 </div>
                 <div>
                   <span className={`block font-semibold ${paymentMethod === 'payway' ? 'text-foreground' : 'text-muted-foreground'}`}>ABA PayWay</span>
-                  <span className={`text-xs mt-1 block ${paymentMethod === 'payway' ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>ABA Pay, cards (sandbox)</span>
+                  <span className={`text-xs mt-1 block ${paymentMethod === 'payway' ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>ABA KHQR scan (sandbox)</span>
                 </div>
                 <div className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'payway' ? 'border-foreground' : 'border-muted-foreground/30'}`}>
                   {paymentMethod === 'payway' && <div className="w-2.5 h-2.5 rounded-full bg-foreground animate-in zoom-in" />}
@@ -972,7 +1108,7 @@ function CheckoutContent() {
             
             <button 
               onClick={handlePlaceOrder}
-              disabled={isProcessing || checkoutItems.length === 0 || (paymentMethod === 'khqr' && !!khqrString) || (paymentMethod === 'payway' && !!paywayCheckout)}
+              disabled={isProcessing || checkoutItems.length === 0 || (paymentMethod === 'khqr' && !!khqrString) || (paymentMethod === 'payway' && !!(paywayQrString || paywayQrImage))}
               className="w-full flex items-center justify-center gap-2 bg-foreground text-background font-medium h-12 rounded-full hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-50 disabled:pointer-events-none"
             >
               {isProcessing ? (
@@ -982,8 +1118,8 @@ function CheckoutContent() {
                 </>
               ) : paymentMethod === 'khqr' && khqrString ? (
                 "Waiting for KHQR payment..."
-              ) : paymentMethod === 'payway' && paywayCheckout ? (
-                "PayWay checkout open…"
+              ) : paymentMethod === 'payway' && (paywayQrString || paywayQrImage) ? (
+                "Waiting for ABA payment..."
               ) : isPayExistingOrder ? (
                 "Continue to Payment"
               ) : (
@@ -993,22 +1129,6 @@ function CheckoutContent() {
           </div>
         </div>
       </div>
-
-      {paywayCheckout && (
-        <form
-          id="aba_merchant_request"
-          method="POST"
-          target="aba_webservice"
-          action={paywayCheckout.action}
-          className="hidden"
-        >
-          {Object.entries(paywayCheckout.fields).map(([name, value]) => (
-            <input key={name} type="hidden" name={name} value={value} />
-          ))}
-        </form>
-      )}
-
-      <Script src="https://checkout.payway.com.kh/plugins/checkout2-0.js" strategy="lazyOnload" />
     </div>
   );
 }

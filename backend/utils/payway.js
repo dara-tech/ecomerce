@@ -15,9 +15,17 @@ function paywayApiUrl() {
   );
 }
 
-function paywayCheckUrl() {
+function paywayBaseUrl() {
   const purchaseUrl = paywayApiUrl();
-  return purchaseUrl.replace('/payments/purchase', '/payments/check-transaction');
+  return purchaseUrl.replace(/\/payments\/purchase\/?$/, '');
+}
+
+function paywayCheckUrl() {
+  return `${paywayBaseUrl()}/payments/check-transaction`;
+}
+
+function paywayGenerateQrUrl() {
+  return `${paywayBaseUrl()}/payments/generate-qr`;
 }
 
 /** YYYYmmddHis in UTC */
@@ -178,7 +186,115 @@ export async function checkPaywayTransaction(tran_id) {
   return { ok: response.ok, data, status: response.status };
 }
 
+export function buildQrHash(fields) {
+  const payload =
+    (fields.req_time || '') +
+    (fields.merchant_id || '') +
+    (fields.tran_id || '') +
+    String(fields.amount ?? '') +
+    (fields.items || '') +
+    (fields.first_name || '') +
+    (fields.last_name || '') +
+    (fields.email || '') +
+    (fields.phone || '') +
+    (fields.purchase_type || '') +
+    (fields.payment_option || '') +
+    (fields.callback_url || '') +
+    (fields.return_deeplink || '') +
+    (fields.currency || '') +
+    (fields.custom_fields || '') +
+    (fields.return_params || '') +
+    (fields.payout || '') +
+    String(fields.lifetime ?? '') +
+    (fields.qr_image_template || '');
+
+  return paywayHmacSha512Base64(payload, paywayPublicKey());
+}
+
+export function buildPaywayQrPayload({
+  order,
+  firstname,
+  lastname,
+  email,
+  phone,
+  callbackBaseUrl,
+  paymentOption = 'abapay_khqr',
+  lifetime,
+  qrImageTemplate,
+}) {
+  const merchant_id = paywayMerchantId();
+  const req_time = paywayReqTime();
+  const tran_id = order.paywayTranId;
+  const amount = Number(Number(order.totalPrice).toFixed(2));
+  const items = encodePaywayItems(order.orderItems);
+  const currency = 'USD';
+  const purchase_type = 'purchase';
+  const qrLifetime = Number(lifetime || process.env.PAYWAY_QR_LIFETIME || 30);
+  const qr_image_template =
+    qrImageTemplate || process.env.PAYWAY_QR_TEMPLATE || 'template3_color';
+
+  const callbackBase = String(callbackBaseUrl || '').replace(/\/$/, '');
+  const callback_url = callbackBase
+    ? Buffer.from(`${callbackBase}/payments/payway/callback`).toString('base64')
+    : '';
+
+  const fields = {
+    req_time,
+    merchant_id,
+    tran_id,
+    first_name: String(firstname || 'Customer').slice(0, 20).replace(/[^\w\s-]/g, ''),
+    last_name: String(lastname || 'Guest').slice(0, 20).replace(/[^\w\s-]/g, ''),
+    email: String(email || 'customer@example.com').slice(0, 50),
+    phone: String(phone || '090000000').slice(0, 20),
+    amount,
+    currency,
+    purchase_type,
+    payment_option: paymentOption,
+    items,
+    callback_url,
+    return_deeplink: '',
+    custom_fields: '',
+    return_params: order._id.toString(),
+    payout: '',
+    lifetime: qrLifetime,
+    qr_image_template,
+  };
+
+  fields.hash = buildQrHash(fields);
+  return fields;
+}
+
+export async function generatePaywayQr(body) {
+  const response = await fetch(paywayGenerateQrUrl(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      language: 'en',
+    },
+    body: JSON.stringify(body),
+  });
+
+  const text = await response.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    return { ok: false, raw: text.slice(0, 500), status: response.status };
+  }
+
+  return { ok: response.ok, data, status: response.status };
+}
+
+export function isPaywayQrGenerated(data) {
+  const code = data?.status?.code;
+  return (code === '0' || code === 0) && Boolean(data?.qrString || data?.qrImage);
+}
+
 export function isPaywayPaymentApproved(data) {
+  if (data?.status && typeof data.status === 'object') {
+    const code = data.status.code;
+    return code === '0' || code === 0;
+  }
   const status = data?.status;
   return status === 0 || status === '0';
 }

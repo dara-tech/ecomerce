@@ -9,10 +9,13 @@ import { validateOrderStock, fulfillOrderStock } from '../utils/orderFulfillment
 import { awardLoyaltyPoints } from '../utils/loyalty.js';
 import {
   buildPaywayPurchasePayload,
+  buildPaywayQrPayload,
   buildPaywayTranId,
   checkPaywayTransaction,
+  generatePaywayQr,
   isPaywayConfigured,
   isPaywayPaymentApproved,
+  isPaywayQrGenerated,
 } from '../utils/payway.js';
 
 const router = express.Router();
@@ -594,6 +597,79 @@ router.get('/khqr/check-status/:orderId', protect, async (req, res) => {
   }
 });
 
+// @route   POST /api/payments/payway/generate-qr
+// @desc    Generate ABA PayWay KHQR via QR API (server-to-server)
+// @access  Private
+router.post('/payway/generate-qr', protect, async (req, res) => {
+  try {
+    if (!isPaywayConfigured()) {
+      return res.status(503).json({
+        message: 'PayWay is not configured. Set PAYWAY_MERCHANT_ID and PAYWAY_PUBLIC_KEY.',
+      });
+    }
+
+    const order = await resolvePaymentOrder(req, req.body, 'ABA Pay');
+    if (!order.paywayTranId) {
+      order.paywayTranId = buildPaywayTranId(order._id);
+      await order.save();
+    }
+
+    const callbackBaseUrl = (
+      process.env.BACKEND_PUBLIC_URL ||
+      `http://127.0.0.1:${process.env.PORT || 5001}/api`
+    ).replace(/\/$/, '');
+
+    const { firstName, lastName, email, phone, paymentOption } = req.body;
+    const qrPayload = buildPaywayQrPayload({
+      order,
+      firstname: firstName || req.user?.name?.split(' ')[0],
+      lastname: lastName || req.user?.name?.split(' ').slice(1).join(' '),
+      email: email || req.user?.email || req.body.guestEmail,
+      phone,
+      callbackBaseUrl,
+      paymentOption: paymentOption || 'abapay_khqr',
+    });
+
+    let result;
+    try {
+      result = await generatePaywayQr(qrPayload);
+    } catch (fetchError) {
+      console.error('PayWay QR network error:', fetchError);
+      return res.status(502).json({
+        message: 'Could not reach PayWay QR API',
+        providerUnavailable: true,
+      });
+    }
+
+    if (!result.ok || !isPaywayQrGenerated(result.data)) {
+      const code = result.data?.status?.code;
+      const message =
+        result.data?.status?.message ||
+        result.raw ||
+        'Failed to generate PayWay QR';
+      console.error('PayWay QR error:', code, message);
+      return res.status(400).json({
+        message,
+        paywayCode: code,
+        traceId: result.data?.status?.trace_id,
+      });
+    }
+
+    res.status(200).json({
+      orderId: order._id,
+      tranId: order.paywayTranId,
+      qrString: result.data.qrString,
+      qrImage: result.data.qrImage,
+      abapayDeeplink: result.data.abapay_deeplink,
+      amount: result.data.amount,
+      currency: result.data.currency,
+    });
+  } catch (error) {
+    console.error('PayWay generate-qr error:', error);
+    paymentRouteError(res, error);
+  }
+});
+
 // @route   POST /api/payments/payway/create-purchase
 // @desc    Create order and signed PayWay checkout form fields
 // @access  Private
@@ -646,28 +722,41 @@ router.post('/payway/create-purchase', protect, async (req, res) => {
 // @access  Public
 router.post('/payway/callback', express.urlencoded({ extended: true }), async (req, res) => {
   try {
-    const { tran_id, status, apv, return_params } = req.body;
-
-    let order =
-      (return_params && (await Order.findById(return_params))) ||
-      (tran_id && (await Order.findOne({ paywayTranId: tran_id })));
-
-    if (!order) {
-      console.warn('PayWay callback: order not found', { tran_id, return_params });
-      return res.status(200).send('OK');
-    }
-
-    if (isPaywayPaymentApproved({ status })) {
-      await markPaywayOrderPaid(order, req.body);
-      console.log(`Order ${order._id} marked paid via PayWay callback (apv: ${apv}).`);
-    }
-
+    await handlePaywayCallback(req.body);
     res.status(200).send('OK');
   } catch (error) {
     console.error('PayWay callback error:', error);
     res.status(200).send('OK');
   }
 });
+
+router.post('/payway/callback/json', express.json(), async (req, res) => {
+  try {
+    await handlePaywayCallback(req.body);
+    res.status(200).json({ ok: true });
+  } catch (error) {
+    console.error('PayWay JSON callback error:', error);
+    res.status(200).json({ ok: true });
+  }
+});
+
+async function handlePaywayCallback(body) {
+  const { tran_id, status, apv, return_params } = body;
+
+  let order =
+    (return_params && (await Order.findById(return_params))) ||
+    (tran_id && (await Order.findOne({ paywayTranId: tran_id })));
+
+  if (!order) {
+    console.warn('PayWay callback: order not found', { tran_id, return_params });
+    return;
+  }
+
+  if (isPaywayPaymentApproved({ status })) {
+    await markPaywayOrderPaid(order, body);
+    console.log(`Order ${order._id} marked paid via PayWay callback (apv: ${apv}).`);
+  }
+}
 
 // @route   GET /api/payments/payway/check-status/:orderId
 // @desc    Verify PayWay transaction and mark order paid
