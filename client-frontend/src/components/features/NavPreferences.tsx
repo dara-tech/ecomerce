@@ -99,7 +99,7 @@ export function PreferencesPanel({ className }: { className?: string }) {
   );
 }
 
-export default function NavPreferences() {
+export default function NavPreferences({ popoverAlign = "end" }: { popoverAlign?: "start" | "end" }) {
   return (
     <Popover>
       <PopoverTrigger
@@ -115,7 +115,7 @@ export default function NavPreferences() {
           </Button>
         }
       />
-      <PopoverContent align="end" sideOffset={8} className="w-56 p-3 z-[100]">
+      <PopoverContent align={popoverAlign} sideOffset={8} className="w-56 p-3 z-[100]">
         <PreferencesPanel />
       </PopoverContent>
     </Popover>

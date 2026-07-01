@@ -44,11 +44,11 @@ export default function MobileTabBar() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background/95 backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/80 bg-background md:hidden"
       style={{ paddingBottom: "max(0.625rem, env(safe-area-inset-bottom, 0px))" }}
       aria-label="Mobile navigation"
     >
-      <div className="mx-auto flex min-h-[4.25rem] max-w-lg items-center justify-around gap-0.5 px-2 py-2.5 sm:gap-1 sm:px-4">
+      <div className="mx-auto flex h-[var(--mobile-tab-bar-content-h)] max-w-lg items-center justify-around gap-0.5 px-2 sm:gap-1 sm:px-4">
         {tabs.map((tab) => {
           const active = tab.match(pathname);
           const Icon = tab.icon;

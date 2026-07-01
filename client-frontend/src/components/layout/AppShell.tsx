@@ -9,15 +9,21 @@ import LiveChat from "@/components/features/LiveChat";
 import MarketingPopup from "@/components/features/MarketingPopup";
 
 const AUTH_PREFIXES = ["/login", "/register", "/auth"];
+const TAB_BAR_HIDDEN_PREFIXES = ["/login", "/register", "/checkout", "/auth"];
 
 function isAuthRoute(pathname: string) {
   return AUTH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
+function hidesMobileTabBar(pathname: string) {
+  return TAB_BAR_HIDDEN_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const authScreen = isAuthRoute(pathname);
   const chatScreen = pathname === "/chat";
+  const noTabBar = hidesMobileTabBar(pathname);
 
   return (
     <>
@@ -29,7 +35,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             ? "flex-grow"
             : chatScreen
               ? "flex h-[calc(100dvh-var(--mobile-header-h))] min-h-0 flex-col overflow-hidden pb-0 md:h-auto md:grow md:overflow-visible md:pb-0"
-              : "flex-grow pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0"
+              : noTabBar
+                ? "flex-grow md:pb-0"
+                : "flex-grow pb-[var(--mobile-tab-bar-h)] md:pb-0"
         }
       >
         {children}

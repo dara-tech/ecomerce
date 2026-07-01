@@ -1,13 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import ProductImage from "@/components/ui/ProductImage";
-import PriceDisplay from "@/components/features/PriceDisplay";
 import { useRecentlyViewed } from "@/context/RecentlyViewedContext";
 import { useStore } from "@/context/StoreContext";
-import MobileProductCard, {
-  MobileProductRail,
+import {
+  CatalogProductCard,
   MobileSectionHeader,
 } from "@/components/ui/MobileProductCard";
 
@@ -20,39 +17,27 @@ export default function RecentlyViewedSection() {
 
   if (!mounted || items.length === 0) return null;
 
+  const displayItems = items.slice(0, 8);
+
   return (
-    <section className="md:container md:mx-auto md:px-4">
-      <MobileSectionHeader title={t("recentlyViewed")} href="/products" />
-      <MobileProductRail>
-        {items.map((p) => (
-          <MobileProductCard
+    <section className="px-4 md:container md:mx-auto md:px-4">
+      <MobileSectionHeader
+        title={t("recentlyViewed")}
+        href="/products"
+        linkLabel={t("viewAll")}
+      />
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-6">
+        {displayItems.map((p, index) => (
+          <CatalogProductCard
             key={p._id}
             id={p._id}
             name={p.name}
             image={p.image}
             price={p.price}
             category={p.category}
+            priority={index === 0}
           />
-        ))}
-      </MobileProductRail>
-
-      <div className="hidden gap-6 md:grid md:grid-cols-4 lg:grid-cols-6">
-        {items.map((p) => (
-          <Link key={`desktop-${p._id}`} href={`/products/${p._id}`} className="group block">
-            <div className="relative mb-3 aspect-square overflow-hidden rounded-xl bg-muted">
-              <ProductImage
-                src={p.image}
-                alt={p.name}
-                fill
-                className="object-cover transition-transform group-hover:scale-105"
-                sizes="176px"
-              />
-            </div>
-            <p className="line-clamp-2 min-h-10 text-sm font-medium leading-5">{p.name}</p>
-            <p className="mt-1 text-sm font-semibold tabular-nums">
-              <PriceDisplay amount={p.price} />
-            </p>
-          </Link>
         ))}
       </div>
     </section>

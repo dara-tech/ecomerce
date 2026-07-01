@@ -1,7 +1,16 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { ShoppingCart, ShoppingBag, Star, Plus, Minus, ArrowLeft, Heart, GitCompare } from "lucide-react";
+import {
+  ShoppingCart,
+  ShoppingBag,
+  Star,
+  Plus,
+  Minus,
+  ArrowLeft,
+  Heart,
+  GitCompare,
+} from "lucide-react";
 import Link from "next/link";
 import ProductImage from "@/components/ui/ProductImage";
 import { useState, useEffect } from "react";
@@ -18,6 +27,9 @@ import { getApiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { PageLoader } from "@/components/ui/PageLoader";
 import { cn } from "@/lib/utils";
+
+const overlayBtn =
+  "flex size-10 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground shadow-sm backdrop-blur-md transition-transform active:scale-95";
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -65,30 +77,47 @@ export default function ProductDetailsPage() {
     countInStock: product.countInStock,
   });
 
+  const handleAddToCart = () => {
+    addToCart(cartPayload());
+    toast.success("Added to cart!");
+  };
+
   const handleBuyNow = () => {
     sessionStorage.setItem("buyNow", JSON.stringify(cartPayload()));
     router.push("/checkout?buyNow=1");
   };
+
+  const inStock = product?.countInStock > 0;
 
   if (loading) {
     return <PageLoader label="Loading product…" />;
   }
 
   if (!product) {
-    return <div className="container mx-auto px-4 py-32 text-center text-muted-foreground">Product not found.</div>;
+    return (
+      <div className="px-4 py-24 text-center text-muted-foreground">{t("productNotFound")}</div>
+    );
   }
 
+  const wishlistItem = {
+    _id: product._id,
+    name: product.name,
+    image: product.image,
+    price: product.price,
+    category: product.category,
+  };
+
   return (
-    <div className="container mx-auto px-4 pb-8 pt-4 md:py-8 md:pb-8">
+    <div className="pb-[calc(var(--mobile-tab-bar-h)+5.25rem)] pt-4 md:container md:mx-auto md:max-w-6xl md:px-4 md:pb-12 md:pt-8">
       <Link
         href="/products"
         className="mb-6 hidden items-center gap-2 text-sm text-muted-foreground hover:text-foreground md:inline-flex md:mb-8"
       >
-        <ArrowLeft className="size-4" /> Back to Products
+        <ArrowLeft className="size-4" /> {t("backToProducts")}
       </Link>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12 lg:gap-24">
-        <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted md:rounded-2xl">
+      <div className="grid grid-cols-1 gap-0 md:grid-cols-2 md:gap-12 lg:gap-24">
+        <div className="relative aspect-square overflow-hidden bg-muted md:rounded-2xl">
           <ProductImage
             src={product.image}
             alt={product.name}
@@ -97,42 +126,83 @@ export default function ProductDetailsPage() {
             sizes="(max-width: 768px) 100vw, 50vw"
             priority
           />
+
+          <div
+            className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 md:hidden"
+            style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top, 0px))" }}
+          >
+            <Link href="/products" className={overlayBtn} aria-label={t("backToProducts")}>
+              <ArrowLeft className="size-5" />
+            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => toggle(wishlistItem)}
+                className={cn(
+                  overlayBtn,
+                  isInWishlist(product._id) && "border-red-500/50 bg-red-500/10 text-red-500"
+                )}
+                aria-label={t("wishlist")}
+              >
+                <Heart className={cn("size-4", isInWishlist(product._id) && "fill-current")} />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const ok = addCompare(wishlistItem);
+                  toast[ok ? "success" : "error"](
+                    ok ? "Added to compare" : "Compare list full (max 4)"
+                  );
+                }}
+                className={cn(
+                  overlayBtn,
+                  isCompared(product._id) && "border-primary/50 bg-primary/10 text-primary"
+                )}
+                aria-label={t("compare")}
+              >
+                <GitCompare className="size-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-col">
-          <p className="mb-2 text-sm font-medium uppercase text-primary">{product.category}</p>
-          <h1 className="mb-3 text-2xl font-bold leading-tight md:mb-4 md:text-4xl">{product.name}</h1>
+        <div className="flex flex-col px-4 pt-5 md:px-0 md:pt-0">
+          {product.category && (
+            <Link
+              href={`/products?category=${encodeURIComponent(product.category)}`}
+              className="mb-2 inline-flex w-fit rounded-full bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+            >
+              {product.category}
+            </Link>
+          )}
 
-          <div className="mb-4 flex items-center gap-4 md:mb-6">
+          <h1 className="text-xl font-bold leading-tight tracking-tight md:text-4xl">{product.name}</h1>
+
+          <div className="mt-3 flex items-center gap-3">
             <div className="flex text-yellow-500">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="size-4 fill-current opacity-20" />
+                <Star key={i} className="size-3.5 fill-current opacity-20 md:size-4" />
               ))}
             </div>
-            <span className="text-sm text-muted-foreground">({product.numReviews || 0} Reviews)</span>
+            <span className="text-xs text-muted-foreground md:text-sm">
+              ({product.numReviews || 0} {t("reviews")})
+            </span>
           </div>
 
-          <p className="mb-4 text-2xl font-bold md:mb-6 md:text-3xl">
+          <p className="mt-4 text-2xl font-bold tabular-nums md:mt-6 md:text-3xl">
             <PriceDisplay amount={product.price} />
           </p>
-          <p className="mb-6 text-sm leading-relaxed text-muted-foreground md:mb-8 md:text-base">
+
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground md:mt-6 md:text-base">
             {product.description}
           </p>
 
-          <div className="mb-5 flex items-center gap-2">
+          <div className="mt-5 hidden items-center gap-2 md:flex">
             <Button
               type="button"
               variant="outline"
               size="icon-lg"
-              onClick={() =>
-                toggle({
-                  _id: product._id,
-                  name: product.name,
-                  image: product.image,
-                  price: product.price,
-                  category: product.category,
-                })
-              }
+              onClick={() => toggle(wishlistItem)}
               className={cn(
                 "size-11 rounded-full",
                 isInWishlist(product._id) && "border-red-500 bg-red-500/10 text-red-500 hover:bg-red-500/15"
@@ -146,14 +216,10 @@ export default function ProductDetailsPage() {
               variant="outline"
               size="icon-lg"
               onClick={() => {
-                const ok = addCompare({
-                  _id: product._id,
-                  name: product.name,
-                  image: product.image,
-                  price: product.price,
-                  category: product.category,
-                });
-                toast[ok ? "success" : "error"](ok ? "Added to compare" : "Compare list full (max 4)");
+                const ok = addCompare(wishlistItem);
+                toast[ok ? "success" : "error"](
+                  ok ? "Added to compare" : "Compare list full (max 4)"
+                );
               }}
               className={cn(
                 "size-11 rounded-full",
@@ -165,7 +231,7 @@ export default function ProductDetailsPage() {
             </Button>
           </div>
 
-          <div className="mb-5 flex h-12 w-full items-center overflow-hidden rounded-full border border-border/60 bg-background sm:w-fit">
+          <div className="mt-5 flex h-12 w-full items-center overflow-hidden rounded-full border border-border/60 bg-background md:w-fit">
             <Button
               type="button"
               variant="ghost"
@@ -176,7 +242,7 @@ export default function ProductDetailsPage() {
             >
               <Minus className="size-4" />
             </Button>
-            <span className="flex-1 text-center text-base font-semibold tabular-nums sm:w-12 sm:flex-none">
+            <span className="flex-1 text-center text-base font-semibold tabular-nums md:w-12 md:flex-none">
               {qty}
             </span>
             <Button
@@ -191,26 +257,23 @@ export default function ProductDetailsPage() {
             </Button>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-3 md:mb-8">
+          <div className="mt-5 hidden gap-3 sm:flex-row md:flex">
             <Button
               type="button"
               size="lg"
-              onClick={() => {
-                addToCart(cartPayload());
-                toast.success("Added to cart!");
-              }}
-              disabled={product.countInStock === 0}
+              onClick={handleAddToCart}
+              disabled={!inStock}
               className="h-12 w-full gap-2.5 rounded-full bg-foreground px-6 text-sm font-semibold text-background hover:bg-foreground/90 sm:flex-1"
             >
               <ShoppingCart className="size-5 shrink-0" />
-              {product.countInStock > 0 ? t("addToCart") : t("outOfStock")}
+              {inStock ? t("addToCart") : t("outOfStock")}
             </Button>
             <Button
               type="button"
               variant="outline"
               size="lg"
               onClick={handleBuyNow}
-              disabled={product.countInStock === 0}
+              disabled={!inStock}
               className="h-12 w-full gap-2.5 rounded-full border-2 border-foreground bg-background px-6 text-sm font-semibold text-foreground hover:bg-muted sm:flex-1"
             >
               <ShoppingBag className="size-5 shrink-0" />
@@ -218,23 +281,55 @@ export default function ProductDetailsPage() {
             </Button>
           </div>
 
-          <div className="mt-6 space-y-2 border-t pt-6 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Brand:</span>
-              <span className="font-medium">{product.brand}</span>
+          <div className="mt-6 rounded-2xl border border-border/60 bg-card p-4 text-sm">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-muted-foreground">{t("brand")}</span>
+              <span className="font-medium">{product.brand || "—"}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Availability:</span>
-              <span className={product.countInStock > 0 ? "font-medium text-green-600" : "font-medium text-destructive"}>
-                {product.countInStock > 0 ? `In Stock (${product.countInStock})` : t("outOfStock")}
+            <div className="mt-3 flex items-center justify-between gap-4 border-t border-border/60 pt-3">
+              <span className="text-muted-foreground">{t("availability")}</span>
+              <span
+                className={cn(
+                  "font-medium",
+                  inStock ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"
+                )}
+              >
+                {inStock
+                  ? t("inStockCount").replace("{count}", String(product.countInStock))
+                  : t("outOfStock")}
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      <ProductRecommendations productId={String(id)} />
-      <ProductReviews productId={String(id)} />
+      <div className="mt-8 space-y-8 px-4 md:mt-12 md:space-y-12 md:px-0">
+        <ProductRecommendations productId={String(id)} />
+        <ProductReviews productId={String(id)} />
+      </div>
+
+      <div className="mobile-dock-above-tabs md:hidden">
+        <div className="flex gap-2 border-t border-border/60 px-4 py-3">
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            disabled={!inStock}
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-foreground text-sm font-semibold text-background transition-transform active:scale-[0.98] disabled:opacity-50"
+          >
+            <ShoppingCart className="size-4 shrink-0" />
+            {inStock ? t("addToCart") : t("outOfStock")}
+          </button>
+          <button
+            type="button"
+            onClick={handleBuyNow}
+            disabled={!inStock}
+            className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full border-2 border-foreground bg-background text-sm font-semibold text-foreground transition-transform active:scale-[0.98] disabled:opacity-50"
+          >
+            <ShoppingBag className="size-4 shrink-0" />
+            {t("buyNow")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

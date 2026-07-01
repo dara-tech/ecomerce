@@ -92,22 +92,21 @@ export default function Navbar() {
       {/* Mobile app header */}
       <header
         data-mobile-header
-        className="sticky top-0 z-50 grid min-h-12 grid-cols-[1fr_auto_1fr] items-center border-b border-border/60 bg-background px-4 pb-2 md:hidden"
+        className="sticky top-0 z-50 flex min-h-12 items-center justify-center border-b border-border/60 bg-background px-4 pb-2 md:hidden"
         style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
       >
-        <div aria-hidden className="min-w-0" />
-        <Link href="/" className="flex min-w-0 items-center justify-center">
-          {settings?.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={settings.logoUrl} alt={storeName} className="h-6 max-w-[120px] object-contain" />
-          ) : (
-            <span className="rounded-full bg-foreground px-3 py-1 text-[11px] font-black uppercase tracking-wider text-background">
-              {storeName}
-            </span>
-          )}
-        </Link>
-        <div className="flex min-w-0 items-center justify-end gap-0.5">
-          <NavPreferences />
+        <div className="flex items-center gap-0.5">
+          <NavPreferences popoverAlign="start" />
+          <Link href="/" className="flex items-center px-2">
+            {settings?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={settings.logoUrl} alt={storeName} className="h-6 max-w-[120px] object-contain" />
+            ) : (
+              <span className="rounded-full bg-foreground px-3 py-1 text-[11px] font-black uppercase tracking-wider text-background">
+                {storeName}
+              </span>
+            )}
+          </Link>
           <Link href="/wishlist" className={iconBtn} aria-label={t("wishlist")}>
             <Heart className="size-4" />
             <Badge count={wishlistItems.length} className="bg-red-500" />

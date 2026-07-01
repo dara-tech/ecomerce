@@ -27,7 +27,7 @@ export function MobileSectionHeader({
   linkLabel?: string;
 }) {
   return (
-    <div className="mb-3 flex items-end justify-between gap-3 px-4 md:mb-6 md:px-0">
+    <div className="mb-3 flex items-end justify-between gap-3 md:mb-6">
       <div className="min-w-0">
         <h2 className="text-lg font-bold tracking-tight text-foreground md:text-2xl">{title}</h2>
         {subtitle && (
@@ -51,6 +51,48 @@ export function MobileProductRail({ children }: { children: ReactNode }) {
     <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-pl-4 px-4 pb-2 no-scrollbar md:hidden">
       {children}
     </div>
+  );
+}
+
+export function CatalogProductCard({
+  id,
+  name,
+  image,
+  price,
+  category,
+  priority,
+}: {
+  id: string;
+  name: string;
+  image: string;
+  price: number;
+  category?: string;
+  priority?: boolean;
+}) {
+  return (
+    <Link
+      href={`/products/${id}`}
+      className="group flex flex-col transition-transform active:scale-[0.98]"
+    >
+      <div className="relative mb-2 aspect-[3/4] w-full overflow-hidden rounded-2xl bg-muted">
+        <ProductImage
+          src={image}
+          alt={name}
+          fill
+          compactPlaceholder
+          priority={priority}
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 768px) 50vw, 33vw"
+        />
+      </div>
+      <h3 className="line-clamp-2 min-h-10 text-[13px] font-semibold leading-5 text-foreground">
+        {name}
+      </h3>
+      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{category || "\u00A0"}</p>
+      <p className="mt-1 text-sm font-bold tabular-nums text-foreground">
+        <PriceDisplay amount={price} />
+      </p>
+    </Link>
   );
 }
 

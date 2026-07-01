@@ -124,13 +124,17 @@ export default function ChatPanel({ variant = "page", className }: ChatPanelProp
 
       <div
         className={cn(
-          "shrink-0 border-t border-border/60 bg-background",
           isPage
-            ? "fixed inset-x-0 bottom-[var(--mobile-tab-bar-h)] z-40 px-4 py-3 md:relative md:inset-x-auto md:bottom-auto md:z-auto md:px-3 md:py-3"
-            : "p-3"
+            ? "mobile-dock-above-tabs md:relative md:inset-x-auto md:bottom-auto md:z-auto md:bg-transparent md:pb-0"
+            : "shrink-0 border-t border-border/60 bg-background p-3"
         )}
       >
-        <div className="mx-auto flex max-w-lg items-center gap-2.5 md:max-w-none">
+        <div
+          className={cn(
+            "mx-auto flex max-w-lg items-center gap-2.5 md:max-w-none",
+            isPage && "border-t border-border/60 px-4 py-3 md:border-t-0 md:px-3 md:py-3"
+          )}
+        >
           <input
             value={message}
             onChange={(e) => setMessage(e.target.value)}

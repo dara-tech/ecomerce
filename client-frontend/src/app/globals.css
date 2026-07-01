@@ -131,8 +131,27 @@
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
     --mobile-header-h: calc(max(0.5rem, env(safe-area-inset-top, 0px)) + 3rem + 0.5rem);
-    --mobile-tab-bar-h: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+    --mobile-tab-bar-h: calc(4.75rem + max(0.625rem, env(safe-area-inset-bottom, 0px)));
+    --mobile-tab-bar-content-h: 4.75rem;
     --mobile-chat-composer-h: 4.75rem;
+    --mobile-safe-bottom: max(0.625rem, env(safe-area-inset-bottom, 0px));
+    --mobile-action-dock-h: calc(5.25rem + var(--mobile-safe-bottom));
+  }
+  .mobile-dock-above-tabs {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 40;
+    background-color: var(--background);
+    padding-bottom: var(--mobile-tab-bar-h);
+  }
+  .mobile-dock-safe-bottom {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 40;
+    background-color: var(--background);
+    padding-bottom: var(--mobile-safe-bottom);
   }
   @media (max-width: 767px) {
     .mobile-app-shell main {

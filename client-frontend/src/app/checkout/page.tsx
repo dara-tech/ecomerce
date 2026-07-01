@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, QrCode, MapPin } from "lucide-react";
 import { useCart, type CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useStore } from "@/context/StoreContext";
 import ProductImage from "@/components/ui/ProductImage";
+import PriceDisplay from "@/components/features/PriceDisplay";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -13,6 +15,7 @@ import { Suspense } from "react";
 import { getApiUrl } from "@/lib/api";
 import { validateCartItems, formatRemovedCartMessage } from "@/lib/cartValidation";
 import { PageLoader, InlineLoader } from "@/components/ui/PageLoader";
+import { cn } from "@/lib/utils";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -21,6 +24,7 @@ function CheckoutContent() {
   const payOrderId = searchParams.get("payOrder");
   const { cartItems, cartTotal, clearCart, syncCart } = useCart();
   const { user } = useAuth();
+  const { t } = useStore();
   const apiUrl = getApiUrl();
   const [buyNowItem, setBuyNowItem] = useState<any>(null);
   const [pendingOrder, setPendingOrder] = useState<any>(null);
@@ -717,7 +721,39 @@ function CheckoutContent() {
   };
 
   const getInputClass = (val: string) =>
-    `w-full px-4 py-3 rounded-lg border bg-background outline-none transition-colors ${hasSubmitted && !val ? 'border-red-500 focus:border-red-500' : 'focus:border-foreground'}`;
+    `w-full rounded-xl border bg-background px-4 py-3 outline-none transition-colors ${hasSubmitted && !val ? "border-red-500 focus:border-red-500" : "border-border/60 focus:border-foreground"}`;
+
+  const placeOrderDisabled =
+    isProcessing ||
+    checkoutItems.length === 0 ||
+    (paymentMethod === "khqr" && !!khqrString) ||
+    (paymentMethod === "payway" && !!(paywayQrString || paywayQrImage));
+
+  const awaitingQrPayment = !!(khqrString || paywayQrString || paywayQrImage);
+  const showMobileDock = !awaitingQrPayment;
+  const itemCount = checkoutItems.reduce((acc, item) => acc + item.qty, 0);
+
+  const placeOrderLabel = isProcessing
+    ? t("processing")
+    : paymentMethod === "khqr" && khqrString
+      ? t("waitingKhqr")
+      : paymentMethod === "payway" && (paywayQrString || paywayQrImage)
+        ? t("waitingAba")
+        : isPayExistingOrder
+          ? t("continueToPayment")
+          : t("placeOrder");
+
+  const placeOrderLabelShort = isPayExistingOrder ? t("pay") : t("placeOrder");
+
+  const sectionClass = "rounded-2xl border border-border/60 bg-card p-4 md:p-5";
+  const paymentOptionClass = (active: boolean) =>
+    cn(
+      "relative flex shrink-0 flex-col items-start gap-2 rounded-2xl border-2 p-3 text-left transition-all md:gap-3 md:p-5",
+      "min-w-[8.75rem] md:min-w-0",
+      active
+        ? "border-foreground bg-background shadow-sm"
+        : "border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40"
+    );
   
   // Calculate taxes (e.g., 10%) — see subtotalAfterDiscount above
 
@@ -854,181 +890,270 @@ function CheckoutContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <div className="flex items-center gap-2 mb-8 text-muted-foreground">
-        <ShieldCheck className="w-5 h-5 text-green-500" />
-        <span className="text-sm font-medium">
-          {isPayExistingOrder ? "Complete Payment" : "Secure Checkout"}
-        </span>
+    <div
+      className={cn(
+        "container mx-auto max-w-4xl px-4 pt-4 md:pb-8 md:pt-8",
+        showMobileDock ? "pb-[var(--mobile-action-dock-h)]" : "pb-[calc(1rem+var(--mobile-safe-bottom))]"
+      )}
+    >
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-xl font-bold tracking-tight md:text-3xl">
+          {isPayExistingOrder ? t("completePayment") : t("checkout")}
+        </h1>
+        <div className="mt-2 flex items-center gap-2 text-muted-foreground">
+          <ShieldCheck className="size-4 shrink-0 text-green-500" />
+          <span className="text-sm">{t("secureCheckout")}</span>
+        </div>
       </div>
 
       {isPayExistingOrder && (
-        <div className="mb-6 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
-          Complete payment for order <span className="font-mono font-medium">#{pendingOrder._id.slice(-8)}</span>.
-          Choose a payment method below, then continue to pay securely.
+        <div className="mb-4 rounded-2xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm md:mb-6">
+          {t("completePaymentHint").replace("{id}", pendingOrder._id.slice(-8))}
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-        {/* Forms */}
-        <div className="space-y-10">
-          <section>
-            <h2 className="text-xl font-bold mb-4">Contact Information</h2>
-            {!user && (
-              <p className="text-sm text-muted-foreground mb-3 rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
-                <Link href="/login?redirect=%2Fcheckout" className="text-primary underline font-medium">
-                  Sign in
-                </Link>{" "}
-                to pay with Stripe or KHQR.
-              </p>
-            )}
-            <div className="space-y-4">
-              <input type="email" placeholder="Email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={getInputClass(contactEmail)} />
-              <input type="tel" placeholder="Phone (for ABA PayWay)" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full px-4 py-3 rounded-lg border bg-background outline-none transition-colors focus:border-foreground" />
-            </div>
-          </section>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
+        {/* Order summary — first on mobile */}
+        <div className="order-1 md:order-2">
+          <div className={cn(sectionClass, "md:sticky md:top-24")}>
+            <h2 className="mb-3 text-base font-bold md:mb-4 md:text-xl">{t("yourOrder")}</h2>
 
-          <section>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Shipping Address</h2>
-              <button 
-                type="button"
-                onClick={handleAutoFillLocation}
-                disabled={isLocating}
-                className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-full"
-              >
-                {isLocating ? <InlineLoader /> : <MapPin className="w-4 h-4" />}
-                {isLocating ? 'Locating...' : 'Use Current Location'}
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={getInputClass(firstName)} />
-                <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} className={getInputClass(lastName)} />
-              </div>
-              <input type="text" placeholder="Address" value={address} onChange={(e) => setAddress(e.target.value)} className={getInputClass(address)} />
-              <div className="grid grid-cols-3 gap-4">
-                <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className={getInputClass(city)} />
-                <input type="text" placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className={getInputClass(state)} />
-                <input type="text" placeholder="ZIP Code" value={zipCode} onChange={(e) => setZipCode(e.target.value)} className={getInputClass(zipCode)} />
-              </div>
-            </div>
-          </section>
-
-          {shippingMethods.length > 0 && !isPayExistingOrder && (
-            <section>
-              <h2 className="text-xl font-bold mb-4">Shipping Method</h2>
-              <div className="space-y-2">
-                {shippingMethods.map((m) => (
-                  <label
-                    key={m._id}
-                    className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedShippingId === m._id ? 'border-foreground bg-background' : 'border-border/60 hover:border-border'}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="shipping"
-                        checked={selectedShippingId === m._id}
-                        onChange={() => setSelectedShippingId(m._id)}
-                        className="accent-foreground"
-                      />
-                      <div>
-                        <span className="font-medium">{m.name}</span>
-                        {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
-                      </div>
+            <div className="max-h-44 space-y-3 overflow-y-auto overscroll-contain border-b border-border/60 pb-4 md:max-h-none md:space-y-4 md:pb-6">
+              {checkoutItems.map((item: { _id: string; name: string; image: string; price: number; qty: number }) => (
+                <div key={item._id} className="flex items-center gap-3">
+                  <div className="relative shrink-0">
+                    <div className="relative size-14 overflow-hidden rounded-xl bg-muted md:size-16">
+                      <ProductImage src={item.image} alt={item.name} fill className="object-cover" compactPlaceholder sizes="64px" />
                     </div>
-                    <span className="font-medium text-sm">
-                      {freeShipping ? 'Free' : m.type === 'free' ? 'Free' : 'Calculated'}
+                    <span className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-foreground text-[10px] font-bold text-background ring-2 ring-card">
+                      {item.qty}
                     </span>
-                  </label>
-                ))}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="line-clamp-2 text-sm font-medium leading-snug">{item.name}</h4>
+                  </div>
+                  <div className="shrink-0 text-sm font-semibold tabular-nums">
+                    <PriceDisplay amount={item.price * item.qty} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 space-y-2 text-sm">
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">{t("subtotal")}</span>
+                <span className="font-medium tabular-nums">
+                  <PriceDisplay amount={checkoutTotal} />
+                </span>
               </div>
-            </section>
+              {couponDiscount > 0 && (
+                <div className="flex justify-between gap-3 text-green-600">
+                  <span>{t("discount")} ({couponCode})</span>
+                  <span className="font-medium tabular-nums">
+                    -<PriceDisplay amount={couponDiscount} />
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">{t("shipping")}</span>
+                <span className="font-medium">
+                  {freeShipping || shippingPrice === 0 ? t("free") : <PriceDisplay amount={shippingPrice} />}
+                </span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-muted-foreground">{t("taxes")}</span>
+                <span className="font-medium tabular-nums">
+                  <PriceDisplay amount={taxes} />
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-4 hidden items-center justify-between md:flex">
+              <span className="font-bold">{t("total")}</span>
+              <span className="text-2xl font-bold tabular-nums">
+                <PriceDisplay amount={finalTotal} />
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handlePlaceOrder}
+              disabled={placeOrderDisabled}
+              className="mt-6 hidden h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground font-semibold text-background transition-all hover:bg-foreground/90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50 md:flex"
+            >
+              {isProcessing ? (
+                <>
+                  <InlineLoader size="sm" className="size-5 border-2" />
+                  {t("processing")}
+                </>
+              ) : (
+                placeOrderLabel
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Forms + payment */}
+        <div className="order-2 space-y-4 md:order-1 md:space-y-5">
+          {!isPayExistingOrder && (
+            <>
+              <section className={sectionClass}>
+                <h2 className="mb-3 text-base font-bold md:text-lg">{t("contactInfo")}</h2>
+                {!user && (
+                  <p className="mb-3 rounded-xl border border-border/60 bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                    <Link href="/login?redirect=%2Fcheckout" className="font-medium text-foreground underline">
+                      {t("signIn")}
+                    </Link>{" "}
+                    {t("signInToPay")}
+                  </p>
+                )}
+                <div className="space-y-3">
+                  <input type="email" placeholder="Email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} className={getInputClass(contactEmail)} />
+                  <input type="tel" placeholder="Phone (ABA PayWay)" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded-xl border border-border/60 bg-background px-4 py-3 outline-none transition-colors focus:border-foreground" />
+                </div>
+              </section>
+
+              <section className={sectionClass}>
+                <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <h2 className="text-base font-bold md:text-lg">{t("shippingAddress")}</h2>
+                  <button
+                    type="button"
+                    onClick={handleAutoFillLocation}
+                    disabled={isLocating}
+                    className="inline-flex h-9 items-center justify-center gap-1.5 self-start rounded-full bg-primary/10 px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/20 sm:self-auto"
+                  >
+                    {isLocating ? <InlineLoader /> : <MapPin className="size-3.5" />}
+                    {isLocating ? t("locating") : t("useCurrentLocation")}
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <input type="text" placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className={getInputClass(firstName)} />
+                    <input type="text" placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} className={getInputClass(lastName)} />
+                  </div>
+                  <input type="text" placeholder="Address" value={address} onChange={(e) => setAddress(e.target.value)} className={getInputClass(address)} />
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    <input type="text" placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className={getInputClass(city)} />
+                    <input type="text" placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className={getInputClass(state)} />
+                    <input type="text" placeholder="ZIP" value={zipCode} onChange={(e) => setZipCode(e.target.value)} className={cn(getInputClass(zipCode), "col-span-2 sm:col-span-1")} />
+                  </div>
+                </div>
+              </section>
+
+              {shippingMethods.length > 0 && (
+                <section className={sectionClass}>
+                  <h2 className="mb-3 text-base font-bold md:text-lg">{t("shippingMethod")}</h2>
+                  <div className="space-y-2">
+                    {shippingMethods.map((m) => (
+                      <label
+                        key={m._id}
+                        className={cn(
+                          "flex cursor-pointer items-center justify-between gap-3 rounded-xl border-2 p-3 transition-all",
+                          selectedShippingId === m._id ? "border-foreground bg-background" : "border-border/60"
+                        )}
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <input
+                            type="radio"
+                            name="shipping"
+                            checked={selectedShippingId === m._id}
+                            onChange={() => setSelectedShippingId(m._id)}
+                            className="accent-foreground"
+                          />
+                          <div className="min-w-0">
+                            <span className="text-sm font-medium">{m.name}</span>
+                            {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
+                          </div>
+                        </div>
+                        <span className="shrink-0 text-sm font-medium">
+                          {freeShipping ? t("free") : m.type === "free" ? t("free") : t("calculatedAtCheckout")}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <section className={sectionClass}>
+                <h2 className="mb-3 text-base font-bold md:text-lg">{t("couponCode")}</h2>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="CODE"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                    className="min-w-0 flex-1 rounded-xl border border-border/60 bg-background px-4 py-2.5 text-sm outline-none focus:border-foreground"
+                  />
+                  <button
+                    type="button"
+                    onClick={applyCoupon}
+                    className="shrink-0 rounded-full bg-foreground px-5 py-2.5 text-sm font-semibold text-background hover:bg-foreground/90"
+                  >
+                    {t("apply")}
+                  </button>
+                </div>
+                {couponCode && (
+                  <p className="mt-2 text-sm text-green-600">
+                    {couponCode} — <PriceDisplay amount={couponDiscount} /> off
+                    {freeShipping ? ` + ${t("free")} ${t("shipping").toLowerCase()}` : ""}
+                  </p>
+                )}
+              </section>
+            </>
           )}
 
-          {!isPayExistingOrder && (
-          <section>
-            <h2 className="text-xl font-bold mb-4">Coupon Code</h2>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Enter coupon code"
-                value={couponInput}
-                onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                className="flex-1 px-4 py-2.5 rounded-xl border bg-background"
-              />
+          <section className={sectionClass}>
+            <h2 className="mb-3 text-base font-bold md:text-lg">{t("paymentMethod")}</h2>
+
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 no-scrollbar md:mx-0 md:grid md:grid-cols-3 md:gap-3 md:overflow-visible md:pb-0">
               <button
                 type="button"
-                onClick={applyCoupon}
-                className="px-5 py-2.5 rounded-xl bg-foreground text-background font-medium text-sm hover:bg-foreground/90"
+                onClick={() => setPaymentMethod("stripe")}
+                className={paymentOptionClass(paymentMethod === "stripe")}
               >
-                Apply
-              </button>
-            </div>
-            {couponCode && (
-              <p className="text-sm text-green-600 mt-2">
-                {couponCode} applied — ${couponDiscount.toFixed(2)} off
-                {freeShipping ? ' + free shipping' : ''}
-              </p>
-            )}
-          </section>
-          )}
-
-          <section>
-            <h2 className="text-xl font-bold mb-4">Payment Method</h2>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-              <button 
-                onClick={() => setPaymentMethod('stripe')}
-                className={`relative p-5 rounded-2xl border-2 flex flex-col items-start gap-3 transition-all text-left overflow-hidden ${paymentMethod === 'stripe' ? 'border-foreground bg-background shadow-md' : 'border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40'}`}
-              >
-                {/* Real Stripe Logo */}
-                <div className="h-7 mb-1 flex items-center">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" 
-                    alt="Stripe Logo" 
+                <div className="flex h-6 items-center md:h-7">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg"
+                    alt="Stripe"
                     className="h-full w-auto object-contain"
                   />
                 </div>
-                <div>
-                  <span className={`block font-semibold ${paymentMethod === 'stripe' ? 'text-foreground' : 'text-muted-foreground'}`}>Credit Card</span>
-                  <span className={`text-xs mt-1 block ${paymentMethod === 'stripe' ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>Visa, Mastercard, Amex, Apple Pay</span>
-                </div>
-                
-                <div className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'stripe' ? 'border-foreground' : 'border-muted-foreground/30'}`}>
-                  {paymentMethod === 'stripe' && <div className="w-2.5 h-2.5 rounded-full bg-foreground animate-in zoom-in" />}
+                <span className={cn("text-sm font-semibold", paymentMethod !== "stripe" && "text-muted-foreground")}>
+                  {t("creditCard")}
+                </span>
+                <span className="hidden text-xs text-muted-foreground md:block">Visa, Mastercard, Apple Pay</span>
+                <div className={cn("absolute right-3 top-3 flex size-4 items-center justify-center rounded-full border-2", paymentMethod === "stripe" ? "border-foreground" : "border-border/60")}>
+                  {paymentMethod === "stripe" && <div className="size-2 rounded-full bg-foreground" />}
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setPaymentMethod("khqr")}
-                className={`relative p-5 rounded-2xl border-2 flex flex-col items-start gap-3 transition-all text-left overflow-hidden ${paymentMethod === 'khqr' ? 'border-foreground bg-background shadow-md' : 'border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40'}`}
+                className={paymentOptionClass(paymentMethod === "khqr")}
               >
-                {/* Real KHQR Logo */}
-                <div className="h-7 mb-1 flex items-center">
-                  <img 
-                    src="https://upload.wikimedia.org/wikipedia/commons/b/bb/KHQR_Logo.png" 
-                    alt="KHQR Logo" 
+                <div className="flex h-6 items-center md:h-7">
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/b/bb/KHQR_Logo.png"
+                    alt="KHQR"
                     className="h-full w-auto object-contain"
                   />
                 </div>
-                <div>
-                  <span className={`block font-semibold ${paymentMethod === 'khqr' ? 'text-foreground' : 'text-muted-foreground'}`}>KHQR Scan</span>
-                  <span className={`text-xs mt-1 block ${paymentMethod === 'khqr' ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>ABA, Bakong, Acleda, Canadia</span>
-                </div>
-
-                <div className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'khqr' ? 'border-foreground' : 'border-muted-foreground/30'}`}>
-                  {paymentMethod === 'khqr' && <div className="w-2.5 h-2.5 rounded-full bg-foreground animate-in zoom-in" />}
+                <span className={cn("text-sm font-semibold", paymentMethod !== "khqr" && "text-muted-foreground")}>
+                  {t("khqrScan")}
+                </span>
+                <span className="hidden text-xs text-muted-foreground md:block">ABA, Bakong, ACLEDA</span>
+                <div className={cn("absolute right-3 top-3 flex size-4 items-center justify-center rounded-full border-2", paymentMethod === "khqr" ? "border-foreground" : "border-border/60")}>
+                  {paymentMethod === "khqr" && <div className="size-2 rounded-full bg-foreground" />}
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setPaymentMethod("payway")}
-                className={`relative p-5 rounded-2xl border-2 flex flex-col items-start gap-3 transition-all text-left overflow-hidden ${paymentMethod === 'payway' ? 'border-foreground bg-background shadow-md' : 'border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40'}`}
+                className={paymentOptionClass(paymentMethod === "payway")}
               >
-                <div className="h-7 mb-1 flex items-center">
+                <div className="flex h-6 items-center gap-1 md:h-7">
                   <img
                     src="https://www.ababank.com/wp-content/themes/ababank/images/aba-logo.svg"
                     alt="ABA PayWay"
@@ -1037,98 +1162,52 @@ function CheckoutContent() {
                       (e.target as HTMLImageElement).style.display = "none";
                     }}
                   />
-                  <span className="font-bold text-sm text-[#005099]">ABA Pay</span>
+                  <span className="text-xs font-bold text-[#005099] md:text-sm">ABA</span>
                 </div>
-                <div>
-                  <span className={`block font-semibold ${paymentMethod === 'payway' ? 'text-foreground' : 'text-muted-foreground'}`}>ABA PayWay</span>
-                  <span className={`text-xs mt-1 block ${paymentMethod === 'payway' ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>ABA KHQR scan (sandbox)</span>
-                </div>
-                <div className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'payway' ? 'border-foreground' : 'border-muted-foreground/30'}`}>
-                  {paymentMethod === 'payway' && <div className="w-2.5 h-2.5 rounded-full bg-foreground animate-in zoom-in" />}
+                <span className={cn("text-sm font-semibold", paymentMethod !== "payway" && "text-muted-foreground")}>
+                  {t("abaPayway")}
+                </span>
+                <span className="hidden text-xs text-muted-foreground md:block">ABA KHQR scan</span>
+                <div className={cn("absolute right-3 top-3 flex size-4 items-center justify-center rounded-full border-2", paymentMethod === "payway" ? "border-foreground" : "border-border/60")}>
+                  {paymentMethod === "payway" && <div className="size-2 rounded-full bg-foreground" />}
                 </div>
               </button>
             </div>
 
-            {/* Dynamic Payment Details UI */}
-            <div className="border rounded-2xl p-6 bg-muted/20">
+            <div className="mt-4 rounded-2xl border border-border/60 bg-muted/20 p-4 md:p-6">
               {renderPaymentDetails()}
             </div>
           </section>
         </div>
+      </div>
 
-        {/* Order Summary Checkout */}
-        <div>
-          <div className="bg-muted/30 border rounded-2xl p-6 sticky top-24">
-            <h2 className="text-xl font-bold mb-6">Your Order</h2>
-            
-            <div className="space-y-4 mb-6 border-b pb-6">
-              {checkoutItems.map((item: { _id: string; name: string; image: string; price: number; qty: number }) => (
-                <div key={item._id} className="flex gap-4 items-center">
-                  <div className="relative shrink-0 pt-2 pr-2">
-                    <div className="w-16 h-16 bg-muted border rounded-xl overflow-hidden relative">
-                      <ProductImage src={item.image} alt={item.name} fill className="object-cover mix-blend-multiply" />
-                    </div>
-                    <span className="absolute top-0 right-0 bg-foreground text-background w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold z-20 shadow-md ring-2 ring-background">{item.qty}</span>
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm line-clamp-2">{item.name}</h4>
-                  </div>
-                  <div className="font-medium text-sm">${(item.price * item.qty).toFixed(2)}</div>
-                </div>
-              ))}
+      {showMobileDock && (
+        <div className="mobile-dock-safe-bottom md:hidden">
+          <div className="flex items-center justify-between gap-4 border-t border-border/60 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">
+                {t("subtotalItems").replace("{count}", String(itemCount))}
+              </p>
+              <p className="text-lg font-bold tabular-nums">
+                <PriceDisplay amount={finalTotal} />
+              </p>
             </div>
-
-            <div className="space-y-3 text-sm mb-6 border-b pb-6">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium">${checkoutTotal.toFixed(2)}</span>
-              </div>
-              {couponDiscount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Discount ({couponCode})</span>
-                  <span className="font-medium">-${couponDiscount.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Shipping</span>
-                <span className="font-medium">
-                  {freeShipping || shippingPrice === 0 ? 'Free' : `$${shippingPrice.toFixed(2)}`}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Taxes</span>
-                <span className="font-medium">${taxes.toFixed(2)}</span>
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center mb-8">
-              <span className="font-bold">Total</span>
-              <span className="text-2xl font-bold">${finalTotal.toFixed(2)}</span>
-            </div>
-            
-            <button 
+            <button
+              type="button"
               onClick={handlePlaceOrder}
-              disabled={isProcessing || checkoutItems.length === 0 || (paymentMethod === 'khqr' && !!khqrString) || (paymentMethod === 'payway' && !!(paywayQrString || paywayQrImage))}
-              className="w-full flex items-center justify-center gap-2 bg-foreground text-background font-medium h-12 rounded-full hover:bg-foreground/90 transition-all active:scale-95 shadow-lg shadow-foreground/10 disabled:opacity-50 disabled:pointer-events-none"
-            >
-              {isProcessing ? (
-                <>
-                  <InlineLoader size="sm" className="size-5 border-2" />
-                  Processing...
-                </>
-              ) : paymentMethod === 'khqr' && khqrString ? (
-                "Waiting for KHQR payment..."
-              ) : paymentMethod === 'payway' && (paywayQrString || paywayQrImage) ? (
-                "Waiting for ABA payment..."
-              ) : isPayExistingOrder ? (
-                "Continue to Payment"
-              ) : (
-                "Place Order"
+              disabled={placeOrderDisabled}
+              className={cn(
+                "inline-flex h-11 max-w-[11rem] flex-1 items-center justify-center gap-2 rounded-full",
+                "bg-foreground text-sm font-semibold text-background transition-transform active:scale-[0.98]",
+                "disabled:pointer-events-none disabled:opacity-50"
               )}
+            >
+              {isProcessing && <InlineLoader size="sm" className="size-4 border-2" />}
+              {isProcessing ? t("processing") : placeOrderLabelShort}
             </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

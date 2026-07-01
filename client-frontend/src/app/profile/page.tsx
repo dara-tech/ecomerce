@@ -3,19 +3,83 @@
 import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, LogOut, Package, Wallet, Star } from "lucide-react";
+import {
+  User,
+  Mail,
+  LogOut,
+  Package,
+  Wallet,
+  Heart,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { PageLoader } from "@/components/ui/PageLoader";
+import { useStore } from "@/context/StoreContext";
+import { cn } from "@/lib/utils";
+
+function ProfileMenuItem({
+  href,
+  icon: Icon,
+  title,
+  subtitle,
+  destructive,
+  onClick,
+}: {
+  href?: string;
+  icon: LucideIcon;
+  title: string;
+  subtitle: string;
+  destructive?: boolean;
+  onClick?: () => void;
+}) {
+  const className = cn(
+    "flex w-full items-center gap-3 rounded-2xl border border-border/60 bg-background p-3.5 text-left transition-colors active:scale-[0.99] md:p-4",
+    destructive
+      ? "hover:border-destructive/40"
+      : "hover:border-foreground/30 hover:bg-muted/30"
+  );
+
+  const content = (
+    <>
+      <div
+        className={cn(
+          "flex size-11 shrink-0 items-center justify-center rounded-xl",
+          destructive ? "bg-destructive/10" : "bg-muted"
+        )}
+      >
+        <Icon className={cn("size-5", destructive ? "text-destructive" : "text-foreground")} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <h3 className={cn("text-sm font-semibold", destructive && "text-destructive")}>{title}</h3>
+        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{subtitle}</p>
+      </div>
+      {!destructive && <ChevronRight className="size-4 shrink-0 text-muted-foreground/60" />}
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={className}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={href!} className={className}>
+      {content}
+    </Link>
+  );
+}
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
+  const { t } = useStore();
   const router = useRouter();
 
   useEffect(() => {
-    // Basic protection: if not logged in, redirect to login
     if (user === null) {
-      // If we know definitely there's no user, redirect
-      // Wait for hydration/initialization slightly handled by context normally
       const storedUser = localStorage.getItem("userInfo");
       if (!storedUser) {
         router.push("/login");
@@ -27,67 +91,62 @@ export default function ProfilePage() {
     return <PageLoader label="Loading profile…" />;
   }
 
+  const initial = user.name.charAt(0).toUpperCase();
+
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="max-w-2xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold tracking-tight">My Account</h1>
-        
-        <div className="border rounded-2xl overflow-hidden bg-card shadow-sm">
-          <div className="p-8 sm:p-10">
-            <div className="flex items-center gap-6 mb-8">
-              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center">
-                <User className="w-10 h-10 text-muted-foreground" />
+    <div className="container mx-auto px-4 pb-6 pt-4 md:py-12">
+      <div className="mx-auto max-w-2xl">
+        <h1 className="mb-4 text-xl font-bold tracking-tight md:mb-8 md:text-3xl">{t("myAccount")}</h1>
+
+        <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+          <div className="border-b border-border/60 p-5 md:p-8">
+            <div className="flex items-center gap-4">
+              <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 md:size-20">
+                {initial ? (
+                  <span className="text-xl font-bold text-white md:text-2xl">{initial}</span>
+                ) : (
+                  <User className="size-8 text-white/90 md:size-10" />
+                )}
               </div>
-              <div>
-                <h2 className="text-2xl font-bold">{user.name}</h2>
-                <div className="flex items-center gap-2 text-muted-foreground mt-1">
-                  <Mail className="w-4 h-4" />
-                  {user.email}
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate text-lg font-bold leading-tight md:text-2xl">{user.name}</h2>
+                <div className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Mail className="size-3.5 shrink-0" />
+                  <span className="truncate">{user.email}</span>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 pt-8 border-t">
-              <Link href="/orders" className="flex items-center gap-4 p-4 rounded-xl border hover:border-foreground/50 transition-colors group">
-                <div className="bg-muted p-3 rounded-lg group-hover:bg-foreground/5 transition-colors">
-                  <Package className="w-5 h-5 text-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">My Orders</h3>
-                  <p className="text-sm text-muted-foreground">View order history & tracking</p>
-                </div>
-              </Link>
-
-              <Link href="/wallet" className="flex items-center gap-4 p-4 rounded-xl border hover:border-foreground/50 transition-colors group">
-                <div className="bg-muted p-3 rounded-lg group-hover:bg-foreground/5 transition-colors">
-                  <Wallet className="w-5 h-5 text-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Wallet & Loyalty</h3>
-                  <p className="text-sm text-muted-foreground">Balance, points & top-up</p>
-                </div>
-              </Link>
-
-              <Link href="/wishlist" className="flex items-center gap-4 p-4 rounded-xl border hover:border-foreground/50 transition-colors group">
-                <div className="bg-muted p-3 rounded-lg group-hover:bg-foreground/5 transition-colors">
-                  <Star className="w-5 h-5 text-foreground" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Wishlist</h3>
-                  <p className="text-sm text-muted-foreground">Saved products</p>
-                </div>
-              </Link>
-              
-              <button onClick={logout} className="flex items-center gap-4 p-4 rounded-xl border hover:border-destructive/50 transition-colors group text-left">
-                <div className="bg-destructive/10 p-3 rounded-lg group-hover:bg-destructive/20 transition-colors">
-                  <LogOut className="w-5 h-5 text-destructive" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-destructive">Logout</h3>
-                  <p className="text-sm text-muted-foreground">End your session</p>
-                </div>
-              </button>
-            </div>
+          <div className="space-y-2 p-4 md:grid md:grid-cols-2 md:gap-3 md:space-y-0 md:p-6">
+            <ProfileMenuItem
+              href="/orders"
+              icon={Package}
+              title={t("orders")}
+              subtitle={t("ordersHint")}
+            />
+            <ProfileMenuItem
+              href="/wallet"
+              icon={Wallet}
+              title={t("wallet")}
+              subtitle={t("walletHint")}
+            />
+            <ProfileMenuItem
+              href="/wishlist"
+              icon={Heart}
+              title={t("wishlist")}
+              subtitle={t("wishlistHint")}
+            />
+            <ProfileMenuItem
+              icon={LogOut}
+              title={t("logout")}
+              subtitle={t("logoutHint")}
+              destructive
+              onClick={() => {
+                logout();
+                router.push("/login");
+              }}
+            />
           </div>
         </div>
       </div>
