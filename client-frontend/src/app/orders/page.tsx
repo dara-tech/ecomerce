@@ -48,7 +48,6 @@ export default function OrdersPage() {
   
   const [filter, setFilter] = useState<FilterType>('all');
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
-  const [isPaying, setIsPaying] = useState(false);
   const [verifyingOrderId, setVerifyingOrderId] = useState<string | null>(null);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
@@ -138,28 +137,13 @@ export default function OrdersPage() {
     }
   };
 
-  const handlePaySelected = async () => {
+  const handlePaySelected = () => {
     if (selectedOrderIds.length === 0) return;
-    setIsPaying(true);
-    try {
-      await Promise.all(
-        selectedOrderIds.map(id =>
-          fetch(`${apiUrl}/orders/${id}/pay`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${user?.token}` },
-            body: JSON.stringify({ id: 'bulk_sim_' + Date.now(), status: 'COMPLETED', update_time: new Date().toISOString() })
-          })
-        )
-      );
-      toast.success(`Successfully paid ${selectedOrderIds.length} order(s)!`);
-      setSelectedOrderIds([]);
-      await fetchOrders();
-    } catch (e) {
-      console.error(e);
-      toast.error("Failed to process payment");
-    } finally {
-      setIsPaying(false);
+    if (selectedOrderIds.length > 1) {
+      toast.info("Please complete payment for one order at a time.");
+      return;
     }
+    router.push(`/checkout?payOrder=${selectedOrderIds[0]}`);
   };
 
   if (!user || loading) {
@@ -262,6 +246,15 @@ export default function OrdersPage() {
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 text-xs font-semibold">
                       <Clock className="w-3.5 h-3.5" /> Pending Payment
                     </span>
+                  )}
+                  {!order.isPaid && (
+                    <Link
+                      href={`/checkout?payOrder=${order._id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 transition-colors"
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      Pay now
+                    </Link>
                   )}
                   {!order.isPaid && order.paymentMethod === 'KHQR' && (
                     <button
@@ -366,18 +359,9 @@ export default function OrdersPage() {
               </div>
               <button
                 onClick={handlePaySelected}
-                disabled={isPaying}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-full font-semibold flex items-center gap-2 transition-colors disabled:opacity-50"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-full font-semibold flex items-center gap-2 transition-colors"
               >
-                {isPaying ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" /> Processing...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-5 h-5" /> Pay Selected
-                  </>
-                )}
+                <CreditCard className="w-5 h-5" /> Continue to Checkout
               </button>
             </div>
           </div>

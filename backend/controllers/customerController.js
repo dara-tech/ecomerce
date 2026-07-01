@@ -82,23 +82,119 @@ export const redeemLoyaltyPoints = async (req, res) => {
 };
 
 export const getRecommendations = async (req, res) => {
-  const { productId } = req.params;
-  let query = {};
+  try {
+    const { productId } = req.params;
+    const exclude = new Set(
+      String(req.query.exclude || '')
+        .split(',')
+        .filter(Boolean)
+    );
+    let query = { countInStock: { $gt: 0 } };
 
-  if (productId && productId !== 'home') {
-    const product = await Product.findById(productId);
-    if (product) {
-      query = { category: product.category, _id: { $ne: product._id } };
+    if (productId && productId !== 'home') {
+      exclude.add(productId);
+      const product = await Product.findById(productId);
+      if (product) {
+        query = {
+          countInStock: { $gt: 0 },
+          $or: [{ category: product.category }, { brand: product.brand }],
+        };
+      }
     }
-  }
 
-  const products = await Product.find(query).sort({ createdAt: -1 }).limit(8);
-  if (products.length < 4) {
-    const extra = await Product.find().sort({ rating: -1 }).limit(8);
-    const ids = new Set(products.map((p) => String(p._id)));
-    extra.forEach((p) => {
-      if (!ids.has(String(p._id)) && products.length < 8) products.push(p);
-    });
+    if (exclude.size) {
+      query._id = { $nin: [...exclude] };
+    }
+
+    const products = await Product.find(query)
+      .sort({ rating: -1, numReviews: -1, createdAt: -1 })
+      .limit(8);
+
+    if (products.length < 4) {
+      const extra = await Product.find({
+        countInStock: { $gt: 0 },
+        _id: { $nin: [...products.map((p) => p._id), ...exclude] },
+      })
+        .sort({ rating: -1, numReviews: -1 })
+        .limit(8);
+      const ids = new Set(products.map((p) => String(p._id)));
+      extra.forEach((p) => {
+        if (!ids.has(String(p._id)) && products.length < 8) products.push(p);
+      });
+    }
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
   }
-  res.json(products);
+};
+
+export const getCartRecommendations = async (req, res) => {
+  try {
+    const ids = String(req.query.ids || '')
+      .split(',')
+      .filter(Boolean);
+    const excludeIds = [...ids];
+
+    const cartProducts = ids.length
+      ? await Product.find({ _id: { $in: ids } }).select('category brand name')
+      : [];
+
+    const categories = [...new Set(cartProducts.map((p) => p.category).filter(Boolean))];
+    const brands = [...new Set(cartProducts.map((p) => p.brand).filter(Boolean))];
+
+    const inStock = { countInStock: { $gt: 0 } };
+    const notInCart = { _id: { $nin: excludeIds } };
+
+    const pairsWell =
+      categories.length > 0
+        ? await Product.find({
+            ...inStock,
+            ...notInCart,
+            category: { $in: categories },
+          })
+            .sort({ rating: -1, numReviews: -1 })
+            .limit(6)
+        : [];
+
+    pairsWell.forEach((p) => excludeIds.push(String(p._id)));
+
+    const sameBrand =
+      brands.length > 0
+        ? await Product.find({
+            ...inStock,
+            _id: { $nin: excludeIds },
+            brand: { $in: brands },
+          })
+            .sort({ rating: -1, createdAt: -1 })
+            .limit(6)
+        : [];
+
+    sameBrand.forEach((p) => excludeIds.push(String(p._id)));
+
+    const crossSell = await Product.find({
+      ...inStock,
+      _id: { $nin: excludeIds },
+      ...(categories.length ? { category: { $nin: categories } } : {}),
+    })
+      .sort({ rating: -1, numReviews: -1 })
+      .limit(6);
+
+    crossSell.forEach((p) => excludeIds.push(String(p._id)));
+
+    const trending = await Product.find({
+      ...inStock,
+      _id: { $nin: excludeIds },
+    })
+      .sort({ rating: -1, numReviews: -1, createdAt: -1 })
+      .limit(8);
+
+    res.json({
+      pairsWell,
+      sameBrand,
+      crossSell,
+      trending,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
 };

@@ -2,6 +2,7 @@ import express from 'express';
 import { protect, optionalProtect } from '../middleware/authMiddleware.js';
 import {
   validateCouponCode,
+  validateCartItems,
   getPublicShippingMethods,
   calculatePublicShipping,
   submitProductReview,
@@ -14,6 +15,7 @@ import {
 const router = express.Router();
 
 router.post('/coupons/validate', validateCouponCode);
+router.post('/cart/validate', validateCartItems);
 router.get('/shipping/methods', getPublicShippingMethods);
 router.post('/shipping/calculate', calculatePublicShipping);
 router.get('/products/:productId/reviews', getProductReviews);

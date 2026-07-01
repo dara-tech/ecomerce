@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import ProductCatalog from "@/components/features/ProductCatalog";
 
 export async function generateMetadata({
@@ -25,5 +26,15 @@ export default async function ProductsPage({
   const category =
     typeof params.category === "string" ? params.category : undefined;
 
-  return <ProductCatalog initialCategory={category} />;
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">
+          Loading products…
+        </div>
+      }
+    >
+      <ProductCatalog initialCategory={category} />
+    </Suspense>
+  );
 }

@@ -7,11 +7,13 @@ import {
   topUpWallet,
   redeemLoyaltyPoints,
   getRecommendations,
+  getCartRecommendations,
 } from '../controllers/customerController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+router.get('/recommendations/cart', getCartRecommendations);
 router.get('/recommendations', (req, res) => {
   req.params.productId = 'home';
   return getRecommendations(req, res);

@@ -1,6 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from "react";
+import { toast } from "sonner";
+import { validateCartItems, formatRemovedCartMessage } from "@/lib/cartValidation";
 
 export interface CartItem {
   _id: string;
@@ -17,6 +19,7 @@ interface CartContextType {
   removeFromCart: (id: string) => void;
   updateQty: (id: string, qty: number) => void;
   clearCart: () => void;
+  syncCart: (items: CartItem[]) => void;
   cartTotal: number;
 }
 
@@ -26,17 +29,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from localStorage on mount and drop stale products
   useEffect(() => {
     const storedCart = localStorage.getItem("cart");
-    if (storedCart) {
-      try {
-        setCartItems(JSON.parse(storedCart));
-      } catch (error) {
-        console.error("Failed to parse cart items:", error);
-      }
+    if (!storedCart) {
+      setIsInitialized(true);
+      return;
     }
-    setIsInitialized(true);
+
+    let parsed: CartItem[] = [];
+    try {
+      parsed = JSON.parse(storedCart);
+    } catch (error) {
+      console.error("Failed to parse cart items:", error);
+      setIsInitialized(true);
+      return;
+    }
+
+    validateCartItems(parsed).then((result) => {
+      if (result) {
+        setCartItems(result.items);
+        if (result.removed.length) {
+          toast.warning(formatRemovedCartMessage(result.removed));
+        }
+      } else {
+        setCartItems(parsed);
+      }
+      setIsInitialized(true);
+    });
   }, []);
 
   // Save to localStorage on change
@@ -74,11 +94,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCartItems([]);
   }, []);
 
+  const syncCart = useCallback((items: CartItem[]) => {
+    setCartItems(items);
+  }, []);
+
   const cartTotal = cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
 
   const value = useMemo(
-    () => ({ cartItems, addToCart, removeFromCart, updateQty, clearCart, cartTotal }),
-    [cartItems, addToCart, removeFromCart, updateQty, clearCart, cartTotal]
+    () => ({ cartItems, addToCart, removeFromCart, updateQty, clearCart, syncCart, cartTotal }),
+    [cartItems, addToCart, removeFromCart, updateQty, clearCart, syncCart, cartTotal]
   );
 
   return (

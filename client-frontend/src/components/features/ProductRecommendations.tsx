@@ -1,43 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import ProductImage from "@/components/ui/ProductImage";
-import PriceDisplay from "./PriceDisplay";
+import ProductRecRow, { type RecProduct } from "@/components/features/ProductRecRow";
 import { useStore } from "@/context/StoreContext";
 import { getApiUrl } from "@/lib/api";
 
-export default function ProductRecommendations({ productId = "home" }: { productId?: string }) {
+export default function ProductRecommendations({
+  productId = "home",
+  excludeIds = [],
+}: {
+  productId?: string;
+  excludeIds?: string[];
+}) {
   const { t } = useStore();
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<RecProduct[]>([]);
 
   useEffect(() => {
     const apiUrl = getApiUrl();
-    const url = productId === "home"
-      ? `${apiUrl}/customer/recommendations`
-      : `${apiUrl}/customer/recommendations/${productId}`;
+    const exclude = excludeIds.length
+      ? `?exclude=${encodeURIComponent(excludeIds.join(","))}`
+      : "";
+    const url =
+      productId === "home"
+        ? `${apiUrl}/customer/recommendations${exclude}`
+        : `${apiUrl}/customer/recommendations/${productId}${exclude}`;
     fetch(url)
       .then((r) => r.json())
       .then(setProducts)
       .catch(() => setProducts([]));
-  }, [productId]);
-
-  if (!products.length) return null;
+  }, [productId, excludeIds.join(",")]);
 
   return (
-    <section className="mt-16">
-      <h2 className="text-2xl font-bold mb-6">{t("recommended")}</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {products.map((p) => (
-          <Link key={p._id} href={`/products/${p._id}`} className="group">
-            <div className="aspect-square rounded-xl bg-muted overflow-hidden mb-2 relative">
-              <ProductImage src={p.image} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform" sizes="200px" />
-            </div>
-            <p className="text-sm font-medium line-clamp-1">{p.name}</p>
-            <p className="text-sm font-semibold"><PriceDisplay amount={p.price} /></p>
-          </Link>
-        ))}
-      </div>
-    </section>
+    <ProductRecRow
+      title={t("recommended")}
+      subtitle={t("trendingHint")}
+      products={products}
+    />
   );
 }

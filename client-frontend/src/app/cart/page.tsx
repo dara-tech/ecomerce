@@ -3,19 +3,23 @@
 import { useCart } from "@/context/CartContext";
 import ProductImage from "@/components/ui/ProductImage";
 import Link from "next/link";
-import { Trash2, Plus, Minus, ArrowRight } from "lucide-react";
+import { Trash2, Plus, Minus } from "lucide-react";
+import SmartShopRecommendations from "@/components/features/SmartShopRecommendations";
 
 export default function CartPage() {
   const { cartItems, removeFromCart, updateQty, cartTotal } = useCart();
 
   if (cartItems.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-32 text-center">
-        <h1 className="text-3xl font-bold mb-4">Your Cart is Empty</h1>
-        <p className="text-muted-foreground mb-8">Looks like you haven't added anything yet.</p>
-        <Link href="/products" className="inline-flex items-center justify-center gap-2 bg-foreground text-background px-8 h-12 rounded-full font-medium hover:bg-foreground/90 transition-all active:scale-95 shadow-sm">
-          Continue Shopping
-        </Link>
+      <div className="container mx-auto px-4 py-16 max-w-5xl">
+        <div className="text-center py-12">
+          <h1 className="text-3xl font-bold mb-4">Your Cart is Empty</h1>
+          <p className="text-muted-foreground mb-8">Looks like you haven&apos;t added anything yet.</p>
+          <Link href="/products" className="inline-flex items-center justify-center gap-2 bg-foreground text-background px-8 h-12 rounded-full font-medium hover:bg-foreground/90 transition-all active:scale-95 shadow-sm">
+            Continue Shopping
+          </Link>
+        </div>
+        <SmartShopRecommendations />
       </div>
     );
   }
@@ -106,6 +110,8 @@ export default function CartPage() {
           </div>
         </div>
       </div>
+
+      <SmartShopRecommendations />
     </div>
   );
 }

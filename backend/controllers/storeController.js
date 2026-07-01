@@ -1,5 +1,6 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
+import mongoose from 'mongoose';
 import RefundRequest from '../models/RefundRequest.js';
 import User from '../models/User.js';
 import WalletTransaction from '../models/WalletTransaction.js';
@@ -54,6 +55,57 @@ export async function validateCouponCode(req, res) {
       type: coupon.type,
       discount: Math.round(discount * 100) / 100,
       freeShipping,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+export async function validateCartItems(req, res) {
+  try {
+    const { items = [] } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.json({ valid: true, items: [], removed: [] });
+    }
+
+    const synced = [];
+    const removed = [];
+
+    for (const item of items) {
+      const productId = item._id || item.product;
+      const label = item.name || 'Item';
+
+      if (!productId || !mongoose.Types.ObjectId.isValid(String(productId))) {
+        removed.push({ _id: productId, name: label, reason: 'invalid' });
+        continue;
+      }
+
+      const product = await Product.findById(productId);
+      if (!product) {
+        removed.push({ _id: productId, name: label, reason: 'not_found' });
+        continue;
+      }
+
+      if (product.countInStock <= 0) {
+        removed.push({ _id: productId, name: product.name, reason: 'out_of_stock' });
+        continue;
+      }
+
+      const qty = Math.min(Math.max(1, Number(item.qty) || 1), product.countInStock);
+      synced.push({
+        _id: String(product._id),
+        name: product.name,
+        image: product.image,
+        price: product.price,
+        qty,
+        countInStock: product.countInStock,
+      });
+    }
+
+    res.json({
+      valid: removed.length === 0,
+      items: synced,
+      removed,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

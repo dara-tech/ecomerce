@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ShieldCheck, CreditCard, QrCode, Loader2, MapPin } from "lucide-react";
-import { useCart } from "@/context/CartContext";
+import { ShieldCheck, QrCode, Loader2, MapPin } from "lucide-react";
+import { useCart, type CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import ProductImage from "@/components/ui/ProductImage";
 import QRCode from "react-qr-code";
@@ -11,22 +11,25 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getApiUrl } from "@/lib/api";
+import { validateCartItems, formatRemovedCartMessage } from "@/lib/cartValidation";
 
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isBuyNow = searchParams.get("buyNow") === "1";
-  const { cartItems, cartTotal, clearCart } = useCart();
+  const payOrderId = searchParams.get("payOrder");
+  const { cartItems, cartTotal, clearCart, syncCart } = useCart();
   const { user } = useAuth();
   const apiUrl = getApiUrl();
   const [buyNowItem, setBuyNowItem] = useState<any>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'khqr' | 'aba' | 'wing' | 'acleda' | 'cod' | 'wallet'>('stripe');
+  const [pendingOrder, setPendingOrder] = useState<any>(null);
+  const [loadingPendingOrder, setLoadingPendingOrder] = useState(!!payOrderId);
+  const [paymentMethod, setPaymentMethod] = useState<"stripe" | "khqr">("stripe");
   const [isProcessing, setIsProcessing] = useState(false);
   const [khqrString, setKhqrString] = useState<string | null>(null);
   const [khqrMd5, setKhqrMd5] = useState<string | null>(null);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [khqrWaiting, setKhqrWaiting] = useState(false);
-  const isDev = process.env.NODE_ENV === 'development';
 
   const [contactEmail, setContactEmail] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -44,9 +47,19 @@ function CheckoutContent() {
   const [shippingMethods, setShippingMethods] = useState<any[]>([]);
   const [selectedShippingId, setSelectedShippingId] = useState('');
   const [shippingFee, setShippingFee] = useState(0);
-  const [walletBalance, setWalletBalance] = useState(0);
 
-  // Auto-fill user details from Auth Context
+  useEffect(() => {
+    if (payOrderId && !user) {
+      router.replace(`/login?redirect=${encodeURIComponent(`/checkout?payOrder=${payOrderId}`)}`);
+    }
+  }, [payOrderId, user, router]);
+
+  useEffect(() => {
+    if (user || payOrderId) return;
+    const redirect = isBuyNow ? "/checkout?buyNow=1" : "/checkout";
+    router.replace(`/login?redirect=${encodeURIComponent(redirect)}`);
+  }, [user, payOrderId, isBuyNow, router]);
+
   useEffect(() => {
     if (isBuyNow) {
       try {
@@ -58,13 +71,90 @@ function CheckoutContent() {
     }
   }, [isBuyNow]);
 
+  useEffect(() => {
+    if (!payOrderId) {
+      setPendingOrder(null);
+      setLoadingPendingOrder(false);
+      return;
+    }
+    if (!user?.token) {
+      setLoadingPendingOrder(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingPendingOrder(true);
+
+    fetch(`${apiUrl}/orders/${payOrderId}`, {
+      headers: { Authorization: `Bearer ${user.token}` },
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Order not found");
+        return res.json();
+      })
+      .then((order) => {
+        if (cancelled) return;
+        if (order.isPaid) {
+          toast.info("This order is already paid.");
+          router.replace(`/checkout/success?order_id=${order._id}`);
+          return;
+        }
+        setPendingOrder(order);
+        setCreatedOrderId(order._id);
+        setContactEmail(order.user?.email || user.email || "");
+        const guestName = order.guestName || "";
+        const nameParts = guestName.split(" ").filter(Boolean);
+        if (order.shippingAddress) {
+          setAddress(order.shippingAddress.address || "");
+          setCity(order.shippingAddress.city || "");
+          setZipCode(order.shippingAddress.postalCode || "");
+        }
+        if (nameParts.length) {
+          setFirstName(nameParts[0]);
+          setLastName(nameParts.slice(1).join(" "));
+        }
+        const method = String(order.paymentMethod || "").toLowerCase();
+        if (method.includes("khqr")) setPaymentMethod("khqr");
+        else setPaymentMethod("stripe");
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Could not load order for payment.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingPendingOrder(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [payOrderId, user, apiUrl, router]);
+
+  const isPayExistingOrder = !!pendingOrder;
+  const existingOrderId = pendingOrder?._id ?? null;
+
   const checkoutItems = useMemo(
-    () => (buyNowItem ? [buyNowItem] : cartItems),
-    [buyNowItem, cartItems]
+    () =>
+      pendingOrder
+        ? pendingOrder.orderItems.map((item: any) => ({
+            _id: item.product || item._id,
+            name: item.name,
+            image: item.image,
+            price: item.price,
+            qty: item.qty,
+          }))
+        : buyNowItem
+          ? [buyNowItem]
+          : cartItems,
+    [pendingOrder, buyNowItem, cartItems]
   );
   const checkoutTotal = useMemo(
-    () => (buyNowItem ? buyNowItem.price * buyNowItem.qty : cartTotal),
-    [buyNowItem, cartTotal]
+    () =>
+      pendingOrder
+        ? pendingOrder.itemsPrice
+        : buyNowItem
+          ? buyNowItem.price * buyNowItem.qty
+          : cartTotal,
+    [pendingOrder, buyNowItem, cartTotal]
   );
 
   const finishCheckout = useCallback(() => {
@@ -93,25 +183,19 @@ function CheckoutContent() {
       .catch(() => {});
   }, [apiUrl]);
 
-  useEffect(() => {
-    if (!user?.token) return;
-    fetch(`${apiUrl}/customer/wallet`, { headers: { Authorization: `Bearer ${user.token}` } })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setWalletBalance(d.balance || 0))
-      .catch(() => {});
-  }, [user, apiUrl]);
-
-  useEffect(() => {
-    if (!user && paymentMethod !== 'cod') {
-      setPaymentMethod('cod');
-    }
-  }, [user, paymentMethod]);
-
-  const subtotalAfterDiscount = Math.max(0, checkoutTotal - couponDiscount);
+  const subtotalAfterDiscount = isPayExistingOrder
+    ? checkoutTotal
+    : Math.max(0, checkoutTotal - couponDiscount);
   const taxRate = 0.10;
-  const taxes = subtotalAfterDiscount * taxRate;
-  const shippingPrice = freeShipping ? 0 : shippingFee;
-  const finalTotal = subtotalAfterDiscount + taxes + shippingPrice;
+  const taxes = isPayExistingOrder ? pendingOrder?.taxPrice ?? 0 : subtotalAfterDiscount * taxRate;
+  const shippingPrice = isPayExistingOrder
+    ? pendingOrder?.shippingPrice ?? 0
+    : freeShipping
+      ? 0
+      : shippingFee;
+  const finalTotal = isPayExistingOrder
+    ? pendingOrder?.totalPrice ?? checkoutTotal
+    : subtotalAfterDiscount + taxes + shippingPrice;
 
   useEffect(() => {
     if (!selectedShippingId || freeShipping) {
@@ -147,23 +231,52 @@ function CheckoutContent() {
     }
   };
 
-  const buildOrderPayload = () => ({
-    orderItems: checkoutItems,
-    shippingAddress: {
-      address,
-      city,
-      postalCode: zipCode,
-      country: 'Cambodia',
-    },
-    itemsPrice: checkoutTotal,
-    taxPrice: taxes,
-    shippingPrice,
-    totalPrice: finalTotal,
-    couponCode: couponCode || undefined,
-    discountAmount: couponDiscount,
-    guestEmail: !user ? contactEmail : undefined,
-    guestName: !user ? `${firstName} ${lastName}`.trim() : undefined,
-  });
+  const mapOrderItems = (items: CartItem[]) =>
+    items.map((item) => ({
+      product: item._id,
+      _id: item._id,
+      name: item.name,
+      image: item.image,
+      price: item.price,
+      qty: item.qty,
+    }));
+
+  const buildOrderPayload = (items: CartItem[]) => {
+    const itemsPrice = isPayExistingOrder
+      ? checkoutTotal
+      : items.reduce((acc, item) => acc + item.price * item.qty, 0);
+    const subtotal = isPayExistingOrder
+      ? checkoutTotal
+      : Math.max(0, itemsPrice - couponDiscount);
+    const orderTaxes = isPayExistingOrder ? pendingOrder?.taxPrice ?? 0 : subtotal * taxRate;
+    const orderShipping = isPayExistingOrder
+      ? pendingOrder?.shippingPrice ?? 0
+      : freeShipping
+        ? 0
+        : shippingFee;
+    const orderTotal = isPayExistingOrder
+      ? pendingOrder?.totalPrice ?? checkoutTotal
+      : subtotal + orderTaxes + orderShipping;
+
+    return {
+      ...(existingOrderId ? { existingOrderId } : {}),
+      orderItems: mapOrderItems(items),
+      shippingAddress: {
+        address,
+        city,
+        postalCode: zipCode,
+        country: "Cambodia",
+      },
+      itemsPrice,
+      taxPrice: orderTaxes,
+      shippingPrice: orderShipping,
+      totalPrice: orderTotal,
+      couponCode: couponCode || undefined,
+      discountAmount: couponDiscount,
+      guestEmail: !user ? contactEmail : undefined,
+      guestName: !user ? `${firstName} ${lastName}`.trim() : undefined,
+    };
+  };
 
   const orderHeaders = (): Record<string, string> => {
     const h: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -286,36 +399,8 @@ function CheckoutContent() {
     );
   };
 
-  const handleSimulateKhqrPayment = async () => {
-    if (!createdOrderId) return;
-
-    try {
-      const res = await fetch(`${apiUrl}/payments/webhook/KHQR`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: createdOrderId,
-          status: 'success',
-          transactionId: 'khqr_sim_' + Date.now(),
-        }),
-      });
-
-      if (!res.ok) {
-        toast.error("Failed to simulate payment.");
-        return;
-      }
-
-      toast.success("Mock payment confirmed.");
-      finishCheckout();
-      router.push(`/checkout/success?order_id=${createdOrderId}`);
-    } catch (e) {
-      console.error('Simulation failed', e);
-      toast.error("Failed to simulate payment.");
-    }
-  };
-
   const renderPaymentDetails = () => {
-    if (paymentMethod === 'stripe') {
+    if (paymentMethod === "stripe") {
       return (
         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="flex items-center gap-2 text-sm text-green-600 font-medium mb-2">
@@ -372,15 +457,6 @@ function CheckoutContent() {
                   </div>
                 )}
               </div>
-              {isDev && (
-                <button
-                  type="button"
-                  onClick={handleSimulateKhqrPayment}
-                  className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
-                >
-                  Dev only: simulate successful payment
-                </button>
-              )}
             </>
           ) : (
             <div className="text-center py-6">
@@ -397,42 +473,7 @@ function CheckoutContent() {
       );
     }
 
-    if (paymentMethod === 'wallet') {
-      return (
-        <p className="text-sm text-muted-foreground">
-          Your store credit balance of ${walletBalance.toFixed(2)} will be applied when you place the order.
-        </p>
-      );
-    }
-
-    if (paymentMethod === 'cod') {
-      return (
-        <div className="space-y-3 py-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <ShieldCheck className="w-5 h-5 text-green-600" />
-            Cash on Delivery
-          </div>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Pay when your order arrives. No online payment is required now.
-          </p>
-        </div>
-      );
-    }
-
-    const gatewayLabel =
-      paymentMethod === 'aba' ? 'ABA Pay' : paymentMethod === 'wing' ? 'Wing Bank' : 'ACLEDA';
-
-    return (
-      <div className="space-y-3 py-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <CreditCard className="w-5 h-5 text-primary" />
-          {gatewayLabel}
-        </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          You will be redirected to {gatewayLabel} to complete your payment after you click &quot;Place Order&quot;.
-        </p>
-      </div>
-    );
+    return null;
   };
 
   const getInputClass = (val: string) =>
@@ -443,83 +484,80 @@ function CheckoutContent() {
   const handlePlaceOrder = async () => {
     setHasSubmitted(true);
 
-    if (!contactEmail || !firstName || !lastName || !address || !city || !state || !zipCode) {
-      toast.error("Please fill out all contact and shipping information.");
-      return;
+    if (!isPayExistingOrder) {
+      if (!contactEmail || !firstName || !lastName || !address || !city || !state || !zipCode) {
+        toast.error("Please fill out all contact and shipping information.");
+        return;
+      }
     }
 
-    if (!user && paymentMethod !== 'cod') {
-      toast.error("Guest checkout supports Cash on Delivery only. Sign in for online payment.");
+    if (!user?.token) {
+      toast.error("Please sign in to complete checkout.");
       return;
     }
 
     setIsProcessing(true);
 
-    const orderData = buildOrderPayload();
-
     try {
-      if (paymentMethod === 'wallet' && user?.token) {
-        const createRes = await fetch(`${apiUrl}/orders`, {
-          method: 'POST',
-          headers: orderHeaders(),
-          body: JSON.stringify({ ...orderData, paymentMethod: 'Wallet' }),
-        });
-        const created = await createRes.json();
-        if (!created._id) throw new Error(created.message || 'Failed to create order');
+      let itemsForOrder = checkoutItems as CartItem[];
 
-        const payRes = await fetch(`${apiUrl}/store/wallet/pay/${created._id}`, {
-          method: 'POST',
-          headers: orderHeaders(),
-        });
-        const paid = await payRes.json();
-        if (!payRes.ok) throw new Error(paid.message || 'Wallet payment failed');
+      if (!isPayExistingOrder) {
+        const validation = await validateCartItems(
+          checkoutItems.map((item: { _id: string; name: string; qty: number }) => ({
+            _id: item._id,
+            name: item.name,
+            qty: item.qty,
+          }))
+        );
 
-        toast.success('Paid with wallet!');
-        finishCheckout();
-        router.push(`/checkout/success?order_id=${created._id}`);
+        if (validation) {
+          if (!buyNowItem) {
+            syncCart(validation.items);
+          }
+
+          if (validation.removed.length) {
+            toast.error(formatRemovedCartMessage(validation.removed));
+            if (validation.items.length === 0) {
+              toast.error("Add available products to your cart before checkout.");
+            }
+            setIsProcessing(false);
+            return;
+          }
+
+          itemsForOrder = validation.items;
+        }
+      }
+
+      if (!itemsForOrder.length) {
+        toast.error("Your cart is empty.");
+        setIsProcessing(false);
         return;
       }
 
-      if (paymentMethod === 'stripe') {
+      const orderData = buildOrderPayload(itemsForOrder);
+
+      if (paymentMethod === "stripe") {
         const res = await fetch(`${apiUrl}/payments/stripe/create-checkout-session`, {
-          method: 'POST',
+          method: "POST",
           headers: orderHeaders(),
           body: JSON.stringify(orderData),
         });
         const data = await res.json();
-        
-        if (data.url) {
-          // If prototype=true, it means Stripe failed to initialize (no key). 
-          // We can just simulate success and clear cart here for UX flow.
-          if (data.url.includes('prototype=true')) {
-            try {
-              await fetch(`${apiUrl}/payments/webhook/Stripe`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: data.orderId, status: 'success', transactionId: 'stripe_sim_' + Date.now() })
-              });
-            } catch (e) {
-              console.error('Simulation failed', e);
-            }
-            toast.success("Order placed successfully! (Stripe Prototype Mode)");
-            finishCheckout();
-            router.push(data.url);
-          } else {
-            // Redirect to real Stripe
-            window.location.href = data.url;
-          }
+
+        if (res.ok && data.url) {
+          window.location.href = data.url;
         } else {
-          toast.error("Failed to initialize Stripe checkout.");
+          toast.error(data.message || "Failed to initialize Stripe checkout.");
           setIsProcessing(false);
         }
-      } else if (paymentMethod === 'khqr') {
+      } else if (paymentMethod === "khqr") {
         const res = await fetch(`${apiUrl}/payments/khqr/generate`, {
-          method: 'POST',
+          method: "POST",
           headers: orderHeaders(),
           body: JSON.stringify(orderData),
         });
         const data = await res.json();
-        
+
         if (data.qrString) {
           setKhqrString(data.qrString);
           setKhqrMd5(data.md5 || null);
@@ -531,55 +569,40 @@ function CheckoutContent() {
           toast.error(data.message || data.error?.message || "Failed to generate KHQR.");
           setIsProcessing(false);
         }
-      } else if (['aba', 'wing', 'acleda'].includes(paymentMethod)) {
-        // Generic Mock Gateway
-        let gatewayStr = paymentMethod === 'aba' ? 'ABA Pay' : paymentMethod === 'wing' ? 'Wing' : 'ACLEDA';
-        const res = await fetch(`${apiUrl}/payments/mock/generate`, {
-          method: 'POST',
-          headers: orderHeaders(),
-          body: JSON.stringify({ ...orderData, gateway: gatewayStr }),
-        });
-        const data = await res.json();
-        
-        if (data.url) {
-          toast.success(`Redirecting to ${gatewayStr}...`);
-          window.location.href = data.url;
-        } else {
-          toast.error(`Failed to initialize ${gatewayStr}.`);
-          setIsProcessing(false);
-        }
-      } else if (paymentMethod === 'cod') {
-        // Direct order creation
-        const payload = { ...orderData, paymentMethod: 'Cash on Delivery' };
-        const res = await fetch(`${apiUrl}/orders`, {
-          method: 'POST',
-          headers: orderHeaders(),
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        
-        if (data._id) {
-          toast.success("Order placed successfully (Cash on Delivery)!");
-          finishCheckout();
-          router.push(`/checkout/success?order_id=${data._id}`);
-        } else {
-          toast.error("Failed to place order.");
-          setIsProcessing(false);
-        }
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
-      toast.error("An error occurred during checkout.");
+      const message =
+        error instanceof Error ? error.message : "An error occurred during checkout.";
+      toast.error(message);
       setIsProcessing(false);
     }
   };
+
+  if (loadingPendingOrder || (!user && !payOrderId)) {
+    return (
+      <div className="container mx-auto px-4 py-32 text-center text-muted-foreground flex flex-col items-center gap-3">
+        <Loader2 className="size-8 animate-spin" />
+        {loadingPendingOrder ? "Loading order…" : "Redirecting to sign in…"}
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="flex items-center gap-2 mb-8 text-muted-foreground">
         <ShieldCheck className="w-5 h-5 text-green-500" />
-        <span className="text-sm font-medium">Secure Checkout</span>
+        <span className="text-sm font-medium">
+          {isPayExistingOrder ? "Complete Payment" : "Secure Checkout"}
+        </span>
       </div>
+
+      {isPayExistingOrder && (
+        <div className="mb-6 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+          Complete payment for order <span className="font-mono font-medium">#{pendingOrder._id.slice(-8)}</span>.
+          Choose a payment method below, then continue to pay securely.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         {/* Forms */}
@@ -588,7 +611,10 @@ function CheckoutContent() {
             <h2 className="text-xl font-bold mb-4">Contact Information</h2>
             {!user && (
               <p className="text-sm text-muted-foreground mb-3 rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
-                Checking out as guest — online payments require an account. Cash on Delivery is available.
+                <Link href="/login?redirect=%2Fcheckout" className="text-primary underline font-medium">
+                  Sign in
+                </Link>{" "}
+                to pay with Stripe or KHQR.
               </p>
             )}
             <div className="space-y-4">
@@ -623,7 +649,7 @@ function CheckoutContent() {
             </div>
           </section>
 
-          {shippingMethods.length > 0 && (
+          {shippingMethods.length > 0 && !isPayExistingOrder && (
             <section>
               <h2 className="text-xl font-bold mb-4">Shipping Method</h2>
               <div className="space-y-2">
@@ -654,6 +680,7 @@ function CheckoutContent() {
             </section>
           )}
 
+          {!isPayExistingOrder && (
           <section>
             <h2 className="text-xl font-bold mb-4">Coupon Code</h2>
             <div className="flex gap-2">
@@ -679,6 +706,7 @@ function CheckoutContent() {
               </p>
             )}
           </section>
+          )}
 
           <section>
             <h2 className="text-xl font-bold mb-4">Payment Method</h2>
@@ -706,76 +734,9 @@ function CheckoutContent() {
                 </div>
               </button>
 
-
-              <button 
-                onClick={() => setPaymentMethod('aba')}
-                className={`relative p-5 rounded-2xl border-2 flex flex-col items-start gap-3 transition-all text-left overflow-hidden ${paymentMethod === 'aba' ? 'border-foreground bg-background shadow-md' : 'border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40'}`}
-              >
-                <div className="h-7 mb-1 flex items-center">
-                  <span className="font-bold text-blue-600 text-lg tracking-wider">ABA Pay</span>
-                </div>
-                <div>
-                  <span className={`block font-semibold ${paymentMethod === 'aba' ? 'text-foreground' : 'text-muted-foreground'}`}>ABA Pay</span>
-                  <span className={`text-xs mt-1 block ${paymentMethod === 'aba' ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>Secure payment via ABA</span>
-                </div>
-                
-                <div className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'aba' ? 'border-foreground' : 'border-muted-foreground/30'}`}>
-                  {paymentMethod === 'aba' && <div className="w-2.5 h-2.5 rounded-full bg-foreground animate-in zoom-in" />}
-                </div>
-              </button>
-
-              <button 
-                onClick={() => setPaymentMethod('wing')}
-                className={`relative p-5 rounded-2xl border-2 flex flex-col items-start gap-3 transition-all text-left overflow-hidden ${paymentMethod === 'wing' ? 'border-foreground bg-background shadow-md' : 'border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40'}`}
-              >
-                <div className="h-7 mb-1 flex items-center">
-                  <span className="font-bold text-green-500 text-lg tracking-wider">Wing</span>
-                </div>
-                <div>
-                  <span className={`block font-semibold ${paymentMethod === 'wing' ? 'text-foreground' : 'text-muted-foreground'}`}>Wing Bank</span>
-                  <span className={`text-xs mt-1 block ${paymentMethod === 'wing' ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>Pay with Wing app</span>
-                </div>
-                
-                <div className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'wing' ? 'border-foreground' : 'border-muted-foreground/30'}`}>
-                  {paymentMethod === 'wing' && <div className="w-2.5 h-2.5 rounded-full bg-foreground animate-in zoom-in" />}
-                </div>
-              </button>
-
-              <button 
-                onClick={() => setPaymentMethod('acleda')}
-                className={`relative p-5 rounded-2xl border-2 flex flex-col items-start gap-3 transition-all text-left overflow-hidden ${paymentMethod === 'acleda' ? 'border-foreground bg-background shadow-md' : 'border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40'}`}
-              >
-                <div className="h-7 mb-1 flex items-center">
-                  <span className="font-bold text-yellow-600 text-lg tracking-wider">ACLEDA</span>
-                </div>
-                <div>
-                  <span className={`block font-semibold ${paymentMethod === 'acleda' ? 'text-foreground' : 'text-muted-foreground'}`}>ACLEDA ToanChet</span>
-                  <span className={`text-xs mt-1 block ${paymentMethod === 'acleda' ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>Pay via ACLEDA app</span>
-                </div>
-                
-                <div className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'acleda' ? 'border-foreground' : 'border-muted-foreground/30'}`}>
-                  {paymentMethod === 'acleda' && <div className="w-2.5 h-2.5 rounded-full bg-foreground animate-in zoom-in" />}
-                </div>
-              </button>
-
-              <button 
-                onClick={() => setPaymentMethod('cod')}
-                className={`relative p-5 rounded-2xl border-2 flex flex-col items-start gap-3 transition-all text-left overflow-hidden ${paymentMethod === 'cod' ? 'border-foreground bg-background shadow-md' : 'border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40'}`}
-              >
-                <div className="h-7 mb-1 flex items-center">
-                  <ShieldCheck className="text-foreground w-6 h-6" />
-                </div>
-                <div>
-                  <span className={`block font-semibold ${paymentMethod === 'cod' ? 'text-foreground' : 'text-muted-foreground'}`}>Cash on Delivery</span>
-                  <span className={`text-xs mt-1 block ${paymentMethod === 'cod' ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>Pay when you receive it</span>
-                </div>
-                
-                <div className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'cod' ? 'border-foreground' : 'border-muted-foreground/30'}`}>
-                  {paymentMethod === 'cod' && <div className="w-2.5 h-2.5 rounded-full bg-foreground animate-in zoom-in" />}
-                </div>
-              </button>
-              <button 
-                onClick={() => setPaymentMethod('khqr')}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("khqr")}
                 className={`relative p-5 rounded-2xl border-2 flex flex-col items-start gap-3 transition-all text-left overflow-hidden ${paymentMethod === 'khqr' ? 'border-foreground bg-background shadow-md' : 'border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40'}`}
               >
                 {/* Real KHQR Logo */}
@@ -795,25 +756,6 @@ function CheckoutContent() {
                   {paymentMethod === 'khqr' && <div className="w-2.5 h-2.5 rounded-full bg-foreground animate-in zoom-in" />}
                 </div>
               </button>
-              {user && walletBalance > 0 && (
-                <button
-                  onClick={() => setPaymentMethod('wallet')}
-                  className={`relative p-5 rounded-2xl border-2 flex flex-col items-start gap-3 transition-all text-left overflow-hidden ${paymentMethod === 'wallet' ? 'border-foreground bg-background shadow-md' : 'border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40'}`}
-                >
-                  <div className="h-7 mb-1 flex items-center">
-                    <span className="font-bold text-purple-600 text-lg">Wallet</span>
-                  </div>
-                  <div>
-                    <span className={`block font-semibold ${paymentMethod === 'wallet' ? 'text-foreground' : 'text-muted-foreground'}`}>Store Credit</span>
-                    <span className={`text-xs mt-1 block ${paymentMethod === 'wallet' ? 'text-muted-foreground' : 'text-muted-foreground/70'}`}>
-                      Balance: ${walletBalance.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${paymentMethod === 'wallet' ? 'border-foreground' : 'border-muted-foreground/30'}`}>
-                    {paymentMethod === 'wallet' && <div className="w-2.5 h-2.5 rounded-full bg-foreground animate-in zoom-in" />}
-                  </div>
-                </button>
-              )}
             </div>
 
             {/* Dynamic Payment Details UI */}
@@ -829,7 +771,7 @@ function CheckoutContent() {
             <h2 className="text-xl font-bold mb-6">Your Order</h2>
             
             <div className="space-y-4 mb-6 border-b pb-6">
-              {checkoutItems.map((item) => (
+              {checkoutItems.map((item: { _id: string; name: string; image: string; price: number; qty: number }) => (
                 <div key={item._id} className="flex gap-4 items-center">
                   <div className="relative shrink-0 pt-2 pr-2">
                     <div className="w-16 h-16 bg-muted border rounded-xl overflow-hidden relative">
@@ -885,6 +827,8 @@ function CheckoutContent() {
                 </>
               ) : paymentMethod === 'khqr' && khqrString ? (
                 "Waiting for KHQR payment..."
+              ) : isPayExistingOrder ? (
+                "Continue to Payment"
               ) : (
                 "Place Order"
               )}

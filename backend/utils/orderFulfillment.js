@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 
 export async function validateOrderStock(orderItems) {
@@ -7,10 +8,21 @@ export async function validateOrderStock(orderItems) {
 
   for (const item of orderItems) {
     const productId = item.product || item._id;
+
+    if (!productId || !mongoose.Types.ObjectId.isValid(String(productId))) {
+      return {
+        ok: false,
+        message: `"${item.name}" is no longer available. Please remove it from your cart.`,
+      };
+    }
+
     const product = await Product.findById(productId);
 
     if (!product) {
-      return { ok: false, message: `Product not found: ${item.name}` };
+      return {
+        ok: false,
+        message: `"${item.name}" is no longer available. Please remove it from your cart.`,
+      };
     }
 
     if (product.countInStock < item.qty) {

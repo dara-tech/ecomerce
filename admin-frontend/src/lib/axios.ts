@@ -1,6 +1,21 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001/api';
+/** Use same-origin /api on HTTPS (Vercel proxy) to avoid mixed-content blocks. */
+export function getApiBase(): string {
+  const envUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5001/api';
+
+  if (
+    typeof window !== 'undefined' &&
+    window.location.protocol === 'https:' &&
+    envUrl.startsWith('http://')
+  ) {
+    return '/api';
+  }
+
+  return envUrl;
+}
+
+const API_BASE = getApiBase();
 
 const api = axios.create({
   baseURL: API_BASE,

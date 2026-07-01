@@ -1,7 +1,7 @@
 "use client";
 
 import { Globe, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@teispace/next-themes";
 import { useEffect, useState } from "react";
 import { useStore } from "@/context/StoreContext";
 import { LOCALES } from "@/lib/i18n";

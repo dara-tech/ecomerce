@@ -19,7 +19,6 @@ type OrderState = {
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
-  const isPrototype = searchParams.get("prototype") === "true";
   const { clearCart } = useCart();
   const { user } = useAuth();
   const apiUrl = getApiUrl();
@@ -43,21 +42,6 @@ function SuccessContent() {
       }
 
       try {
-        if (isPrototype) {
-          await fetch(`${apiUrl}/orders/${orderId}/pay`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${user.token}`,
-            },
-            body: JSON.stringify({
-              id: "stripe_sandbox_" + Date.now(),
-              status: "COMPLETED",
-              update_time: new Date().toISOString(),
-            }),
-          });
-        }
-
         const res = await fetch(`${apiUrl}/orders/${orderId}`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
@@ -105,7 +89,7 @@ function SuccessContent() {
     return () => {
       cancelled = true;
     };
-  }, [orderId, user, apiUrl, clearCart, isPrototype]);
+  }, [orderId, user, apiUrl, clearCart]);
 
   if (loading) {
     return (
@@ -135,8 +119,7 @@ function SuccessContent() {
     );
   }
 
-  const isCod = order.paymentMethod === "Cash on Delivery";
-  const isPaid = order.isPaid || isCod;
+  const isPaid = order.isPaid;
 
   if (!isPaid) {
     return (
@@ -181,13 +164,9 @@ function SuccessContent() {
         <CheckCircle2 className="w-24 h-24 text-green-500 relative z-10" />
       </div>
 
-      <h1 className="text-4xl font-black mb-4">
-        {isCod ? "Order Placed!" : "Payment Successful!"}
-      </h1>
+      <h1 className="text-4xl font-black mb-4">Payment Successful!</h1>
       <p className="text-muted-foreground text-lg mb-8 max-w-md">
-        {isCod
-          ? "Your order has been placed. Please prepare payment when your delivery arrives."
-          : "Thank you for your purchase. Your order has been securely processed and is now being prepared for shipping."}
+        Thank you for your purchase. Your order has been securely processed and is now being prepared for shipping.
       </p>
 
       <div className="w-full max-w-md bg-muted/30 border rounded-2xl p-6 mb-10 text-left">
@@ -207,7 +186,7 @@ function SuccessContent() {
           <div className="flex justify-between items-center border-b border-border/50 pb-3">
             <span className="text-muted-foreground">Status</span>
             <span className="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-500">
-              {isCod ? "Confirmed" : "Paid"}
+              Paid
             </span>
           </div>
           <div className="flex justify-between items-center pt-1">
