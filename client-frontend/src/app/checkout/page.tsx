@@ -731,7 +731,10 @@ function CheckoutContent() {
 
   const awaitingQrPayment = !!(khqrString || paywayQrString || paywayQrImage);
   const showMobileDock = !awaitingQrPayment;
-  const itemCount = checkoutItems.reduce((acc, item) => acc + item.qty, 0);
+  const itemCount = checkoutItems.reduce(
+    (acc: number, item: { qty: number }) => acc + item.qty,
+    0
+  );
 
   const placeOrderLabel = isProcessing
     ? t("processing")
