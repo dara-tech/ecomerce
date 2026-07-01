@@ -16,9 +16,14 @@ type OrderState = {
   status: string;
 };
 
+function isStripeMethod(method?: string) {
+  return method?.toLowerCase() === "stripe";
+}
+
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
+  const sessionId = searchParams.get("session_id");
   const { clearCart } = useCart();
   const { user } = useAuth();
   const apiUrl = getApiUrl();
@@ -33,54 +38,116 @@ function SuccessContent() {
       return;
     }
 
-    let cancelled = false;
+    if (!user?.token) {
+      setLoading(false);
+      return;
+    }
 
-    const verifyOrder = async () => {
-      if (!user?.token) {
-        setLoading(false);
-        return;
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setInterval> | undefined;
+
+    const authHeaders = {
+      Authorization: `Bearer ${user.token}`,
+      "Content-Type": "application/json",
+    };
+
+    const fetchOrder = async () => {
+      const res = await fetch(`${apiUrl}/orders/${orderId}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      if (!res.ok) return null;
+      return res.json();
+    };
+
+    const confirmStripeSession = async (current: OrderState) => {
+      if (!sessionId || current.isPaid || !isStripeMethod(current.paymentMethod)) {
+        return current;
       }
 
-      try {
-        const res = await fetch(`${apiUrl}/orders/${orderId}`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
+      const verifyRes = await fetch(`${apiUrl}/payments/stripe/verify-session`, {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify({ sessionId, orderId }),
+      });
 
-        if (!res.ok) {
+      if (!verifyRes.ok) return current;
+
+      const verifyData = await verifyRes.json();
+      if (verifyData.isPaid) {
+        const refreshed = await fetchOrder();
+        return refreshed || { ...current, isPaid: true };
+      }
+
+      return current;
+    };
+
+    const confirmKhqr = async (current: OrderState) => {
+      if (current.isPaid || current.paymentMethod !== "KHQR") return current;
+
+      const khqrRes = await fetch(`${apiUrl}/payments/khqr/check-status/${orderId}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      if (!khqrRes.ok) return current;
+
+      const khqrData = await khqrRes.json();
+      if (khqrData.isPaid || khqrData.status === "SUCCESS") {
+        const refreshed = await fetchOrder();
+        return refreshed || { ...current, isPaid: true };
+      }
+
+      return current;
+    };
+
+    const verifyOrder = async () => {
+      try {
+        let data = await fetchOrder();
+        if (!data) {
           if (!cancelled) setVerificationFailed(true);
           return;
         }
 
-        const data = await res.json();
+        data = await confirmStripeSession(data);
+        data = await confirmKhqr(data);
+
         if (cancelled) return;
 
         setOrder(data);
-
         if (data.isPaid) {
           clearCart();
-        } else if (data.paymentMethod === "KHQR") {
-          const khqrRes = await fetch(`${apiUrl}/payments/khqr/check-status/${orderId}`, {
-            headers: { Authorization: `Bearer ${user.token}` },
-          });
-          if (khqrRes.ok) {
-            const khqrData = await khqrRes.json();
-            if (khqrData.isPaid || khqrData.status === 'SUCCESS') {
-              const refreshed = await fetch(`${apiUrl}/orders/${orderId}`, {
-                headers: { Authorization: `Bearer ${user.token}` },
-              });
-              if (refreshed.ok) {
-                const refreshedOrder = await refreshed.json();
-                setOrder(refreshedOrder);
-                if (refreshedOrder.isPaid) clearCart();
-              }
-            }
-          }
+          setLoading(false);
+          return;
         }
+
+        // Keep polling briefly — webhook or Bakong may lag behind redirect
+        let attempts = 0;
+        pollTimer = setInterval(async () => {
+          if (cancelled || attempts >= 15) {
+            clearInterval(pollTimer);
+            if (!cancelled) setLoading(false);
+            return;
+          }
+          attempts += 1;
+
+          let latest = await fetchOrder();
+          if (!latest) return;
+
+          latest = await confirmStripeSession(latest);
+          latest = await confirmKhqr(latest);
+
+          if (cancelled) return;
+
+          setOrder(latest);
+          if (latest.isPaid) {
+            clearCart();
+            clearInterval(pollTimer);
+            setLoading(false);
+          }
+        }, 2000);
       } catch (e) {
         console.error("Order verification failed", e);
         if (!cancelled) setVerificationFailed(true);
-      } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     };
 
@@ -88,8 +155,39 @@ function SuccessContent() {
 
     return () => {
       cancelled = true;
+      if (pollTimer) clearInterval(pollTimer);
     };
-  }, [orderId, user, apiUrl, clearCart]);
+  }, [orderId, sessionId, user?.token, apiUrl, clearCart]);
+
+  if (!orderId) {
+    return (
+      <div className="container mx-auto px-4 py-20 max-w-3xl flex flex-col items-center text-center">
+        <AlertCircle className="w-16 h-16 text-destructive mb-6" />
+        <h1 className="text-2xl font-bold mb-3">Missing order reference</h1>
+        <Link href="/orders" className="text-primary underline font-medium">
+          View My Orders
+        </Link>
+      </div>
+    );
+  }
+
+  if (!user?.token) {
+    return (
+      <div className="container mx-auto px-4 py-20 max-w-3xl flex flex-col items-center text-center">
+        <AlertCircle className="w-16 h-16 text-amber-500 mb-6" />
+        <h1 className="text-2xl font-bold mb-3">Sign in to view your order</h1>
+        <p className="text-muted-foreground mb-8 max-w-md">
+          Your payment may have completed. Sign in with the same account used at checkout.
+        </p>
+        <Link
+          href={`/login?redirect=${encodeURIComponent(`/checkout/success?order_id=${orderId}${sessionId ? `&session_id=${sessionId}` : ""}`)}`}
+          className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-primary text-primary-foreground font-semibold"
+        >
+          Sign in
+        </Link>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -100,7 +198,7 @@ function SuccessContent() {
     );
   }
 
-  if (!orderId || verificationFailed || !order) {
+  if (verificationFailed || !order) {
     return (
       <div className="container mx-auto px-4 py-20 max-w-3xl flex flex-col items-center text-center">
         <AlertCircle className="w-16 h-16 text-destructive mb-6" />
@@ -128,8 +226,8 @@ function SuccessContent() {
         <h1 className="text-2xl font-bold mb-3">Payment pending</h1>
         <p className="text-muted-foreground mb-8 max-w-md">
           {order.paymentMethod === "KHQR"
-            ? "Your KHQR payment has not been confirmed yet. If you already paid, wait a moment and refresh, or return to checkout to continue waiting."
-            : "Your payment is still being processed. Please check back shortly."}
+            ? "Your KHQR payment has not been confirmed yet. If you already paid, wait a moment and refresh, or check Orders."
+            : "Your Stripe payment is still being confirmed. Refresh this page in a few seconds."}
         </p>
         <div className="w-full max-w-md bg-muted/30 border rounded-2xl p-6 mb-8 text-left">
           <div className="flex justify-between items-center">
@@ -144,14 +242,13 @@ function SuccessContent() {
           >
             View Orders
           </Link>
-          {order.paymentMethod === "KHQR" && (
-            <Link
-              href="/checkout"
-              className="flex-1 inline-flex justify-center items-center gap-2 h-12 px-6 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
-            >
-              Back to Checkout
-            </Link>
-          )}
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="flex-1 inline-flex justify-center items-center gap-2 h-12 px-6 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
+          >
+            Refresh status
+          </button>
         </div>
       </div>
     );

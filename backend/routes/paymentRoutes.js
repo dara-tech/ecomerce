@@ -59,6 +59,49 @@ async function markKhqrOrderPaid(order, bakongData = {}) {
   return order;
 }
 
+async function markStripeOrderPaid(order, session) {
+  if (order.isPaid && order.stockDeducted) return order;
+
+  if (!order.isPaid) {
+    order.isPaid = true;
+    order.paidAt = Date.now();
+    order.paymentResult = {
+      id: session.payment_intent,
+      status: session.payment_status,
+      update_time: new Date().toISOString(),
+      email_address: session.customer_details?.email,
+    };
+    order.status = 'paid';
+    order.timeline.push({
+      status: 'paid',
+      note: 'Payment confirmed via Stripe',
+    });
+    await order.save();
+
+    const paymentLog = new PaymentLog({
+      order: order._id,
+      user: order.user,
+      gateway: 'Stripe',
+      status: 'success',
+      amount: (session.amount_total || 0) / 100,
+      currency: (session.currency || 'usd').toUpperCase(),
+      transactionId: session.payment_intent,
+      webhookData: session,
+      errorMessage: '',
+    });
+    await paymentLog.save();
+  }
+
+  const stockResult = await fulfillOrderStock(order);
+  if (!stockResult.ok) {
+    console.error(`Stock deduction failed for Stripe order ${order._id}:`, stockResult.message);
+  }
+
+  await awardLoyaltyPoints(order);
+
+  return order;
+}
+
 function isBakongPaymentSuccess(bakongResponse) {
   // Bakong success: responseCode 0 + transaction data with hash (no "status" field)
   return (
@@ -226,7 +269,7 @@ router.post('/stripe/create-checkout-session', protect, async (req, res) => {
         payment_method_types: ['card'],
         line_items,
         mode: 'payment',
-        success_url: `${clientUrl}/checkout/success?order_id=${order._id}`,
+        success_url: `${clientUrl}/checkout/success?order_id=${order._id}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${clientUrl}/checkout${existingOrderId ? `?payOrder=${order._id}` : ''}`,
         client_reference_id: order._id.toString(),
       });
@@ -262,39 +305,11 @@ router.post('/stripe/webhook', async (req, res) => {
   // Handle the event
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
-    
-    // Fulfill the purchase
     const orderId = session.client_reference_id;
     try {
       const order = await Order.findById(orderId);
       if (order) {
-        order.isPaid = true;
-        order.paidAt = Date.now();
-        order.paymentResult = {
-          id: session.payment_intent,
-          status: session.payment_status,
-          update_time: new Date().toISOString(),
-          email_address: session.customer_details?.email,
-        };
-        await order.save();
-
-        const stockResult = await fulfillOrderStock(order);
-        if (!stockResult.ok) {
-          console.error(`Stock deduction failed for Stripe order ${orderId}:`, stockResult.message);
-        }
-
-        const paymentLog = new PaymentLog({
-          order: order._id,
-          user: order.user,
-          gateway: 'Stripe',
-          status: 'success',
-          amount: session.amount_total / 100,
-          currency: session.currency.toUpperCase(),
-          transactionId: session.payment_intent,
-          webhookData: session,
-          errorMessage: ''
-        });
-        await paymentLog.save();
+        await markStripeOrderPaid(order, session);
         console.log(`Order ${orderId} successfully marked as paid via Stripe webhook.`);
       }
     } catch (dbError) {
@@ -304,6 +319,55 @@ router.post('/stripe/webhook', async (req, res) => {
 
   res.status(200).send();
 });
+
+// @route   POST /api/payments/stripe/verify-session
+// @desc    Confirm Stripe payment on success page (fallback when webhook is delayed/missing)
+// @access  Private
+router.post('/stripe/verify-session', protect, async (req, res) => {
+  try {
+    const { sessionId, orderId } = req.body;
+    if (!sessionId || !orderId) {
+      return res.status(400).json({ message: 'sessionId and orderId are required' });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized for this order' });
+    }
+
+    if (order.isPaid) {
+      return res.status(200).json({ isPaid: true, orderId: order._id, status: 'paid' });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(String(sessionId));
+    if (session.client_reference_id !== order._id.toString()) {
+      return res.status(400).json({ message: 'Stripe session does not match this order' });
+    }
+
+    const paid =
+      session.payment_status === 'paid' ||
+      (session.status === 'complete' && session.payment_status !== 'unpaid');
+
+    if (paid) {
+      await markStripeOrderPaid(order, session);
+      return res.status(200).json({ isPaid: true, orderId: order._id, status: 'paid' });
+    }
+
+    return res.status(200).json({
+      isPaid: false,
+      status: session.payment_status || session.status || 'pending',
+    });
+  } catch (error) {
+    console.error('Stripe verify-session error:', error);
+    res.status(502).json({
+      message: error.message || 'Could not verify Stripe payment',
+    });
+  }
+});
+
 // @route   POST /api/payments/khqr/generate
 // @desc    Generate a KHQR string for the order
 // @access  Private
