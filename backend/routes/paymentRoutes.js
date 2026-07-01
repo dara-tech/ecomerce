@@ -140,6 +140,64 @@ function paymentRouteError(res, error) {
   res.status(status).json({ message: error.message || 'Server Error' });
 }
 
+/** Stripe rejects empty/invalid image URLs — omit them instead of passing []. */
+function stripeHttpsImage(image) {
+  if (typeof image !== 'string') return undefined;
+  const trimmed = image.trim();
+  if (!trimmed || !/^https:\/\//i.test(trimmed)) return undefined;
+  return trimmed;
+}
+
+function buildStripeLineItems(items) {
+  return items.map((item) => {
+    const name = String(item.name || 'Product').slice(0, 250);
+    const rawAmount = Math.round(Number(item.price) * 100);
+    const unit_amount = Number.isFinite(rawAmount) && rawAmount > 0 ? rawAmount : 100;
+    const quantity = Math.max(1, Math.round(Number(item.qty) || 1));
+
+    const product_data = { name };
+    const image = stripeHttpsImage(item.image);
+    if (image) product_data.images = [image];
+
+    return {
+      price_data: {
+        currency: 'usd',
+        product_data,
+        unit_amount,
+      },
+      quantity,
+    };
+  });
+}
+
+function appendStripeFeeLineItems(line_items, taxPrice, shippingPrice) {
+  const taxCents = Math.round(Number(taxPrice) * 100);
+  if (Number.isFinite(taxCents) && taxCents > 0) {
+    line_items.push({
+      price_data: {
+        currency: 'usd',
+        product_data: { name: 'Tax' },
+        unit_amount: taxCents,
+      },
+      quantity: 1,
+    });
+  }
+
+  const shipCents = Math.round(Number(shippingPrice) * 100);
+  if (Number.isFinite(shipCents) && shipCents > 0) {
+    line_items.push({
+      price_data: {
+        currency: 'usd',
+        product_data: { name: 'Shipping' },
+        unit_amount: shipCents,
+      },
+      quantity: 1,
+    });
+  }
+
+  return line_items;
+}
+
 // Initialize Stripe (uses dummy key if not provided in .env)
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy');
 
@@ -155,25 +213,21 @@ router.post('/stripe/create-checkout-session', protect, async (req, res) => {
       ? order.orderItems
       : orderItems;
 
-    const line_items = items.map((item) => ({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: item.name,
-          images: item.image ? [item.image] : [],
-        },
-        unit_amount: Math.round(item.price * 100),
-      },
-      quantity: item.qty,
-    }));
+    const line_items = appendStripeFeeLineItems(
+      buildStripeLineItems(items),
+      req.body.taxPrice ?? order.taxPrice,
+      req.body.shippingPrice ?? order.shippingPrice
+    );
+
+    const clientUrl = (process.env.CLIENT_URL || 'http://localhost:3000').replace(/\/$/, '');
 
     try {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         line_items,
         mode: 'payment',
-        success_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/checkout/success?order_id=${order._id}`,
-        cancel_url: `${process.env.CLIENT_URL || 'http://localhost:3000'}/checkout${existingOrderId ? `?payOrder=${order._id}` : ''}`,
+        success_url: `${clientUrl}/checkout/success?order_id=${order._id}`,
+        cancel_url: `${clientUrl}/checkout${existingOrderId ? `?payOrder=${order._id}` : ''}`,
         client_reference_id: order._id.toString(),
       });
 
