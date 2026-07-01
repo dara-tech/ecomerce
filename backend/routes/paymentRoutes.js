@@ -484,6 +484,7 @@ router.get('/khqr/check-status/:orderId', protect, async (req, res) => {
         message: 'Payment provider unreachable; still waiting',
         status: 'PENDING',
         isPaid: false,
+        providerUnavailable: true,
       });
     }
 
@@ -497,6 +498,7 @@ router.get('/khqr/check-status/:orderId', protect, async (req, res) => {
         message: 'Unexpected payment provider response',
         status: 'PENDING',
         isPaid: false,
+        providerUnavailable: true,
       });
     }
 

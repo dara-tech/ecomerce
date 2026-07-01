@@ -30,6 +30,7 @@ function CheckoutContent() {
   const [khqrMd5, setKhqrMd5] = useState<string | null>(null);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [khqrWaiting, setKhqrWaiting] = useState(false);
+  const [khqrProviderIssue, setKhqrProviderIssue] = useState(false);
 
   const [contactEmail, setContactEmail] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -290,16 +291,34 @@ function CheckoutContent() {
 
   const checkKhqrPaymentNow = useCallback(async (orderId: string, token: string) => {
     const md5Query = khqrMd5Ref.current ? `?md5=${encodeURIComponent(khqrMd5Ref.current)}` : '';
-    const statusRes = await fetch(
-      `${apiUrl}/payments/khqr/check-status/${orderId}${md5Query}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-    if (statusRes.ok) {
-      const statusData = await statusRes.json();
-      if (statusData.isPaid || statusData.status === 'SUCCESS') {
-        return true;
+    try {
+      const statusRes = await fetch(
+        `${apiUrl}/payments/khqr/check-status/${orderId}${md5Query}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        }
+      );
+
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        if (statusData.isPaid || statusData.status === 'SUCCESS') {
+          return { paid: true as const };
+        }
+        return {
+          paid: false as const,
+          providerUnavailable: Boolean(statusData.providerUnavailable),
+        };
       }
+
+      if (statusRes.status === 401) {
+        return { paid: false as const, authExpired: true as const };
+      }
+    } finally {
+      clearTimeout(timeoutId);
     }
 
     const orderRes = await fetch(`${apiUrl}/orders/${orderId}`, {
@@ -307,10 +326,10 @@ function CheckoutContent() {
     });
     if (orderRes.ok) {
       const orderData = await orderRes.json();
-      if (orderData?.isPaid) return true;
+      if (orderData?.isPaid) return { paid: true as const };
     }
 
-    return false;
+    return { paid: false as const };
   }, [apiUrl]);
 
   useEffect(() => {
@@ -321,10 +340,13 @@ function CheckoutContent() {
 
     let cancelled = false;
     let intervalId: ReturnType<typeof setInterval>;
+    let pollDelayMs = 4000;
+    let errorStreak = 0;
     const orderId = createdOrderId;
     const token = user.token;
 
     setKhqrWaiting(true);
+    setKhqrProviderIssue(false);
 
     const handlePaymentSuccess = () => {
       if (cancelled) return;
@@ -336,18 +358,42 @@ function CheckoutContent() {
       router.push(`/checkout/success?order_id=${orderId}`);
     };
 
+    const scheduleNextPoll = () => {
+      clearInterval(intervalId);
+      intervalId = setInterval(poll, pollDelayMs);
+    };
+
     const poll = async () => {
       if (cancelled) return;
       try {
-        const paid = await checkKhqrPaymentNow(orderId, token);
-        if (paid) handlePaymentSuccess();
-      } catch (error) {
-        console.error("KHQR polling error", error);
+        const result = await checkKhqrPaymentNow(orderId, token);
+        errorStreak = 0;
+        pollDelayMs = 4000;
+
+        if (result.paid) {
+          handlePaymentSuccess();
+          return;
+        }
+
+        if (result.authExpired) {
+          toast.error("Session expired. Please sign in again.");
+          return;
+        }
+
+        if (result.providerUnavailable) {
+          setKhqrProviderIssue(true);
+        }
+      } catch {
+        errorStreak += 1;
+        if (errorStreak >= 3) {
+          pollDelayMs = Math.min(pollDelayMs * 2, 15000);
+          scheduleNextPoll();
+        }
       }
     };
 
     poll();
-    intervalId = setInterval(poll, 2000);
+    intervalId = setInterval(poll, pollDelayMs);
 
     return () => {
       cancelled = true;
@@ -433,27 +479,38 @@ function CheckoutContent() {
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Waiting for payment confirmation...
                     </div>
+                    {khqrProviderIssue && (
+                      <p className="text-xs text-amber-600 max-w-[280px]">
+                        Auto-confirm may be delayed. If you already paid, open order status below.
+                      </p>
+                    )}
                     <button
                       type="button"
                       onClick={async () => {
                         if (!createdOrderId || !user?.token) return;
                         try {
-                          const paid = await checkKhqrPaymentNow(createdOrderId, user.token);
-                          if (paid) {
+                          const result = await checkKhqrPaymentNow(createdOrderId, user.token);
+                          if (result.paid) {
                             toast.success("Payment confirmed!");
                             finishCheckout();
                             router.push(`/checkout/success?order_id=${createdOrderId}`);
                           } else {
-                            toast.info("Payment not detected yet. Keep this page open after scanning.");
+                            toast.info("Payment not detected yet. You can still open order status if you already paid.");
                           }
                         } catch {
-                          toast.error("Failed to check payment status.");
+                          toast.error("Network error. Try again or open order status.");
                         }
                       }}
                       className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
                     >
                       I already paid — check now
                     </button>
+                    <Link
+                      href={`/checkout/success?order_id=${createdOrderId}`}
+                      className="text-xs font-semibold text-primary underline hover:opacity-80"
+                    >
+                      View order status
+                    </Link>
                   </div>
                 )}
               </div>
