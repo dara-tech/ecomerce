@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { PageLoader } from "@/components/ui/PageLoader";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { getApiUrl } from "@/lib/api";
@@ -149,21 +149,14 @@ function TelegramCallbackContent() {
     );
   }
 
-  return (
-    <div className="flex min-h-[calc(100dvh-5rem)] flex-col items-center justify-center gap-3 px-4">
-      <Loader2 className="size-6 animate-spin text-muted-foreground" />
-      <p className="text-sm text-muted-foreground">Completing Telegram sign-in…</p>
-    </div>
-  );
+  return <PageLoader label="Completing Telegram sign-in…" fullScreen />;
 }
 
 export default function TelegramCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[calc(100dvh-5rem)] items-center justify-center">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        </div>
+        <PageLoader />
       }
     >
       <TelegramCallbackContent />

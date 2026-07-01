@@ -4,6 +4,10 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import ProductImage from "@/components/ui/ProductImage";
 import PriceDisplay from "@/components/features/PriceDisplay";
+import MobileProductCard, {
+  MobileProductRail,
+  MobileSectionHeader,
+} from "@/components/ui/MobileProductCard";
 import { useCart } from "@/context/CartContext";
 import { toast } from "sonner";
 
@@ -49,59 +53,71 @@ export default function ProductRecRow({
     toast.success("Added to cart");
   };
 
+  const quickAddFooter = (p: RecProduct) => {
+    if (!showQuickAdd) return null;
+    if (inCart.has(p._id)) {
+      return (
+        <p className="flex h-8 items-center justify-center text-center text-[11px] font-medium text-primary">
+          In your cart
+        </p>
+      );
+    }
+    return (
+      <button
+        type="button"
+        onClick={() => handleQuickAdd(p)}
+        className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-full border border-border text-xs font-medium transition-colors hover:bg-muted"
+      >
+        <Plus className="size-3.5" />
+        Add
+      </button>
+    );
+  };
+
   return (
-    <section className="space-y-3">
-      <div>
-        <h3 className="text-lg font-bold tracking-tight">{title}</h3>
-        {subtitle && (
-          <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
-        )}
-      </div>
-      <div className="flex items-stretch gap-4 overflow-x-auto pb-2 snap-x no-scrollbar -mx-1 px-1">
+    <section className="md:container md:mx-auto md:px-4">
+      <MobileSectionHeader title={title} subtitle={subtitle} href="/products" />
+
+      <MobileProductRail>
         {products.map((p) => (
-          <div
+          <MobileProductCard
             key={p._id}
-            className="shrink-0 w-[9.5rem] sm:w-44 snap-start group flex flex-col"
-          >
-            <Link href={`/products/${p._id}`} className="block flex-1">
-              <div className="aspect-square rounded-xl bg-muted overflow-hidden mb-2 relative border border-border/40">
+            id={p._id}
+            name={p.name}
+            image={p.image}
+            price={p.price}
+            category={p.category}
+            footer={quickAddFooter(p)}
+          />
+        ))}
+      </MobileProductRail>
+
+      <div className="hidden gap-6 md:grid md:grid-cols-4 lg:grid-cols-6">
+        {products.map((p) => (
+          <div key={`desktop-${p._id}`} className="flex flex-col">
+            <Link href={`/products/${p._id}`} className="group block flex-1">
+              <div className="relative mb-3 aspect-square overflow-hidden rounded-xl border border-border/40 bg-muted">
                 <ProductImage
                   src={p.image}
                   alt={p.name}
                   fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
                   sizes="176px"
                 />
               </div>
-              <p className="text-sm font-medium line-clamp-2 min-h-[2.5rem] leading-snug group-hover:text-primary transition-colors">
+              <p className="line-clamp-2 min-h-10 text-sm font-medium leading-5 group-hover:text-primary">
                 {p.name}
               </p>
               {p.category && (
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                <p className="mt-0.5 truncate text-[10px] uppercase tracking-wider text-muted-foreground">
                   {p.category}
                 </p>
               )}
-              <p className="text-sm font-semibold mt-1">
+              <p className="mt-1 text-sm font-semibold tabular-nums">
                 <PriceDisplay amount={p.price} />
               </p>
             </Link>
-            <div className="mt-auto pt-2 shrink-0">
-              {showQuickAdd && !inCart.has(p._id) && (
-                <button
-                  type="button"
-                  onClick={() => handleQuickAdd(p)}
-                  className="w-full inline-flex items-center justify-center gap-1 h-8 rounded-full border border-border text-xs font-medium hover:bg-muted transition-colors"
-                >
-                  <Plus className="size-3.5" />
-                  Add
-                </button>
-              )}
-              {inCart.has(p._id) && (
-                <p className="text-center text-[11px] font-medium text-primary h-8 flex items-center justify-center">
-                  In your cart
-                </p>
-              )}
-            </div>
+            <div className="mt-2 shrink-0">{quickAddFooter(p)}</div>
           </div>
         ))}
       </div>

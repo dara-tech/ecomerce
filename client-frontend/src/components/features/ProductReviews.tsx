@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
-
 import { getApiUrl } from '@/lib/api';
+import { SectionLoader } from "@/components/ui/PageLoader";
 
 export default function ProductReviews({ productId }: { productId: string }) {
   const { user } = useAuth();
@@ -87,7 +87,7 @@ export default function ProductReviews({ productId }: { productId: string }) {
       )}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading reviews…</p>
+        <SectionLoader label="Loading reviews…" compact />
       ) : reviews.length === 0 ? (
         <p className="text-sm text-muted-foreground">No reviews yet. Be the first!</p>
       ) : (

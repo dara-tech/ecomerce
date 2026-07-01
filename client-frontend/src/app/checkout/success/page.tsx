@@ -1,7 +1,8 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, Package, ArrowRight, ArrowLeft, Clock, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, Package, ArrowRight, ArrowLeft, Clock, AlertCircle } from "lucide-react";
+import { PageLoader } from "@/components/ui/PageLoader";
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
@@ -215,12 +216,7 @@ function SuccessContent() {
   }
 
   if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-20 max-w-3xl flex flex-col items-center text-center">
-        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Verifying your payment...</p>
-      </div>
-    );
+    return <PageLoader label="Verifying your payment…" />;
   }
 
   if (verificationFailed || !order) {
@@ -343,11 +339,7 @@ function SuccessContent() {
 export default function CheckoutSuccessPage() {
   return (
     <Suspense
-      fallback={
-        <div className="container mx-auto px-4 py-20 flex justify-center">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
+      fallback={<PageLoader />}
     >
       <SuccessContent />
     </Suspense>

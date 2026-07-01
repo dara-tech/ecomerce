@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, Mail, LogOut, Package, Wallet, Star } from "lucide-react";
 import Link from "next/link";
+import { PageLoader } from "@/components/ui/PageLoader";
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
@@ -23,7 +24,7 @@ export default function ProfilePage() {
   }, [user, router]);
 
   if (!user) {
-    return <div className="container mx-auto px-4 py-32 text-center text-muted-foreground">Loading profile...</div>;
+    return <PageLoader label="Loading profile…" />;
   }
 
   return (

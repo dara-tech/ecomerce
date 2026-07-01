@@ -127,6 +127,15 @@
   html {
     @apply font-sans;
   }
+  .mobile-app-shell {
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  @media (max-width: 767px) {
+    .mobile-app-shell main {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
 }
 
 @layer utilities {

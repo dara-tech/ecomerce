@@ -10,7 +10,6 @@ import {
   Package,
   FolderTree,
   LayoutDashboard,
-  Menu,
   ChevronRight,
   Info,
   BookOpen,
@@ -23,7 +22,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { useCompare } from "@/context/CompareContext";
 import { useStore } from "@/context/StoreContext";
-import NavPreferences, { PreferencesPanel } from "@/components/features/NavPreferences";
+import NavPreferences from "@/components/features/NavPreferences";
 import { useEffect, useRef, useState } from "react";
 
 const pillShell =
@@ -49,7 +48,6 @@ export default function Navbar() {
   const storeName = settings?.storeName || "Store";
   const pathname = usePathname();
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
   const userRef = useRef<HTMLDivElement>(null);
 
@@ -64,7 +62,6 @@ export default function Navbar() {
   ];
 
   useEffect(() => {
-    setMobileOpen(false);
     setUserOpen(false);
   }, [pathname]);
 
@@ -91,18 +88,37 @@ export default function Navbar() {
     "relative h-9 w-9 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground rounded-full flex items-center justify-center transition-colors";
 
   return (
-    <div className="sticky top-4 z-50 w-full px-4 mb-6">
+    <>
+      {/* Mobile app header */}
+      <header
+        data-mobile-header
+        className="sticky top-0 z-50 flex min-h-12 items-center justify-between border-b border-border/60 bg-background px-4 pb-2 md:hidden"
+        style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
+      >
+        <Link href="/" className="flex min-w-0 items-center gap-2">
+          {settings?.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={settings.logoUrl} alt={storeName} className="h-6 max-w-[120px] object-contain" />
+          ) : (
+            <span className="rounded-full bg-foreground px-3 py-1 text-[11px] font-black uppercase tracking-wider text-background">
+              {storeName}
+            </span>
+          )}
+        </Link>
+        <div className="flex items-center gap-0.5">
+          <NavPreferences />
+          <Link href="/wishlist" className={iconBtn} aria-label={t("wishlist")}>
+            <Heart className="size-4" />
+            <Badge count={wishlistItems.length} className="bg-red-500" />
+          </Link>
+        </div>
+      </header>
+
+      {/* Desktop floating nav */}
+      <div className="sticky top-4 z-50 mb-6 hidden w-full px-4 md:block">
       <div className="container mx-auto max-w-7xl relative flex items-center justify-between gap-3 pointer-events-none min-h-14">
         {/* Logo pill */}
         <header className={`${pillShell} px-3 sm:px-4 gap-2 z-10`}>
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            className="md:hidden text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-muted transition-colors"
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          >
-            <Menu className="size-5" />
-          </button>
           <Link href="/" className="flex items-center">
             {settings?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -230,88 +246,8 @@ export default function Navbar() {
             )}
           </div>
         </div>
-
-        {/* Mobile menu — floating card */}
-        {mobileOpen && (
-          <div className="pointer-events-auto absolute top-16 left-0 right-0 md:hidden mt-1 bg-popover/95 backdrop-blur-md border border-border/50 rounded-2xl p-2 shadow-xl space-y-0.5 z-20">
-            {NAV_ITEMS.map((tab) => (
-              <Link
-                key={tab.path}
-                href={tab.path}
-                onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
-                  isActive(tab.path)
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <tab.icon className="size-5 opacity-70" />
-                {tab.name}
-              </Link>
-            ))}
-            <div className="h-px bg-border/50 my-2" />
-            <Link
-              href="/wishlist"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted font-medium"
-            >
-              <Heart className="size-5" /> {t("wishlist")}
-              {wishlistItems.length > 0 && (
-                <span className="ml-auto text-xs bg-red-500/10 text-red-600 px-2 py-0.5 rounded-full">
-                  {wishlistItems.length}
-                </span>
-              )}
-            </Link>
-            <Link
-              href="/compare"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted font-medium"
-            >
-              <GitCompare className="size-5" /> {t("compare")}
-              {compareItems.length > 0 && (
-                <span className="ml-auto text-xs bg-blue-500/10 text-blue-600 px-2 py-0.5 rounded-full">
-                  {compareItems.length}
-                </span>
-              )}
-            </Link>
-            <div className="px-4 py-3 border-t border-border/50 mt-1">
-              <PreferencesPanel className="space-y-4" />
-            </div>
-            {user ? (
-              <>
-                <div className="h-px bg-border/50 my-2" />
-                <Link href="/profile" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted font-medium">
-                  <User className="size-5" /> My Profile
-                </Link>
-                <Link href="/orders" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted font-medium">
-                  <Package className="size-5" /> {t("orders")}
-                </Link>
-                <Link href="/wallet" onClick={() => setMobileOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted font-medium">
-                  <Wallet className="size-5" /> {t("wallet")}
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    router.push("/login");
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-destructive hover:bg-destructive/10 font-medium"
-                >
-                  <LogOut className="size-5" /> Logout
-                </button>
-              </>
-            ) : (
-              <Link
-                href="/login"
-                onClick={() => setMobileOpen(false)}
-                className="flex items-center justify-center gap-2 mx-2 mt-2 py-3 rounded-full bg-primary text-primary-foreground text-sm font-medium"
-              >
-                <User className="size-4" /> {t("signIn")}
-              </Link>
-            )}
-          </div>
-        )}
       </div>
     </div>
+    </>
   );
 }

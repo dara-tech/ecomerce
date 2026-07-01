@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { InlineLoader } from "@/components/ui/PageLoader";
 import { ReactNode } from "react";
 
 type SocialButtonProps = {
@@ -15,12 +15,12 @@ export function SocialButton({ label, icon, loading, disabled, hint }: SocialBut
   return (
     <div className="w-full">
       <div
-        className={`relative flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-border bg-background text-sm font-medium text-foreground transition-colors ${
+        className={`relative flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl border border-border bg-background text-sm font-medium text-foreground transition-colors md:h-11 md:rounded-xl ${
           disabled ? "cursor-not-allowed opacity-50" : ""
         }`}
       >
         {loading ? (
-          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+          <InlineLoader />
         ) : (
           icon
         )}

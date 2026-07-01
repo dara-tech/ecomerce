@@ -82,7 +82,7 @@ export default function SocialAuth({ onError, className = "" }: SocialAuthProps)
     <div className={className}>
       <div className="grid gap-3">
         {googleClientId && (
-          <div className="relative h-11 w-full">
+          <div className="relative h-12 w-full md:h-11">
             <SocialButton
               label="Continue with Google"
               icon={<GoogleIcon />}
@@ -118,7 +118,7 @@ export default function SocialAuth({ onError, className = "" }: SocialAuthProps)
         )}
       </div>
 
-      <div className="relative my-6">
+      <div className="relative my-5 md:my-6">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-border" />
         </div>

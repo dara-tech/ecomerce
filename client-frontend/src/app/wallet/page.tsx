@@ -9,6 +9,7 @@ import PriceDisplay from "@/components/features/PriceDisplay";
 import { toast } from "sonner";
 import { getApiUrl } from "@/lib/api";
 import { Input } from "@/components/ui/Input";
+import { PageLoader } from "@/components/ui/PageLoader";
 
 export default function WalletPage() {
   const { user } = useAuth();
@@ -65,7 +66,7 @@ export default function WalletPage() {
   };
 
   if (!data) {
-    return <div className="container mx-auto px-4 py-32 text-center text-muted-foreground">Loading...</div>;
+    return <PageLoader label="Loading wallet…" />;
   }
 
   return (

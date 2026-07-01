@@ -11,6 +11,43 @@ export type CategoryItem = {
   icon?: string;
 };
 
+const MOBILE_HEADER_SELECTOR = "[data-mobile-header]";
+
+function useMobileHeaderOffset() {
+  const [topPx, setTopPx] = useState<number | null>(null);
+
+  useEffect(() => {
+    const header = document.querySelector<HTMLElement>(MOBILE_HEADER_SELECTOR);
+    if (!header) return;
+
+    const sync = () => setTopPx(header.getBoundingClientRect().height);
+    sync();
+
+    const ro = new ResizeObserver(sync);
+    ro.observe(header);
+    window.addEventListener("resize", sync);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", sync);
+    };
+  }, []);
+
+  return topPx;
+}
+
+const MOBILE_CHIP_BASE =
+  "snap-start shrink-0 inline-flex items-center h-9 rounded-full text-xs font-semibold border transition-colors whitespace-nowrap";
+
+function chipClass(active: boolean, withIcon = false) {
+  return cn(
+    MOBILE_CHIP_BASE,
+    withIcon ? "gap-2 pl-1.5 pr-4" : "px-4",
+    active
+      ? "border-foreground bg-foreground text-background"
+      : "border-border/50 bg-muted text-muted-foreground hover:text-foreground"
+  );
+}
+
 function CategoryLink({
   href,
   active,
@@ -71,9 +108,114 @@ function CategoryIcon({ category }: { category: CategoryItem }) {
     );
   }
   return (
-    <span className="text-xs font-bold uppercase tracking-wide opacity-70">
+    <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
       {category.name.slice(0, 2)}
     </span>
+  );
+}
+
+function CategoryIconBadge({
+  category,
+  active,
+}: {
+  category: CategoryItem;
+  active: boolean;
+}) {
+  return (
+    <span
+      className={cn(
+        "flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full",
+        active ? "bg-background/20" : "bg-background"
+      )}
+    >
+      <CategoryIcon category={category} />
+    </span>
+  );
+}
+
+/** Full-width sticky category chips — render outside the page container on mobile. */
+export function MobileCategoryBar({
+  categories,
+  activeCategory,
+}: {
+  categories: CategoryItem[];
+  activeCategory?: string;
+}) {
+  const allActive = !activeCategory;
+  const headerOffset = useMobileHeaderOffset();
+
+  return (
+    <section
+      className="sticky top-[calc(max(0.5rem,env(safe-area-inset-top,0px))+3.5rem)] z-40 border-b border-border/60 bg-background lg:hidden"
+      style={headerOffset != null ? { top: `${headerOffset}px` } : undefined}
+      aria-label="Product categories"
+    >
+      <div className="px-4 py-3">
+        <div className="-mx-4 px-4">
+          <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-0.5 no-scrollbar">
+            <Link href="/products" className={chipClass(allActive)}>
+              All
+            </Link>
+            {categories.map((category) => {
+              const active = activeCategory === category.name;
+              return (
+                <Link
+                  key={category._id}
+                  href={`/products?category=${encodeURIComponent(category.name)}`}
+                  className={chipClass(active, true)}
+                >
+                  <CategoryIconBadge category={category} active={active} />
+                  {category.name}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/** Desktop sidebar — use inside the catalog layout row. */
+export function DesktopCategoryNav({
+  categories,
+  activeCategory,
+}: {
+  categories: CategoryItem[];
+  activeCategory?: string;
+}) {
+  const allActive = !activeCategory;
+
+  return (
+    <aside className="hidden w-full shrink-0 lg:block lg:w-56 xl:w-60">
+      <nav
+        className="sticky top-24 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm"
+        aria-label="Product categories"
+      >
+        <div className="border-b border-border/60 bg-muted/30 px-4 py-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Categories
+          </h2>
+        </div>
+        <div className="no-scrollbar max-h-[calc(100vh-8rem)] space-y-0.5 overflow-y-auto p-2">
+          <CategoryLink
+            href="/products"
+            active={allActive}
+            label="All products"
+            icon={<LayoutGrid className="size-4" />}
+          />
+          {categories.map((category) => (
+            <CategoryLink
+              key={category._id}
+              href={`/products?category=${encodeURIComponent(category.name)}`}
+              active={activeCategory === category.name}
+              label={category.name}
+              icon={<CategoryIcon category={category} />}
+            />
+          ))}
+        </div>
+      </nav>
+    </aside>
   );
 }
 
@@ -84,82 +226,10 @@ export default function CategorySidebar({
   categories: CategoryItem[];
   activeCategory?: string;
 }) {
-  const allActive = !activeCategory;
-
   return (
     <>
-      {/* Mobile: full-width sticky bar (sibling in flex-col stacks above products) */}
-      <div className="lg:hidden w-full -mx-4 px-4 sticky top-[4.5rem] z-30 py-3 mb-1 bg-background/95 backdrop-blur-md border-b border-border/60">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-1">
-          Browse by category
-        </p>
-        <div className="relative">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5 snap-x snap-mandatory">
-            <Link
-              href="/products"
-              className={cn(
-                "snap-start shrink-0 inline-flex items-center h-9 px-4 rounded-full text-xs font-semibold border transition-colors",
-                allActive
-                  ? "bg-foreground text-background border-foreground"
-                  : "bg-muted/50 border-transparent text-muted-foreground hover:text-foreground"
-              )}
-            >
-              All
-            </Link>
-            {categories.map((category) => {
-              const active = activeCategory === category.name;
-              return (
-                <Link
-                  key={category._id}
-                  href={`/products?category=${encodeURIComponent(category.name)}`}
-                  className={cn(
-                    "snap-start shrink-0 inline-flex items-center gap-2 h-9 pl-1.5 pr-4 rounded-full text-xs font-semibold border transition-colors whitespace-nowrap",
-                    active
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-muted/50 border-transparent text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <span className="flex size-6 items-center justify-center rounded-full overflow-hidden bg-background/80 shrink-0">
-                    <CategoryIcon category={category} />
-                  </span>
-                  {category.name}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop sidebar */}
-      <aside className="hidden lg:block w-full lg:w-56 xl:w-60 shrink-0">
-        <nav
-          className="sticky top-24 rounded-xl border border-border/60 bg-card shadow-sm overflow-hidden"
-          aria-label="Product categories"
-        >
-          <div className="px-4 py-3 border-b border-border/60 bg-muted/30">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Categories
-            </h2>
-          </div>
-          <div className="p-2 space-y-0.5 max-h-[calc(100vh-8rem)] overflow-y-auto no-scrollbar">
-            <CategoryLink
-              href="/products"
-              active={allActive}
-              label="All products"
-              icon={<LayoutGrid className="size-4" />}
-            />
-            {categories.map((category) => (
-              <CategoryLink
-                key={category._id}
-                href={`/products?category=${encodeURIComponent(category.name)}`}
-                active={activeCategory === category.name}
-                label={category.name}
-                icon={<CategoryIcon category={category} />}
-              />
-            ))}
-          </div>
-        </nav>
-      </aside>
+      <MobileCategoryBar categories={categories} activeCategory={activeCategory} />
+      <DesktopCategoryNav categories={categories} activeCategory={activeCategory} />
     </>
   );
 }

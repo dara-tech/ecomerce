@@ -1,14 +1,23 @@
 import type { Metadata } from "next";
 import { Google_Sans } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import AppShell from "@/components/layout/AppShell";
 import { Providers } from "@/context/Providers";
 
 const googleSans = Google_Sans({
   variable: "--font-google-sans",
   subsets: ["latin"],
 });
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+};
 
 export const metadata: Metadata = {
   icons: {
@@ -48,9 +57,6 @@ export const metadata: Metadata = {
 };
 
 import { Toaster } from 'sonner';
-import LiveChat from '@/components/features/LiveChat';
-import MarketingPopup from '@/components/features/MarketingPopup';
-import FlashSaleBar from '@/components/features/FlashSaleBar';
 
 export default function RootLayout({
   children,
@@ -60,19 +66,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${googleSans.variable} font-sans antialiased min-h-screen flex flex-col`}
+        className={`${googleSans.variable} font-sans antialiased min-h-screen flex flex-col mobile-app-shell`}
       >
         <Providers>
-          <FlashSaleBar />
-          <Navbar />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
-          <LiveChat />
-          <MarketingPopup />
+          <AppShell>{children}</AppShell>
         </Providers>
-        <Toaster position="bottom-right" />
+        <Toaster position="top-center" className="md:!bottom-4 md:!top-auto md:!right-4" />
       </body>
     </html>
   );

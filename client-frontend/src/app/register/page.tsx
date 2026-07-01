@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { InlineLoader } from "@/components/ui/PageLoader";
 import { useAuth } from "@/context/AuthContext";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -57,7 +57,8 @@ export default function RegisterPage() {
   return (
     <AuthShell
       title="Create account"
-      subtitle="Get started in seconds with Google, Telegram, or email."
+      subtitle="Get started with Google, Telegram, or email."
+      topLink={{ href: "/login", label: "Sign in" }}
       footer={
         <>
           Already have an account?{" "}
@@ -70,7 +71,7 @@ export default function RegisterPage() {
       <AuthError message={error} />
       <SocialAuth onError={setError} />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5 md:space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="name" className={authLabelClass}>
             Full name
@@ -121,7 +122,7 @@ export default function RegisterPage() {
         </div>
 
         <button type="submit" disabled={loading} className={`${authSubmitClass} mt-2`}>
-          {loading ? <Loader2 className="size-4 animate-spin" /> : "Create account"}
+          {loading ? <InlineLoader /> : "Create account"}
         </button>
       </form>
 

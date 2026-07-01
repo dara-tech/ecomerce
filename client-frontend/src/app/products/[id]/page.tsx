@@ -16,6 +16,7 @@ import ProductReviews from "@/components/features/ProductReviews";
 import { toast } from "sonner";
 import { getApiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { PageLoader } from "@/components/ui/PageLoader";
 import { cn } from "@/lib/utils";
 
 export default function ProductDetailsPage() {
@@ -70,7 +71,7 @@ export default function ProductDetailsPage() {
   };
 
   if (loading) {
-    return <div className="container mx-auto px-4 py-32 text-center text-muted-foreground">Loading product details...</div>;
+    return <PageLoader label="Loading product…" />;
   }
 
   if (!product) {

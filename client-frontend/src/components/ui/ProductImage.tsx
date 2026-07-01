@@ -7,18 +7,41 @@ import { Package } from "lucide-react";
 interface ProductImageProps extends Omit<ImageProps, "src"> {
   src: string;
   fallbackText?: string;
+  /** Icon-only placeholder for compact product rails (no text on image). */
+  compactPlaceholder?: boolean;
 }
 
-export default function ProductImage({ src, alt, fallbackText, fill, sizes, ...props }: ProductImageProps) {
+function isRemoteUrl(src: string) {
+  return /^https?:\/\//i.test(src);
+}
+
+export default function ProductImage({
+  src,
+  alt,
+  fallbackText,
+  compactPlaceholder,
+  fill,
+  sizes,
+  className,
+  priority,
+  loading,
+  ...props
+}: ProductImageProps) {
   const [error, setError] = useState(false);
 
-  if (error || !src || src === '/images/sample.jpg') {
+  if (error || !src || src === "/images/sample.jpg") {
     return (
-      <div className={`flex flex-col items-center justify-center bg-muted text-muted-foreground w-full h-full ${props.className || ''}`}>
-        <Package className="w-12 h-12 mb-2 opacity-20" />
-        <span className="text-sm font-medium opacity-50 px-4 text-center">
-          {fallbackText || alt || "No Image Available"}
-        </span>
+      <div
+        className={`flex w-full h-full items-center justify-center bg-muted text-muted-foreground ${
+          compactPlaceholder ? "" : "flex-col"
+        } ${className || ""}`}
+      >
+        <Package className={`opacity-25 ${compactPlaceholder ? "size-8" : "mb-2 size-12"}`} />
+        {!compactPlaceholder && (
+          <span className="px-4 text-center text-sm font-medium opacity-50">
+            {fallbackText || alt || "No Image Available"}
+          </span>
+        )}
       </div>
     );
   }
@@ -26,10 +49,14 @@ export default function ProductImage({ src, alt, fallbackText, fill, sizes, ...p
   return (
     <Image
       {...props}
+      className={className}
       fill={fill}
       sizes={fill && !sizes ? "(max-width: 768px) 100vw, 64px" : sizes}
       src={src}
       alt={alt}
+      priority={priority}
+      loading={priority ? undefined : loading ?? "lazy"}
+      unoptimized={isRemoteUrl(src)}
       onError={() => setError(true)}
     />
   );

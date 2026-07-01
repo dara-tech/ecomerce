@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Package, ArrowLeft, Loader2, Clock, CheckCircle2, CreditCard, ChevronDown, Truck, MapPin } from "lucide-react";
+import { Package, ArrowLeft, Clock, CheckCircle2, CreditCard, ChevronDown, Truck, MapPin } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { getApiUrl } from '@/lib/api';
+import { PageLoader, InlineLoader } from "@/components/ui/PageLoader";
 
 type FilterType = 'all' | 'paid' | 'pending';
 
@@ -147,11 +148,7 @@ export default function OrdersPage() {
   };
 
   if (!user || loading) {
-    return (
-      <div className="container mx-auto px-4 py-32 flex justify-center items-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoader label="Loading orders…" />;
   }
 
   return (
@@ -263,7 +260,7 @@ export default function OrdersPage() {
                       className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors disabled:opacity-50"
                     >
                       {verifyingOrderId === order._id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <InlineLoader size="xs" />
                       ) : (
                         <CreditCard className="w-3.5 h-3.5" />
                       )}

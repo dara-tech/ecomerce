@@ -119,7 +119,7 @@ export default function ReturnsPage() {
       )}
 
       <p className="mt-8 text-sm text-muted-foreground">
-        Need help? <Link href="/faq" className="underline">Visit FAQ</Link> or use live chat.
+        Need help? <Link href="/chat" className="underline">Live chat</Link> or <Link href="/faq" className="underline">FAQ</Link>.
       </p>
     </div>
   );

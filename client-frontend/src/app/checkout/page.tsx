@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ShieldCheck, QrCode, Loader2, MapPin } from "lucide-react";
+import { ShieldCheck, QrCode, MapPin } from "lucide-react";
 import { useCart, type CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import ProductImage from "@/components/ui/ProductImage";
@@ -12,6 +12,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { getApiUrl } from "@/lib/api";
 import { validateCartItems, formatRemovedCartMessage } from "@/lib/cartValidation";
+import { PageLoader, InlineLoader } from "@/components/ui/PageLoader";
 
 function CheckoutContent() {
   const router = useRouter();
@@ -588,7 +589,7 @@ function CheckoutContent() {
                 {paywayWaiting && (
                   <div className="flex flex-col items-center gap-3 pt-2">
                     <div className="flex items-center justify-center gap-2 text-sm text-primary">
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <InlineLoader />
                       Waiting for payment confirmation...
                     </div>
                     {paywayProviderIssue && (
@@ -658,7 +659,7 @@ function CheckoutContent() {
                 {khqrWaiting && (
                   <div className="flex flex-col items-center gap-3 pt-2">
                     <div className="flex items-center justify-center gap-2 text-sm text-primary">
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <InlineLoader />
                       Waiting for payment confirmation...
                     </div>
                     {khqrProviderIssue && (
@@ -846,10 +847,9 @@ function CheckoutContent() {
 
   if (loadingPendingOrder || (!user && !payOrderId)) {
     return (
-      <div className="container mx-auto px-4 py-32 text-center text-muted-foreground flex flex-col items-center gap-3">
-        <Loader2 className="size-8 animate-spin" />
-        {loadingPendingOrder ? "Loading order…" : "Redirecting to sign in…"}
-      </div>
+      <PageLoader
+        label={loadingPendingOrder ? "Loading order…" : "Redirecting to sign in…"}
+      />
     );
   }
 
@@ -897,7 +897,7 @@ function CheckoutContent() {
                 disabled={isLocating}
                 className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-full"
               >
-                {isLocating ? <Loader2 className="w-4 h-4 animate-spin" /> : <MapPin className="w-4 h-4" />}
+                {isLocating ? <InlineLoader /> : <MapPin className="w-4 h-4" />}
                 {isLocating ? 'Locating...' : 'Use Current Location'}
               </button>
             </div>
@@ -1113,7 +1113,7 @@ function CheckoutContent() {
             >
               {isProcessing ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <InlineLoader size="sm" className="size-5 border-2" />
                   Processing...
                 </>
               ) : paymentMethod === 'khqr' && khqrString ? (
@@ -1135,7 +1135,7 @@ function CheckoutContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto px-4 py-32 text-center text-muted-foreground">Loading checkout...</div>}>
+    <Suspense fallback={<PageLoader label="Loading checkout…" />}>
       <CheckoutContent />
     </Suspense>
   );

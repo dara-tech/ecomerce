@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import ProductCatalog from "@/components/features/ProductCatalog";
+import { PageLoader } from "@/components/ui/PageLoader";
 
 export async function generateMetadata({
   searchParams,
@@ -28,11 +29,7 @@ export default async function ProductsPage({
 
   return (
     <Suspense
-      fallback={
-        <div className="container mx-auto px-4 py-20 text-center text-muted-foreground">
-          Loading products…
-        </div>
-      }
+      fallback={<PageLoader label="Loading products…" />}
     >
       <ProductCatalog initialCategory={category} />
     </Suspense>

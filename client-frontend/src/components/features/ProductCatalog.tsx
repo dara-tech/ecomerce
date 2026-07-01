@@ -3,9 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Filter, Loader2 } from "lucide-react";
+import { Filter } from "lucide-react";
+import { SectionLoader, InlineLoader } from "@/components/ui/PageLoader";
 import ProductImage from "@/components/ui/ProductImage";
-import CategorySidebar, { type CategoryItem } from "@/components/features/CategorySidebar";
+import {
+  DesktopCategoryNav,
+  MobileCategoryBar,
+  type CategoryItem,
+} from "@/components/features/CategorySidebar";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -41,8 +46,43 @@ const toolbarControlBase =
 const filterButtonClass = cn(toolbarControlBase, "w-9 shrink-0 p-0");
 const sortSelectClass = cn(
   toolbarControlBase,
-  "w-[180px] justify-between font-medium"
+  "w-full min-w-0 justify-between font-medium lg:w-[180px]"
 );
+
+function CatalogFilters({
+  sort,
+  onSortChange,
+}: {
+  sort: SortValue;
+  onSortChange: (value: SortValue) => void;
+}) {
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        aria-label="Filters"
+        className={filterButtonClass}
+      >
+        <Filter className="size-4" />
+      </Button>
+      <div className="min-w-0 flex-1 lg:flex-none lg:min-w-[180px]">
+        <Select value={sort} onValueChange={(v) => onSortChange(v as SortValue)}>
+          <SelectTrigger className={sortSelectClass}>
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </>
+  );
+}
 
 export default function ProductCatalog({
   initialCategory,
@@ -128,52 +168,35 @@ export default function ProductCatalog({
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 lg:py-8 max-w-7xl">
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-        <CategorySidebar categories={categories} activeCategory={activeCategory} />
+    <>
+      <MobileCategoryBar categories={categories} activeCategory={activeCategory} />
 
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                {activeCategory ? `${activeCategory} Products` : "All Products"}
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                Showing {products.length} of {total} results
-              </p>
-            </div>
+      <div className="flex items-center gap-2 border-b border-border/60 bg-background px-4 py-3 lg:hidden">
+        <CatalogFilters sort={sort} onSortChange={setSort} />
+      </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                aria-label="Filters"
-                className={filterButtonClass}
-              >
-                <Filter className="size-4" />
-              </Button>
-              <Select
-                value={sort}
-                onValueChange={(v) => setSort(v as SortValue)}
-              >
-                <SelectTrigger className={sortSelectClass}>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  {SORT_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <div className="container mx-auto max-w-7xl px-4 pb-4 pt-4 lg:py-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
+          <DesktopCategoryNav categories={categories} activeCategory={activeCategory} />
+
+          <div className="min-w-0 flex-1">
+            <div className="mb-8 hidden items-center justify-between gap-4 md:flex">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  {activeCategory ? `${activeCategory} Products` : "All Products"}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Showing {products.length} of {total} results
+                </p>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <CatalogFilters sort={sort} onSortChange={setSort} />
+              </div>
             </div>
-          </div>
 
           {loading ? (
-            <div className="flex justify-center py-20">
-              <Loader2 className="size-8 animate-spin text-muted-foreground" />
-            </div>
+            <SectionLoader label="Loading products…" />
           ) : fetchError ? (
             <div className="text-center py-20 space-y-4">
               <p className="text-muted-foreground">{fetchError}</p>
@@ -201,7 +224,7 @@ export default function ProductCatalog({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3">
                 {products.map((product) => (
                   <Link
                     key={product._id}
@@ -242,7 +265,7 @@ export default function ProductCatalog({
                   >
                     {loadingMore ? (
                       <>
-                        <Loader2 className="size-4 animate-spin" />
+                        <InlineLoader />
                         Loading…
                       </>
                     ) : (
@@ -253,8 +276,9 @@ export default function ProductCatalog({
               )}
             </>
           )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
