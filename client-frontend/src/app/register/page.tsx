@@ -58,7 +58,6 @@ export default function RegisterPage() {
     <AuthShell
       title="Create account"
       subtitle="Get started in seconds with Google, Telegram, or email."
-      topLink={{ href: "/login", label: "Sign in" }}
       footer={
         <>
           Already have an account?{" "}

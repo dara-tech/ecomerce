@@ -2,10 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
-import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { getApiUrl } from "@/lib/api";
 import { mapAuthResponse } from "@/lib/authResponse";
+import {
+  GoogleIcon,
+  isTelegramDomainAllowed,
+  SocialButton,
+  TelegramIcon,
+} from "@/components/auth/SocialButton";
 
 declare global {
   interface Window {
@@ -31,25 +36,16 @@ type SocialAuthProps = {
 export default function SocialAuth({ onError, className = "" }: SocialAuthProps) {
   const { login } = useAuth();
   const [loading, setLoading] = useState<"google" | "telegram" | null>(null);
+  const [telegramAllowed, setTelegramAllowed] = useState(false);
   const telegramRef = useRef<HTMLDivElement>(null);
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
   const telegramBot = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || "";
   const hasSocial = Boolean(googleClientId || telegramBot);
 
-  const [host, setHost] = useState("");
   useEffect(() => {
-    setHost(window.location.hostname);
+    setTelegramAllowed(isTelegramDomainAllowed());
   }, []);
-
-  const telegramAllowedHosts = (
-    process.env.NEXT_PUBLIC_TELEGRAM_ALLOWED_HOSTS || "localhost,lunakh.vercel.app"
-  )
-    .split(",")
-    .map((h) => h.trim())
-    .filter(Boolean);
-
-  const telegramDomainOk = !host || telegramAllowedHosts.includes(host);
 
   const completeAuth = useCallback(
     (data: unknown) => {
@@ -114,7 +110,7 @@ export default function SocialAuth({ onError, className = "" }: SocialAuthProps)
   );
 
   useEffect(() => {
-    if (!telegramBot || !telegramRef.current || !telegramDomainOk) return;
+    if (!telegramBot || !telegramRef.current || !telegramAllowed) return;
 
     window.onTelegramAuth = handleTelegramAuth;
 
@@ -125,8 +121,8 @@ export default function SocialAuth({ onError, className = "" }: SocialAuthProps)
     script.src = "https://telegram.org/js/telegram-widget.js?22";
     script.async = true;
     script.setAttribute("data-telegram-login", telegramBot);
-    script.setAttribute("data-size", "medium");
-    script.setAttribute("data-radius", "20");
+    script.setAttribute("data-size", "large");
+    script.setAttribute("data-radius", "12");
     script.setAttribute("data-onauth", "onTelegramAuth(user)");
     script.setAttribute("data-request-access", "write");
     container.appendChild(script);
@@ -135,7 +131,7 @@ export default function SocialAuth({ onError, className = "" }: SocialAuthProps)
       delete window.onTelegramAuth;
       container.innerHTML = "";
     };
-  }, [telegramBot, handleTelegramAuth, telegramDomainOk]);
+  }, [telegramBot, telegramAllowed, handleTelegramAuth]);
 
   if (!hasSocial) {
     return null;
@@ -143,59 +139,55 @@ export default function SocialAuth({ onError, className = "" }: SocialAuthProps)
 
   return (
     <div className={className}>
-      <div className="grid gap-2.5">
+      <div className="grid gap-3">
         {googleClientId && (
-          <div className="relative flex min-h-11 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-background/80">
-            {loading === "google" && (
-              <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90 backdrop-blur-[1px]">
-                <Loader2 className="size-4 animate-spin text-muted-foreground" />
-              </div>
-            )}
-            <div className="flex w-full scale-[1.02] justify-center py-1 [&>div]:w-full [&>div>div]:mx-auto">
+          <div className="relative h-11 w-full">
+            <SocialButton
+              label="Continue with Google"
+              icon={<GoogleIcon />}
+              loading={loading === "google"}
+            />
+            <div className="absolute inset-0 z-10 cursor-pointer opacity-[0.01] [&>div]:!h-full [&>div]:!w-full [&>div>div]:!h-full [&>div>div]:!w-full">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => onError?.("Google sign-in failed.")}
                 theme="outline"
-                size="medium"
-                width={340}
+                size="large"
+                width={400}
                 text="continue_with"
-                shape="pill"
+                shape="rectangular"
               />
             </div>
           </div>
         )}
 
-        {telegramBot && (
-          telegramDomainOk ? (
-            <div className="relative flex min-h-11 flex-col items-center justify-center overflow-hidden rounded-full border border-border/70 bg-background/80">
-              {loading === "telegram" && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/90 backdrop-blur-[1px]">
-                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
-                </div>
-              )}
-              <div
-                ref={telegramRef}
-                className="flex scale-95 justify-center py-0.5 [&>iframe]:max-w-full"
-              />
-            </div>
-          ) : (
-            <p className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2.5 text-center text-xs leading-relaxed text-muted-foreground">
-              Telegram login is available on{" "}
-              <span className="font-medium text-foreground">{telegramAllowedHosts.join(" or ")}</span>.
-              {host ? (
-                <>
-                  {" "}
-                  You are on <span className="font-medium">{host}</span>.
-                </>
-              ) : null}
-            </p>
-          )
+        {telegramBot && telegramAllowed && (
+          <div className="relative h-11 w-full">
+            <SocialButton
+              label="Continue with Telegram"
+              icon={<TelegramIcon />}
+              loading={loading === "telegram"}
+            />
+            <div
+              ref={telegramRef}
+              className="absolute inset-0 z-10 overflow-hidden opacity-[0.01] [&>iframe]:!h-11 [&>iframe]:!min-h-full [&>iframe]:!w-full"
+            />
+          </div>
+        )}
+
+        {telegramBot && !telegramAllowed && (
+          <SocialButton
+            label="Continue with Telegram"
+            icon={<TelegramIcon />}
+            disabled
+            hint="Telegram login is available on lunakh.vercel.app after BotFather domain setup."
+          />
         )}
       </div>
 
       <div className="relative my-6">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border/60" />
+          <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center">
           <span className="bg-background px-3 text-xs text-muted-foreground">or</span>

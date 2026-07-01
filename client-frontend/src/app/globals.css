@@ -137,4 +137,15 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
+  .auth-input:-webkit-autofill,
+  .auth-input:-webkit-autofill:hover,
+  .auth-input:-webkit-autofill:focus,
+  .auth-input:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--foreground) !important;
+    caret-color: var(--foreground);
+    -webkit-box-shadow: 0 0 0 1000px var(--background) inset !important;
+    box-shadow: 0 0 0 1000px var(--background) inset !important;
+    transition: background-color 99999s ease-out 0s;
+  }
 }

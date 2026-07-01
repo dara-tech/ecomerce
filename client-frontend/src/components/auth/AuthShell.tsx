@@ -63,9 +63,9 @@ export function AuthError({ message }: { message: string }) {
 }
 
 export const authInputClass =
-  "h-11 rounded-xl border-border/70 bg-background/80 px-3.5 text-sm shadow-none transition-colors placeholder:text-muted-foreground/70 focus-visible:border-foreground/30 focus-visible:ring-1 focus-visible:ring-foreground/10";
+  "auth-input h-11 rounded-xl border border-border bg-background px-3.5 text-sm shadow-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-foreground/40 focus-visible:ring-2 focus-visible:ring-foreground/5 focus-visible:ring-offset-0";
 
-export const authLabelClass = "text-xs font-medium text-muted-foreground";
+export const authLabelClass = "text-xs font-medium text-foreground/70";
 
 export const authSubmitClass =
-  "flex h-11 w-full items-center justify-center gap-2 rounded-full bg-foreground text-sm font-medium text-background transition-all hover:bg-foreground/90 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50";
+  "flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-foreground text-sm font-medium text-background transition-all hover:bg-foreground/90 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50";

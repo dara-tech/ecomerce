@@ -62,7 +62,6 @@ export default function LoginPage() {
     <AuthShell
       title="Sign in"
       subtitle="Continue to your account with Google, Telegram, or email."
-      topLink={{ href: "/register", label: "Create account" }}
       footer={
         <>
           New here?{" "}
