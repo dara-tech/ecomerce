@@ -90,6 +90,9 @@ const orderSchema = new mongoose.Schema(
     khqrMd5: {
       type: String,
     },
+    paywayTranId: {
+      type: String,
+    },
     stockDeducted: {
       type: Boolean,
       default: false,

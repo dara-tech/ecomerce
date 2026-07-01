@@ -7,6 +7,13 @@ import Stripe from 'stripe';
 import { BakongKHQR, khqrData, IndividualInfo } from 'bakong-khqr';
 import { validateOrderStock, fulfillOrderStock } from '../utils/orderFulfillment.js';
 import { awardLoyaltyPoints } from '../utils/loyalty.js';
+import {
+  buildPaywayPurchasePayload,
+  buildPaywayTranId,
+  checkPaywayTransaction,
+  isPaywayConfigured,
+  isPaywayPaymentApproved,
+} from '../utils/payway.js';
 
 const router = express.Router();
 
@@ -95,6 +102,54 @@ async function markStripeOrderPaid(order, session) {
   const stockResult = await fulfillOrderStock(order);
   if (!stockResult.ok) {
     console.error(`Stock deduction failed for Stripe order ${order._id}:`, stockResult.message);
+  }
+
+  await awardLoyaltyPoints(order);
+
+  return order;
+}
+
+async function markPaywayOrderPaid(order, paywayData = {}) {
+  if (order.isPaid && order.stockDeducted) return order;
+
+  if (!order.isPaid) {
+    const transactionId =
+      paywayData.apv ||
+      paywayData.tran_id ||
+      order.paywayTranId ||
+      `payway_${Date.now()}`;
+
+    order.isPaid = true;
+    order.paidAt = Date.now();
+    order.paymentResult = {
+      id: transactionId,
+      status: 'completed',
+      update_time: new Date().toISOString(),
+    };
+    order.status = 'paid';
+    order.timeline.push({
+      status: 'paid',
+      note: 'Payment confirmed via ABA PayWay',
+    });
+    await order.save();
+
+    const paymentLog = new PaymentLog({
+      order: order._id,
+      user: order.user,
+      gateway: 'ABA Pay',
+      status: 'success',
+      amount: order.totalPrice,
+      currency: 'USD',
+      transactionId,
+      webhookData: paywayData,
+      errorMessage: '',
+    });
+    await paymentLog.save();
+  }
+
+  const stockResult = await fulfillOrderStock(order);
+  if (!stockResult.ok) {
+    console.error(`Stock deduction failed for PayWay order ${order._id}:`, stockResult.message);
   }
 
   await awardLoyaltyPoints(order);
@@ -535,6 +590,165 @@ router.get('/khqr/check-status/:orderId', protect, async (req, res) => {
     });
   } catch (error) {
     console.error('Bakong check error:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+// @route   POST /api/payments/payway/create-purchase
+// @desc    Create order and signed PayWay checkout form fields
+// @access  Private
+router.post('/payway/create-purchase', protect, async (req, res) => {
+  try {
+    if (!isPaywayConfigured()) {
+      return res.status(503).json({
+        message: 'PayWay is not configured. Set PAYWAY_MERCHANT_ID and PAYWAY_PUBLIC_KEY.',
+      });
+    }
+
+    const order = await resolvePaymentOrder(req, req.body, 'ABA Pay');
+    if (!order.paywayTranId) {
+      order.paywayTranId = buildPaywayTranId(order._id);
+      await order.save();
+    }
+
+    const clientUrl = (process.env.CLIENT_URL || 'http://localhost:3000').replace(/\/$/, '');
+    const callbackBaseUrl = (
+      process.env.BACKEND_PUBLIC_URL ||
+      `http://127.0.0.1:${process.env.PORT || 5001}/api`
+    ).replace(/\/$/, '');
+
+    const { firstName, lastName, email, phone, paymentOption } = req.body;
+    const purchase = buildPaywayPurchasePayload({
+      order,
+      firstname: firstName || req.user?.name?.split(' ')[0],
+      lastname: lastName || req.user?.name?.split(' ').slice(1).join(' '),
+      email: email || req.user?.email || req.body.guestEmail,
+      phone,
+      clientUrl,
+      callbackBaseUrl,
+      paymentOption: paymentOption || 'abapay',
+    });
+
+    res.status(200).json({
+      orderId: order._id,
+      tranId: order.paywayTranId,
+      checkoutScript: 'https://checkout.payway.com.kh/plugins/checkout2-0.js',
+      ...purchase,
+    });
+  } catch (error) {
+    console.error('PayWay create-purchase error:', error);
+    paymentRouteError(res, error);
+  }
+});
+
+// @route   POST /api/payments/payway/callback
+// @desc    PayWay pushback notification
+// @access  Public
+router.post('/payway/callback', express.urlencoded({ extended: true }), async (req, res) => {
+  try {
+    const { tran_id, status, apv, return_params } = req.body;
+
+    let order =
+      (return_params && (await Order.findById(return_params))) ||
+      (tran_id && (await Order.findOne({ paywayTranId: tran_id })));
+
+    if (!order) {
+      console.warn('PayWay callback: order not found', { tran_id, return_params });
+      return res.status(200).send('OK');
+    }
+
+    if (isPaywayPaymentApproved({ status })) {
+      await markPaywayOrderPaid(order, req.body);
+      console.log(`Order ${order._id} marked paid via PayWay callback (apv: ${apv}).`);
+    }
+
+    res.status(200).send('OK');
+  } catch (error) {
+    console.error('PayWay callback error:', error);
+    res.status(200).send('OK');
+  }
+});
+
+// @route   GET /api/payments/payway/check-status/:orderId
+// @desc    Verify PayWay transaction and mark order paid
+// @access  Private
+router.get('/payway/check-status/:orderId', protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized for this order' });
+    }
+
+    if (order.isPaid) {
+      if (!order.stockDeducted) {
+        await fulfillOrderStock(order);
+      }
+      return res.status(200).json({
+        message: 'Order already paid',
+        status: 'SUCCESS',
+        isPaid: true,
+        orderId: order._id,
+      });
+    }
+
+    if (!order.paywayTranId) {
+      return res.status(400).json({ message: 'No PayWay transaction for this order' });
+    }
+
+    if (!isPaywayConfigured()) {
+      return res.status(200).json({
+        message: 'PayWay not configured',
+        status: 'PENDING',
+        isPaid: false,
+      });
+    }
+
+    let result;
+    try {
+      result = await checkPaywayTransaction(order.paywayTranId);
+    } catch (fetchError) {
+      console.error('PayWay network error:', fetchError);
+      return res.status(200).json({
+        message: 'Payment provider unreachable',
+        status: 'PENDING',
+        isPaid: false,
+        providerUnavailable: true,
+      });
+    }
+
+    if (!result.ok || !result.data) {
+      return res.status(200).json({
+        message: 'Could not verify PayWay transaction',
+        status: 'PENDING',
+        isPaid: false,
+        providerUnavailable: true,
+      });
+    }
+
+    if (isPaywayPaymentApproved(result.data)) {
+      await markPaywayOrderPaid(order, result.data);
+      return res.status(200).json({
+        message: 'Payment confirmed',
+        status: 'SUCCESS',
+        isPaid: true,
+        orderId: order._id,
+        data: result.data,
+      });
+    }
+
+    res.status(200).json({
+      message: result.data.description || 'Payment pending',
+      status: 'PENDING',
+      isPaid: false,
+      paywayStatus: result.data.status,
+    });
+  } catch (error) {
+    console.error('PayWay check-status error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 });

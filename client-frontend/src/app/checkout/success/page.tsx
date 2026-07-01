@@ -20,6 +20,11 @@ function isStripeMethod(method?: string) {
   return method?.toLowerCase() === "stripe";
 }
 
+function isPaywayMethod(method?: string) {
+  const m = method?.toLowerCase() || "";
+  return m.includes("aba") || m.includes("payway");
+}
+
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("order_id");
@@ -99,6 +104,24 @@ function SuccessContent() {
       return current;
     };
 
+    const confirmPayway = async (current: OrderState) => {
+      if (current.isPaid || !isPaywayMethod(current.paymentMethod)) return current;
+
+      const paywayRes = await fetch(`${apiUrl}/payments/payway/check-status/${orderId}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      if (!paywayRes.ok) return current;
+
+      const paywayData = await paywayRes.json();
+      if (paywayData.isPaid || paywayData.status === "SUCCESS") {
+        const refreshed = await fetchOrder();
+        return refreshed || { ...current, isPaid: true };
+      }
+
+      return current;
+    };
+
     const verifyOrder = async () => {
       try {
         let data = await fetchOrder();
@@ -109,6 +132,7 @@ function SuccessContent() {
 
         data = await confirmStripeSession(data);
         data = await confirmKhqr(data);
+        data = await confirmPayway(data);
 
         if (cancelled) return;
 
@@ -134,6 +158,7 @@ function SuccessContent() {
 
           latest = await confirmStripeSession(latest);
           latest = await confirmKhqr(latest);
+          latest = await confirmPayway(latest);
 
           if (cancelled) return;
 
@@ -227,7 +252,9 @@ function SuccessContent() {
         <p className="text-muted-foreground mb-8 max-w-md">
           {order.paymentMethod === "KHQR"
             ? "Your KHQR payment has not been confirmed yet. If you already paid, wait a moment and refresh, or check Orders."
-            : "Your Stripe payment is still being confirmed. Refresh this page in a few seconds."}
+            : isPaywayMethod(order.paymentMethod)
+              ? "Your ABA PayWay payment has not been confirmed yet. If you already paid, wait a moment and refresh, or check Orders."
+              : "Your Stripe payment is still being confirmed. Refresh this page in a few seconds."}
         </p>
         <div className="w-full max-w-md bg-muted/30 border rounded-2xl p-6 mb-8 text-left">
           <div className="flex justify-between items-center">
