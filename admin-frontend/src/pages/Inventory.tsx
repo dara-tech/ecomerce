@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, AlertTriangle } from 'lucide-react';
+import { Plus, AlertTriangle } from 'lucide-react';
 import api from '../lib/axios';
 import { useOpsList } from '../lib/useOpsList';
 import { opsTableClass, opsThClass, opsTdClass } from '../lib/opsUi';
+import { OpsDataTable } from '../components/layout/OpsDataTable';
+import { DesktopTablePanel, MobileListShell, MobileRecordCard } from '../components/layout/mobileAdmin';
 import { PageStickyHeader } from '../components/layout/PageSubTabs';
-import { PAGE_TOOLBAR_ROW_CLASS, PAGE_TAB_GROUP_CLASS, pageTabButtonClass, PAGE_PRIMARY_BTN_CLASS, PAGE_ROOT_CLASS, PAGE_BODY_CLASS } from '../lib/pageToolbar';
+import { PAGE_TOOLBAR_ROW_CLASS, PAGE_TAB_GROUP_CLASS, pageTabButtonClass, PAGE_PRIMARY_BTN_CLASS, PAGE_ROOT_CLASS, PAGE_LIST_BODY_CLASS } from '../lib/pageToolbar';
 import ConfirmModal from '../components/ui/ConfirmModal';
 
 type Tab = 'warehouses' | 'suppliers' | 'transfers' | 'purchase-orders' | 'alerts' | 'history';
@@ -41,21 +43,21 @@ export default function Inventory() {
         subTabs={<div className={PAGE_TAB_GROUP_CLASS}>{tabs.map((t) => (<button key={t.id} type="button" onClick={() => setTab(t.id)} className={pageTabButtonClass(tab === t.id)}>{t.label}</button>))}</div>}
       />
 
-      <div className={PAGE_BODY_CLASS}>
+      <div className={PAGE_LIST_BODY_CLASS}>
         {tab === 'warehouses' && (
           <>
             <button type="button" className={PAGE_PRIMARY_BTN_CLASS} onClick={() => warehouses.create({ name: 'Main Warehouse', code: `WH-${Date.now()}`, city: 'Phnom Penh', isDefault: true, isActive: true })}><Plus className="size-3.5" /> Add Warehouse</button>
-            <Table headers={['Name', 'Code', 'City', 'Default', '']} rows={warehouses.items.map((w) => [w.name, w.code, w.city || '—', w.isDefault ? 'Yes' : 'No', w._id])} onDelete={(id) => { setDeletePath('inventory/warehouses'); setDeleteId(id); }} />
+            <OpsDataTable headers={['Name', 'Code', 'City', 'Default', '']} rows={warehouses.items.map((w) => [w.name, w.code, w.city || '—', w.isDefault ? 'Yes' : 'No', w._id])} onDelete={(id) => { setDeletePath('inventory/warehouses'); setDeleteId(id); }} />
           </>
         )}
         {tab === 'suppliers' && (
           <>
             <button type="button" className={PAGE_PRIMARY_BTN_CLASS} onClick={() => suppliers.create({ name: 'New Supplier', isActive: true })}><Plus className="size-3.5" /> Add Supplier</button>
-            <Table headers={['Name', 'Email', 'Phone', '']} rows={suppliers.items.map((s) => [s.name, s.email || '—', s.phone || '—', s._id])} onDelete={(id) => { setDeletePath('inventory/suppliers'); setDeleteId(id); }} />
+            <OpsDataTable headers={['Name', 'Email', 'Phone', '']} rows={suppliers.items.map((s) => [s.name, s.email || '—', s.phone || '—', s._id])} onDelete={(id) => { setDeletePath('inventory/suppliers'); setDeleteId(id); }} />
           </>
         )}
         {tab === 'transfers' && (
-          <Table headers={['Product', 'From', 'To', 'Qty', 'Status', 'Action']} rows={transfers.items.map((t) => [
+          <OpsDataTable headers={['Product', 'From', 'To', 'Qty', 'Status', 'Action']} rows={transfers.items.map((t) => [
             t.product?.name || t.product,
             t.fromWarehouse?.name || '—',
             t.toWarehouse?.name || '—',
@@ -67,7 +69,7 @@ export default function Inventory() {
         {tab === 'purchase-orders' && (
           <>
             <button type="button" className={PAGE_PRIMARY_BTN_CLASS} onClick={() => purchaseOrders.create({ poNumber: `PO-${Date.now()}`, supplier: suppliers.items[0]?._id, warehouse: warehouses.items[0]?._id, items: [], status: 'draft', totalCost: 0 })} disabled={!suppliers.items.length || !warehouses.items.length}><Plus className="size-3.5" /> New PO</button>
-            <Table headers={['PO #', 'Supplier', 'Status', 'Total', 'Action']} rows={purchaseOrders.items.map((p) => [p.poNumber, p.supplier?.name || '—', p.status, `$${p.totalCost}`, p.status !== 'received' ? p._id : ''])} actionLabel="Receive" onAction={async (id) => { await api.post(`/ops/inventory/purchase-orders/${id}/receive`); purchaseOrders.refresh(); }} />
+            <OpsDataTable headers={['PO #', 'Supplier', 'Status', 'Total', 'Action']} rows={purchaseOrders.items.map((p) => [p.poNumber, p.supplier?.name || '—', p.status, `$${p.totalCost}`, p.status !== 'received' ? p._id : ''])} actionLabel="Receive" onAction={async (id) => { await api.post(`/ops/inventory/purchase-orders/${id}/receive`); purchaseOrders.refresh(); }} />
           </>
         )}
         {tab === 'alerts' && (
@@ -83,49 +85,38 @@ export default function Inventory() {
           </div>
         )}
         {tab === 'history' && (
-          <div className="border border-border/80 rounded-none overflow-hidden bg-card overflow-x-auto no-scrollbar">
-            <table className={opsTableClass}>
-              <thead className="bg-muted/30"><tr>{['Product', 'Change', 'Balance', 'Reason', 'Date'].map((h) => <th key={h} className={opsThClass}>{h}</th>)}</tr></thead>
-              <tbody>
-                {history.map((h) => (
-                  <tr key={h._id}>
-                    <td className={opsTdClass}>{h.product?.name}</td>
-                    <td className={opsTdClass}>{h.change > 0 ? `+${h.change}` : h.change}</td>
-                    <td className={opsTdClass}>{h.balanceAfter}</td>
-                    <td className={opsTdClass}>{h.reason}</td>
-                    <td className={opsTdClass}>{new Date(h.createdAt).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <DesktopTablePanel className="overflow-x-auto no-scrollbar">
+              <table className={opsTableClass}>
+                <thead className="bg-muted/30"><tr>{['Product', 'Change', 'Balance', 'Reason', 'Date'].map((h) => <th key={h} className={opsThClass}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {history.map((h) => (
+                    <tr key={h._id}>
+                      <td className={opsTdClass}>{h.product?.name}</td>
+                      <td className={opsTdClass}>{h.change > 0 ? `+${h.change}` : h.change}</td>
+                      <td className={opsTdClass}>{h.balanceAfter}</td>
+                      <td className={opsTdClass}>{h.reason}</td>
+                      <td className={opsTdClass}>{new Date(h.createdAt).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </DesktopTablePanel>
+            <MobileListShell>
+              {history.map((h) => (
+                <MobileRecordCard
+                  key={h._id}
+                  title={h.product?.name || 'Product'}
+                  subtitle={`${h.change > 0 ? `+${h.change}` : h.change} → ${h.balanceAfter} in stock`}
+                  meta={`${h.reason} · ${new Date(h.createdAt).toLocaleString()}`}
+                />
+              ))}
+            </MobileListShell>
+          </>
         )}
       </div>
 
       <ConfirmModal isOpen={!!deleteId} title="Delete?" message="This cannot be undone." onConfirm={async () => { if (deleteId) { await api.delete(`/ops/${deletePath}/${deleteId}`); setDeleteId(null); warehouses.refresh(); suppliers.refresh(); } }} onCancel={() => setDeleteId(null)} />
-    </div>
-  );
-}
-
-function Table({ headers, rows, onDelete, onAction, actionLabel }: { headers: string[]; rows: (string | number)[][]; onDelete?: (id: string) => void; onAction?: (id: string) => void; actionLabel?: string }) {
-  return (
-    <div className="border border-border/80 rounded-none overflow-hidden bg-card overflow-x-auto no-scrollbar">
-      <table className={opsTableClass}>
-        <thead className="bg-muted/30"><tr>{headers.map((h) => <th key={h} className={opsThClass}>{h}</th>)}</tr></thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={i}>
-              {row.slice(0, -1).map((cell, j) => <td key={j} className={opsTdClass}>{cell}</td>)}
-              <td className={opsTdClass}>
-                {onAction && typeof row[row.length - 1] === 'string' && String(row[row.length - 1]).length > 10 && (
-                  <button type="button" className="text-xs text-primary font-medium mr-2" onClick={() => onAction(String(row[row.length - 1]))}>{actionLabel}</button>
-                )}
-                {onDelete && <button type="button" aria-label="Delete" onClick={() => onDelete(String(row[row.length - 1]))}><Trash2 className="size-3.5 text-destructive" /></button>}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

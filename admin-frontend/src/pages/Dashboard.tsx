@@ -34,6 +34,7 @@ import {
   PAGE_SECONDARY_BTN_CLASS,
   PAGE_TABLE_HEAD_CLASS,
 } from '../lib/pageToolbar';
+import { MobileRecordCard } from '../components/layout/mobileAdmin';
 
 interface RecentOrder {
   _id: string;
@@ -345,52 +346,77 @@ const Dashboard = () => {
                   No orders yet
                 </div>
               ) : (
-                <table className="w-full border-collapse text-left">
-                  <thead className={PAGE_TABLE_HEAD_CLASS}>
-                    <tr>
-                      <th className="px-4 py-2 border-b border-border/80 font-medium text-[10px] uppercase tracking-wider text-muted-foreground">
-                        Customer
-                      </th>
-                      <th className="px-4 py-2 border-b border-border/80 font-medium text-[10px] uppercase tracking-wider text-muted-foreground text-center">
-                        Status
-                      </th>
-                      <th className="px-4 py-2 border-b border-border/80 font-medium text-[10px] uppercase tracking-wider text-muted-foreground text-right">
-                        Amount
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-[11px] text-foreground">
-                    {stats.recentOrders.map((order) => (
-                      <tr
-                        key={order._id}
-                        className="border-b border-border/40 transition-colors last:border-0 hover:bg-muted/30"
-                      >
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-[12px]">{order.user?.name || 'Guest'}</div>
-                          <div className="mt-0.5 text-[10px] text-muted-foreground">
-                            {new Date(order.createdAt).toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <OrderStatusBadge status={order.status} />
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="font-semibold text-primary">{formatMoney(order.totalPrice)}</div>
-                          {!order.isPaid && (
-                            <div className="mt-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-600">
-                              Unpaid
-                            </div>
-                          )}
-                        </td>
+                <>
+                  <table className="hidden w-full border-collapse text-left md:table">
+                    <thead className={PAGE_TABLE_HEAD_CLASS}>
+                      <tr>
+                        <th className="border-b border-border/80 px-4 py-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                          Customer
+                        </th>
+                        <th className="border-b border-border/80 px-4 py-2 text-center text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                          Status
+                        </th>
+                        <th className="border-b border-border/80 px-4 py-2 text-right text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                          Amount
+                        </th>
                       </tr>
+                    </thead>
+                    <tbody className="text-[11px] text-foreground">
+                      {stats.recentOrders.map((order) => (
+                        <tr
+                          key={order._id}
+                          className="border-b border-border/40 transition-colors last:border-0 hover:bg-muted/30"
+                        >
+                          <td className="px-4 py-3">
+                            <div className="text-[12px] font-medium">{order.user?.name || 'Guest'}</div>
+                            <div className="mt-0.5 text-[10px] text-muted-foreground">
+                              {new Date(order.createdAt).toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <OrderStatusBadge status={order.status} />
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="font-semibold text-primary">{formatMoney(order.totalPrice)}</div>
+                            {!order.isPaid && (
+                              <div className="mt-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-600">
+                                Unpaid
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="space-y-2 p-3 md:hidden">
+                    {stats.recentOrders.map((order) => (
+                      <MobileRecordCard
+                        key={order._id}
+                        title={order.user?.name || 'Guest'}
+                        subtitle={new Date(order.createdAt).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                        meta={formatMoney(order.totalPrice)}
+                        badges={
+                          <>
+                            <OrderStatusBadge status={order.status} />
+                            {!order.isPaid && (
+                              <span className="text-[9px] font-medium uppercase tracking-wider text-amber-600">Unpaid</span>
+                            )}
+                          </>
+                        }
+                      />
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                </>
               )}
             </div>
           </div>

@@ -4,7 +4,8 @@ import api from '../lib/axios';
 import { useOpsList } from '../lib/useOpsList';
 import { opsInputClass, opsLabelClass, opsTableClass, opsThClass, opsTdClass } from '../lib/opsUi';
 import { PageStickyHeader } from '../components/layout/PageSubTabs';
-import { PAGE_TOOLBAR_ROW_CLASS, PAGE_TAB_GROUP_CLASS, pageTabButtonClass, PAGE_PRIMARY_BTN_CLASS, PAGE_ROOT_CLASS, PAGE_BODY_CLASS } from '../lib/pageToolbar';
+import { PAGE_TOOLBAR_ROW_CLASS, PAGE_TAB_GROUP_CLASS, pageTabButtonClass, PAGE_PRIMARY_BTN_CLASS, PAGE_ROOT_CLASS, PAGE_LIST_BODY_CLASS } from '../lib/pageToolbar';
+import { DesktopTablePanel, MobileListShell, MobileRecordCard } from '../components/layout/mobileAdmin';
 import ConfirmModal from '../components/ui/ConfirmModal';
 
 type Tab = 'zones' | 'methods' | 'calculator' | 'estimates';
@@ -58,13 +59,13 @@ export default function Shipping() {
         }
       />
 
-      <div className={PAGE_BODY_CLASS}>
+      <div className={PAGE_LIST_BODY_CLASS}>
         {tab === 'zones' && (
           <>
             <button type="button" className={PAGE_PRIMARY_BTN_CLASS} onClick={() => zones.create({ name: 'New Zone', countries: ['KH'], isActive: true })}>
               <Plus className="size-3.5" /> Add Zone
             </button>
-            <div className="border border-border/80 rounded-none overflow-hidden bg-card">
+            <DesktopTablePanel className="overflow-x-auto no-scrollbar">
               <table className={opsTableClass}>
                 <thead className="bg-muted/30"><tr><th className={opsThClass}>Name</th><th className={opsThClass}>Countries</th><th className={opsThClass}>Active</th><th className={opsThClass} /></tr></thead>
                 <tbody>
@@ -78,7 +79,24 @@ export default function Shipping() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DesktopTablePanel>
+            <MobileListShell>
+              {zones.items.map((z) => (
+                <MobileRecordCard
+                  key={z._id}
+                  title={z.name}
+                  subtitle={(z.countries || []).join(', ') || 'No countries'}
+                  meta={z.isActive ? 'Active' : 'Inactive'}
+                  actions={
+                    <button type="button" aria-label="Delete zone" onClick={() => { setDeletePath('shipping/zones'); setDeleteId(z._id); }}>
+                      <Trash2 className="size-3.5 text-destructive" />
+                    </button>
+                  }
+                >
+                  <input className={`${opsInputClass} mt-2`} value={z.name} onChange={(e) => zones.update(z._id, { name: e.target.value })} />
+                </MobileRecordCard>
+              ))}
+            </MobileListShell>
           </>
         )}
 
@@ -87,7 +105,7 @@ export default function Shipping() {
             <button type="button" className={PAGE_PRIMARY_BTN_CLASS} onClick={() => methods.create({ name: 'Standard', type: 'flat', baseFee: 5, minDays: 2, maxDays: 5, isActive: true })}>
               <Plus className="size-3.5" /> Add Method
             </button>
-            <div className="border border-border/80 rounded-none overflow-hidden bg-card overflow-x-auto no-scrollbar">
+            <DesktopTablePanel className="overflow-x-auto no-scrollbar">
               <table className={opsTableClass}>
                 <thead className="bg-muted/30"><tr><th className={opsThClass}>Name</th><th className={opsThClass}>Type</th><th className={opsThClass}>Fee</th><th className={opsThClass}>Days</th><th className={opsThClass}>Warehouse</th><th className={opsThClass} /></tr></thead>
                 <tbody>
@@ -103,7 +121,22 @@ export default function Shipping() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </DesktopTablePanel>
+            <MobileListShell>
+              {methods.items.map((m) => (
+                <MobileRecordCard
+                  key={m._id}
+                  title={m.name}
+                  subtitle={`${m.type} · $${m.baseFee}`}
+                  meta={`${m.minDays}–${m.maxDays} days · ${m.warehouse?.name || 'No warehouse'}`}
+                  actions={
+                    <button type="button" aria-label="Delete method" onClick={() => { setDeletePath('shipping/methods'); setDeleteId(m._id); }}>
+                      <Trash2 className="size-3.5 text-destructive" />
+                    </button>
+                  }
+                />
+              ))}
+            </MobileListShell>
           </>
         )}
 

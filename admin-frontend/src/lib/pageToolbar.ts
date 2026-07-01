@@ -2,7 +2,7 @@ import { cn } from './utils';
 
 /** Full-height page column — horizontal padding lives here so borders align */
 export const PAGE_ROOT_CLASS =
-  'flex h-full min-h-0 flex-1 flex-col overflow-hidden px-4';
+  'flex h-full min-h-0 flex-1 flex-col overflow-hidden px-3 sm:px-4';
 
 /** Sticky header shell (toolbar + optional sub-tabs) — fixed, does not scroll */
 export const PAGE_STICKY_SHELL_CLASS =
@@ -49,7 +49,8 @@ export const PAGE_SUB_TABS_BAR_CLASS =
   'flex min-h-9 items-center gap-2 overflow-x-auto border-t border-b border-border/60 bg-background py-2';
 
 /** Separate bordered tab buttons row */
-export const PAGE_TAB_GROUP_CLASS = 'flex flex-wrap items-center gap-2';
+export const PAGE_TAB_GROUP_CLASS =
+  'flex min-w-0 items-center gap-2 overflow-x-auto no-scrollbar pb-0.5';
 
 /** Modal / panel tab row */
 export const PAGE_MODAL_TABS_ROW_CLASS =

@@ -4,6 +4,7 @@ import {
   PAGE_SEARCH_CLASS,
   PAGE_PRIMARY_BTN_CLASS,
 } from '../../lib/pageToolbar';
+import { MobileFab } from '../layout/mobileAdmin';
 
 export default function MarketingToolbar({
   title,
@@ -21,27 +22,30 @@ export default function MarketingToolbar({
   onAction: () => void;
 }) {
   return (
-    <div className={PAGE_TOOLBAR_CLASS}>
-      <div className={PAGE_TOOLBAR_ROW_CLASS}>
-        <h1 className="text-sm font-bold text-foreground shrink-0 leading-none">{title}</h1>
-        <div className="relative flex-1 max-w-xs w-full sm:h-8">
-          <input
-            type="text"
-            placeholder={searchPlaceholder}
-            value={searchValue}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className={PAGE_SEARCH_CLASS}
-          />
+    <>
+      <div className={PAGE_TOOLBAR_CLASS}>
+        <div className={PAGE_TOOLBAR_ROW_CLASS}>
+          <h1 className="shrink-0 text-sm font-bold leading-none text-foreground">{title}</h1>
+          <div className="relative w-full max-w-xs flex-1 sm:h-8">
+            <input
+              type="text"
+              placeholder={searchPlaceholder}
+              value={searchValue}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className={PAGE_SEARCH_CLASS}
+            />
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={onAction}
+          className={`${PAGE_PRIMARY_BTN_CLASS} hidden md:inline-flex`}
+        >
+          {actionLabel}
+        </button>
       </div>
-      <button
-        type="button"
-        onClick={onAction}
-        className={PAGE_PRIMARY_BTN_CLASS}
-      >
-        {actionLabel}
-      </button>
-    </div>
+      <MobileFab onClick={onAction} label={actionLabel} />
+    </>
   );
 }
 

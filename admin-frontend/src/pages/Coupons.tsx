@@ -2,9 +2,15 @@ import { useState } from 'react';
 import { Plus, Trash2, Pencil } from 'lucide-react';
 import { useOpsList } from '../lib/useOpsList';
 import { opsInputClass, opsLabelClass, opsTableClass, opsThClass, opsTdClass } from '../lib/opsUi';
-import { PAGE_TOOLBAR_ROW_CLASS, PAGE_PRIMARY_BTN_CLASS, PAGE_ROOT_CLASS, PAGE_BODY_CLASS } from '../lib/pageToolbar';
+import { PAGE_TOOLBAR_ROW_CLASS, PAGE_PRIMARY_BTN_CLASS, PAGE_ROOT_CLASS, PAGE_LIST_BODY_CLASS } from '../lib/pageToolbar';
 import { PageStickyHeader } from '../components/layout/PageSubTabs';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import {
+  DesktopTablePanel,
+  MobileFab,
+  MobileListShell,
+  MobileRecordCard,
+} from '../components/layout/mobileAdmin';
 
 const empty = {
   code: '',
@@ -60,21 +66,27 @@ export default function Coupons() {
     setShowForm(false);
   };
 
+  const formatValue = (c: any) =>
+    c.type === 'free_shipping' ? 'Free shipping' : c.type === 'percent' ? `${c.value}%` : `$${c.value}`;
+
   return (
     <div className={PAGE_ROOT_CLASS}>
       <PageStickyHeader
         toolbar={
           <div className={PAGE_TOOLBAR_ROW_CLASS}>
             <h1 className="text-sm font-semibold">Coupons</h1>
-            <button type="button" className={PAGE_PRIMARY_BTN_CLASS} onClick={openCreate}><Plus className="size-3.5" /> New Coupon</button>
+            <button type="button" className={`${PAGE_PRIMARY_BTN_CLASS} hidden md:inline-flex`} onClick={openCreate}>
+              <Plus className="size-3.5" /> New Coupon
+            </button>
           </div>
         }
         subTabs={<span className="text-xs text-muted-foreground">Manage discount codes</span>}
       />
+      <MobileFab onClick={openCreate} label="New Coupon" />
 
-      <div className={PAGE_BODY_CLASS}>
+      <div className={PAGE_LIST_BODY_CLASS}>
         {showForm && (
-          <form onSubmit={handleSubmit} className="bg-card border border-border/80 rounded-none p-5 grid md:grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="grid gap-4 rounded-none border border-border/80 bg-card p-4 md:grid-cols-2 md:p-5">
             <div><label className={opsLabelClass}>Code</label><input required className={opsInputClass} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} /></div>
             <div><label className={opsLabelClass}>Name</label><input required className={opsInputClass} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div><label className={opsLabelClass}>Type</label>
@@ -91,14 +103,14 @@ export default function Coupons() {
             <div><label className={opsLabelClass}>Usage limit (0 = unlimited)</label><input type="number" className={opsInputClass} value={form.usageLimit} onChange={(e) => setForm({ ...form, usageLimit: Number(e.target.value) })} /></div>
             <div><label className={opsLabelClass}>Per customer limit</label><input type="number" className={opsInputClass} value={form.perCustomerLimit} onChange={(e) => setForm({ ...form, perCustomerLimit: Number(e.target.value) })} /></div>
             <div><label className={opsLabelClass}>Expiration</label><input type="date" className={opsInputClass} value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} /></div>
-            <div className="md:col-span-2 flex gap-2">
+            <div className="flex gap-2 md:col-span-2">
               <button type="submit" className={PAGE_PRIMARY_BTN_CLASS}>{editingId ? 'Update Coupon' : 'Save Coupon'}</button>
-              <button type="button" className="h-8 px-4 text-[12px] border rounded-none" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancel</button>
+              <button type="button" className="h-8 rounded-none border px-4 text-[12px]" onClick={() => { setShowForm(false); setEditingId(null); }}>Cancel</button>
             </div>
           </form>
         )}
 
-        <div className="border border-border/80 rounded-none overflow-hidden bg-card overflow-x-auto no-scrollbar">
+        <DesktopTablePanel className="overflow-x-auto no-scrollbar">
           <table className={opsTableClass}>
             <thead className="bg-muted/30"><tr>{['Code', 'Type', 'Value', 'Used', 'Limit', 'Expires', 'Customer', 'Active', ''].map((h) => <th key={h} className={opsThClass}>{h}</th>)}</tr></thead>
             <tbody>
@@ -106,7 +118,7 @@ export default function Coupons() {
                 <tr key={c._id}>
                   <td className={opsTdClass}><code className="font-mono text-xs">{c.code}</code></td>
                   <td className={opsTdClass}>{c.type}</td>
-                  <td className={opsTdClass}>{c.type === 'free_shipping' ? '—' : c.type === 'percent' ? `${c.value}%` : `$${c.value}`}</td>
+                  <td className={opsTdClass}>{formatValue(c)}</td>
                   <td className={opsTdClass}>{c.usedCount}/{c.usageLimit || '∞'}</td>
                   <td className={opsTdClass}>{c.usageLimit || '∞'}</td>
                   <td className={opsTdClass}>{c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : '—'}</td>
@@ -124,7 +136,30 @@ export default function Coupons() {
               ))}
             </tbody>
           </table>
-        </div>
+        </DesktopTablePanel>
+
+        <MobileListShell>
+          {items.map((c) => (
+            <MobileRecordCard
+              key={c._id}
+              title={<code className="font-mono text-[13px]">{c.code}</code>}
+              subtitle={c.name}
+              meta={`${formatValue(c)} · ${c.usedCount}/${c.usageLimit || '∞'} used`}
+              badges={
+                <button type="button" className="text-[10px] font-semibold uppercase" onClick={() => update(c._id, { isActive: !c.isActive })}>
+                  {c.isActive ? 'Active' : 'Off'}
+                </button>
+              }
+              onClick={() => openEdit(c)}
+              actions={
+                <>
+                  <button type="button" aria-label="Edit coupon" onClick={(e) => { e.stopPropagation(); openEdit(c); }}><Pencil className="size-3.5 text-primary" /></button>
+                  <button type="button" aria-label="Delete coupon" onClick={(e) => { e.stopPropagation(); setDeleteId(c._id); }}><Trash2 className="size-3.5 text-destructive" /></button>
+                </>
+              }
+            />
+          ))}
+        </MobileListShell>
       </div>
 
       <ConfirmModal isOpen={!!deleteId} title="Delete coupon?" message="This cannot be undone." onConfirm={async () => { if (deleteId) { await remove(deleteId); setDeleteId(null); } }} onCancel={() => setDeleteId(null)} />

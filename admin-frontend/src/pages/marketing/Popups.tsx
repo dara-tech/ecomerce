@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { PAGE_ROOT_CLASS, PAGE_BODY_CLASS } from '../../lib/pageToolbar';
+import { PAGE_ROOT_CLASS, PAGE_LIST_BODY_CLASS } from '../../lib/pageToolbar';
+import { DesktopTablePanel, MobileEmptyState, MobileListShell, MobileRecordCard } from '../../components/layout/mobileAdmin';
 import { createPortal } from 'react-dom';
 import { Edit2, Trash2, MessageSquare } from 'lucide-react';
 import api from '../../lib/axios';
@@ -80,9 +81,9 @@ export default function Popups() {
     <div className={PAGE_ROOT_CLASS}>
       <MarketingToolbar title="Popups" searchPlaceholder="Search popups..." searchValue={search} onSearchChange={setSearch} actionLabel="New Popup" onAction={() => { setEditing(null); setFormData(emptyForm); setIsModalOpen(true); }} />
 
-      <div className={PAGE_BODY_CLASS}>
-      <div className="border border-border/80 rounded-none overflow-hidden bg-card shadow-sm">
-        <table className="w-full text-left border-collapse">
+      <div className={PAGE_LIST_BODY_CLASS}>
+      <DesktopTablePanel className="overflow-x-auto no-scrollbar">
+        <table className="w-full border-collapse text-left">
           <thead className="bg-muted/30">
             <tr>
               <th className="px-4 py-3 border-b text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Name</th>
@@ -113,7 +114,31 @@ export default function Popups() {
             )}
           </tbody>
         </table>
-      </div>
+      </DesktopTablePanel>
+
+      <MobileListShell>
+        {loading ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">Loading popups…</div>
+        ) : filtered.length === 0 ? (
+          <MobileEmptyState message="No popups yet." />
+        ) : (
+          filtered.map((item) => (
+            <MobileRecordCard
+              key={item._id}
+              title={item.name}
+              subtitle={item.title}
+              meta={`${item.trigger.replace('_', ' ')} · ${item.isActive ? 'active' : 'inactive'}`}
+              badges={<StatusBadge status={item.isActive ? 'active' : 'inactive'} />}
+              actions={
+                <>
+                  <button type="button" onClick={() => { setEditing(item); setFormData({ name: item.name, title: item.title, content: item.content, image: '', ctaText: item.ctaText || '', ctaUrl: item.ctaUrl || '', trigger: item.trigger, delaySeconds: 3, displayFrequency: item.displayFrequency, isActive: item.isActive, sortOrder: 0 }); setIsModalOpen(true); }} className="p-1.5 text-muted-foreground hover:text-primary"><Edit2 className="size-3.5" /></button>
+                  <button type="button" onClick={() => setDeleteId(item._id)} className="p-1.5 text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
+                </>
+              }
+            />
+          ))
+        )}
+      </MobileListShell>
       </div>
 
       {isModalOpen && createPortal(

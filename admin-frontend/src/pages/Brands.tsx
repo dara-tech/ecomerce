@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import api from '../lib/axios';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import Loading from '../components/ui/Loading';
-import { PAGE_ROOT_CLASS, PAGE_TOOLBAR_CLASS, PAGE_TOOLBAR_ROW_CLASS, PAGE_BODY_CLASS, PAGE_PRIMARY_BTN_CLASS } from '../lib/pageToolbar';
+import { PAGE_ROOT_CLASS, PAGE_TOOLBAR_CLASS, PAGE_TOOLBAR_ROW_CLASS, PAGE_LIST_BODY_CLASS, PAGE_PRIMARY_BTN_CLASS } from '../lib/pageToolbar';
+import DataTableShell from '../components/layout/DataTableShell';
+import { MobileFab, MobileListShell, MobileRecordCard, MobileEmptyState } from '../components/layout/mobileAdmin';
 
 interface Brand {
   _id: string;
@@ -95,27 +97,28 @@ const Brands = () => {
           <h1 className="text-sm font-semibold">Brands</h1>
           <span className="text-xs text-muted-foreground">{brands.length} total</span>
         </div>
-        <button type="button" onClick={openCreate} className={PAGE_PRIMARY_BTN_CLASS}>
+        <button type="button" onClick={openCreate} className={`${PAGE_PRIMARY_BTN_CLASS} hidden md:inline-flex`}>
           Add Brand
         </button>
       </div>
+      <MobileFab onClick={openCreate} label="Add Brand" />
 
-      <div className={PAGE_BODY_CLASS}>
+      <div className={PAGE_LIST_BODY_CLASS}>
       {error && (
         <div className="p-3 bg-destructive/10 text-destructive text-[11px] font-medium text-center">
           {error}
         </div>
       )}
 
-      {/* Table */}
-      <div className="border border-border/80 overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      {/* Desktop Table */}
+      <DataTableShell>
+        <table className="w-full border-collapse text-left">
           <thead className="bg-muted/25">
             <tr>
-              <th className="px-4 py-3 border-b border-border/80 font-medium text-[10px] uppercase tracking-wider text-muted-foreground">Brand Name</th>
-              <th className="px-4 py-3 border-b border-border/80 font-medium text-[10px] uppercase tracking-wider text-muted-foreground">Description</th>
-              <th className="px-4 py-3 border-b border-border/80 font-medium text-[10px] uppercase tracking-wider text-muted-foreground">Created At</th>
-              <th className="px-4 py-3 border-b border-border/80 font-medium text-[10px] uppercase tracking-wider text-muted-foreground text-right w-24">Actions</th>
+              <th className="border-b border-border/80 px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Brand Name</th>
+              <th className="border-b border-border/80 px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Description</th>
+              <th className="border-b border-border/80 px-4 py-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Created At</th>
+              <th className="w-24 border-b border-border/80 px-4 py-3 text-right text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-card text-[11px] text-foreground">
@@ -127,20 +130,20 @@ const Brands = () => {
               </tr>
             ) : (
               brands.map((brand) => (
-                <tr key={brand._id} className="border-b border-border/40 hover:bg-muted/30 transition-colors last:border-0">
+                <tr key={brand._id} className="border-b border-border/40 transition-colors last:border-0 hover:bg-muted/30">
                   <td className="px-4 py-3 font-semibold">{brand.name}</td>
                   <td className="px-4 py-3 text-muted-foreground">{brand.description || '-'}</td>
                   <td className="px-4 py-3 text-muted-foreground">{new Date(brand.createdAt).toLocaleDateString()}</td>
-                  <td className="px-4 py-3 text-right space-x-2">
+                  <td className="space-x-2 px-4 py-3 text-right">
                     <button
                       onClick={() => openEdit(brand)}
-                      className="text-primary hover:text-primary/80 font-medium px-2 py-1 transition-colors cursor-pointer"
+                      className="cursor-pointer px-2 py-1 font-medium text-primary transition-colors hover:text-primary/80"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => requestDelete(brand._id)}
-                      className="text-destructive hover:text-destructive/80 font-medium px-2 py-1 transition-colors cursor-pointer"
+                      className="cursor-pointer px-2 py-1 font-medium text-destructive transition-colors hover:text-destructive/80"
                     >
                       Delete
                     </button>
@@ -150,7 +153,50 @@ const Brands = () => {
             )}
           </tbody>
         </table>
-      </div>
+      </DataTableShell>
+
+      {/* Mobile cards */}
+      <MobileListShell>
+        {loading ? (
+          <Loading variant="panel" label="Loading brands…" />
+        ) : brands.length === 0 ? (
+          <MobileEmptyState message="No brands found." />
+        ) : (
+          brands.map((brand) => (
+            <MobileRecordCard
+              key={brand._id}
+              title={brand.name}
+              subtitle={brand.description || 'No description'}
+              meta={new Date(brand.createdAt).toLocaleDateString()}
+              onClick={() => openEdit(brand)}
+              actions={
+                <>
+                  <button
+                    type="button"
+                    className="px-2 py-1 text-[11px] font-medium text-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEdit(brand);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="px-2 py-1 text-[11px] font-medium text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      requestDelete(brand._id);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </>
+              }
+            />
+          ))
+        )}
+      </MobileListShell>
       </div>
 
       {/* Simple Add Modal */}

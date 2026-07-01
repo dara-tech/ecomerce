@@ -83,7 +83,7 @@ export default function AdminLayout() {
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset className="flex h-screen min-h-0 flex-col overflow-hidden">
-          <header className="z-30 flex h-10 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
+          <header className="z-30 flex h-11 shrink-0 items-center gap-2 border-b border-border bg-background px-3 sm:h-10 sm:px-4" style={{ paddingTop: 'max(0px, env(safe-area-inset-top, 0px))' }}>
             <Tooltip>
               <TooltipTrigger render={<SidebarTrigger className="-ml-1" />} />
               <TooltipContent side="bottom">Toggle sidebar</TooltipContent>

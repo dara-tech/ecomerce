@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { PAGE_ROOT_CLASS, PAGE_BODY_CLASS } from '../../lib/pageToolbar';
+import { PAGE_ROOT_CLASS, PAGE_LIST_BODY_CLASS } from '../../lib/pageToolbar';
+import { DesktopTablePanel, MobileEmptyState, MobileListShell, MobileRecordCard } from '../../components/layout/mobileAdmin';
 import { createPortal } from 'react-dom';
 import { Edit2, Trash2, Mail, Send } from 'lucide-react';
 import api from '../../lib/axios';
@@ -178,9 +179,9 @@ export default function EmailCampaigns() {
         onAction={openAdd}
       />
 
-      <div className={PAGE_BODY_CLASS}>
-      <div className="border border-border/80 rounded-none overflow-hidden bg-card shadow-sm">
-        <table className="w-full text-left border-collapse">
+      <div className={PAGE_LIST_BODY_CLASS}>
+      <DesktopTablePanel className="overflow-x-auto no-scrollbar">
+        <table className="w-full border-collapse text-left">
           <thead className="bg-muted/30">
             <tr>
               <th className="px-4 py-3 border-b border-border/80 text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Name</th>
@@ -218,7 +219,34 @@ export default function EmailCampaigns() {
             )}
           </tbody>
         </table>
-      </div>
+      </DesktopTablePanel>
+
+      <MobileListShell>
+        {loading ? (
+          <div className="py-8 text-center text-sm text-muted-foreground">Loading campaigns…</div>
+        ) : filtered.length === 0 ? (
+          <MobileEmptyState message="No campaigns yet." />
+        ) : (
+          filtered.map((item) => (
+            <MobileRecordCard
+              key={item._id}
+              title={item.name}
+              subtitle={item.subject}
+              meta={`${item.audience} · ${item.status}`}
+              badges={<StatusBadge status={item.status} />}
+              actions={
+                <>
+                  {item.status !== 'sent' && (
+                    <button type="button" onClick={() => handleSend(item._id)} className="p-1.5 text-primary"><Send className="size-3.5" /></button>
+                  )}
+                  <button type="button" onClick={() => openEdit(item)} className="p-1.5 text-muted-foreground hover:text-primary"><Edit2 className="size-3.5" /></button>
+                  <button type="button" onClick={() => setDeleteId(item._id)} className="p-1.5 text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
+                </>
+              }
+            />
+          ))
+        )}
+      </MobileListShell>
       </div>
 
       {modal}
