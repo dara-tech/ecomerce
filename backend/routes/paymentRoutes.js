@@ -350,19 +350,54 @@ router.get('/khqr/check-status/:orderId', protect, async (req, res) => {
     }
 
     const bakongApiUrl = process.env.BAKONG_API_URL || 'https://api-bakong.nbc.gov.kh/v1';
-    const response = await fetch(`${bakongApiUrl}/check_transaction_by_md5`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${bakongToken}`,
-      },
-      body: JSON.stringify({ md5: order.khqrMd5 }),
-    });
+    let response;
+    try {
+      response = await fetch(`${bakongApiUrl}/check_transaction_by_md5`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${bakongToken}`,
+        },
+        body: JSON.stringify({ md5: order.khqrMd5 }),
+      });
+    } catch (fetchError) {
+      console.error('Bakong network error:', fetchError);
+      return res.status(200).json({
+        message: 'Payment provider unreachable; still waiting',
+        status: 'PENDING',
+        isPaid: false,
+      });
+    }
 
-    const data = await response.json();
+    const rawBody = await response.text();
+    let data;
+    try {
+      data = rawBody ? JSON.parse(rawBody) : {};
+    } catch {
+      console.error('Bakong non-JSON response:', rawBody.slice(0, 200));
+      return res.status(200).json({
+        message: 'Unexpected payment provider response',
+        status: 'PENDING',
+        isPaid: false,
+      });
+    }
+
+    if (!response.ok) {
+      return res.status(200).json({
+        message: data.responseMessage || 'Payment still pending',
+        status: 'PENDING',
+        isPaid: false,
+        bakongResponseCode: data.responseCode ?? response.status,
+      });
+    }
 
     if (isBakongPaymentSuccess(data)) {
-      await markKhqrOrderPaid(order, data.data);
+      try {
+        await markKhqrOrderPaid(order, data.data);
+      } catch (fulfillError) {
+        console.error('KHQR fulfill error:', fulfillError);
+        return res.status(500).json({ message: 'Payment received but order update failed' });
+      }
       return res.status(200).json({
         message: 'Payment confirmed',
         status: 'SUCCESS',

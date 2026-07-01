@@ -39,7 +39,7 @@ export const getCategories = async (req, res) => {
 // @access  Private/Admin
 export const createCategory = async (req, res) => {
   try {
-    const { name, description } = req.body;
+    const { name, description, icon, isActive } = req.body;
     
     if (!name) {
       return res.status(400).json({ message: 'Name is required' });
@@ -50,7 +50,12 @@ export const createCategory = async (req, res) => {
       return res.status(400).json({ message: 'Category already exists' });
     }
 
-    const category = await Category.create({ name, description });
+    const category = await Category.create({
+      name,
+      description,
+      icon: icon || '',
+      isActive: isActive !== undefined ? isActive : true,
+    });
     res.status(201).json(category);
   } catch (error) {
     res.status(500).json({ message: 'Failed to create category' });

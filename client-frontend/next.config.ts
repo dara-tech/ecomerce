@@ -8,6 +8,21 @@ const nextConfig: NextConfig = {
         destination: '/favicon.svg',
         permanent: false,
       },
+      {
+        source: '/categories/new',
+        destination: '/products?sort=newest',
+        permanent: false,
+      },
+      {
+        source: '/categories/sale',
+        destination: '/products',
+        permanent: false,
+      },
+      {
+        source: '/categories/:slug',
+        destination: '/products',
+        permanent: false,
+      },
     ];
   },
   async rewrites() {
@@ -25,10 +40,17 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'live.staticflickr.com',
+        pathname: '/**',
       },
     ],
   },

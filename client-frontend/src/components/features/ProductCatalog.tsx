@@ -128,8 +128,8 @@ export default function ProductCatalog({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+    <div className="container mx-auto px-4 py-6 lg:py-8 max-w-7xl">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
         <CategorySidebar categories={categories} activeCategory={activeCategory} />
 
         <div className="flex-1 min-w-0">

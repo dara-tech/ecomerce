@@ -44,7 +44,13 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     fetch(`${apiUrl}/customer/wishlist`, {
       headers: { Authorization: `Bearer ${user.token}` },
     })
-      .then((r) => (r.ok ? r.json() : []))
+      .then((r) => {
+        if (r.status === 401) {
+          // Stale session — local wishlist from storage is kept
+          return null;
+        }
+        return r.ok ? r.json() : null;
+      })
       .then((data) => {
         if (Array.isArray(data) && data.length) setItems(data);
       })

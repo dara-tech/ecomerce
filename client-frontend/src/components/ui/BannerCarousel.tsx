@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { resolveShopLink } from '@/lib/shopLinks';
 
 export default function BannerCarousel({ banners }: { banners: any[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -62,7 +63,7 @@ export default function BannerCarousel({ banners }: { banners: any[] }) {
         </header>
         <div className="flex items-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
           <Link 
-            href={activeBanner.linkUrl || "/products"} 
+            href={resolveShopLink(activeBanner.linkUrl)} 
             className="inline-flex items-center justify-center gap-2 bg-foreground text-background font-medium px-8 h-12 rounded-full hover:bg-foreground/90 transition-all hover:scale-105 active:scale-95 shadow-lg"
           >
             Shop Collection

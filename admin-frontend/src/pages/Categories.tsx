@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Plus, Trash2, Edit2, X, FolderTree, Package, Image as ImageIcon } from 'lucide-react';
+import { Search, Plus, Trash2, Edit2, X, FolderTree, Package } from 'lucide-react';
 import api from '../lib/axios';
 import {PAGE_TOOLBAR_CLASS, PAGE_TOOLBAR_ROW_CLASS, PAGE_ROOT_CLASS, PAGE_LIST_BODY_CLASS, PAGE_TABLE_HEAD_CLASS} from '../lib/pageToolbar';
 import DataTableShell from '../components/layout/DataTableShell';
 import Loading, { LoadingSpinner } from '../components/ui/Loading';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import InternetImagePicker from '../components/ui/InternetImagePicker';
 import { cn } from '../lib/utils';
 
 interface Category {
@@ -455,25 +456,12 @@ const Categories = () => {
                   />
                 </div>
                 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[12px] font-semibold text-muted-foreground">Icon / Image URL</label>
-                  <div className="flex gap-2">
-                    <div className="size-11 rounded-none bg-muted/50 border border-border/50 flex items-center justify-center shrink-0">
-                      {formData.icon ? (
-                        <img src={formData.icon} alt="Icon preview" className="w-6 h-6 object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                      ) : (
-                        <ImageIcon className="size-5 text-muted-foreground/50" />
-                      )}
-                    </div>
-                    <input
-                      type="text"
-                      value={formData.icon}
-                      onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                      className="flex-1 h-11 bg-input border border-border/60 rounded-none px-4 text-[13px] text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                      placeholder="https://..."
-                    />
-                  </div>
-                </div>
+                <InternetImagePicker
+                  value={formData.icon}
+                  onChange={(icon) => setFormData({ ...formData, icon })}
+                  searchHint={formData.name}
+                  label="Icon / Image"
+                />
 
                 <div className="flex items-center justify-between py-2 border-t border-border/40 mt-2">
                   <div className="flex flex-col">

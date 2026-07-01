@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useStore } from "@/context/StoreContext";
+import { resolveShopLink } from "@/lib/shopLinks";
 
 const Footer = () => {
   const { settings } = useStore();
@@ -21,8 +22,8 @@ const Footer = () => {
             <h4 className="font-semibold mb-4">Shop</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/products" className="hover:text-foreground transition-colors">All Products</Link></li>
-              <li><Link href="/categories/new" className="hover:text-foreground transition-colors">New Arrivals</Link></li>
-              <li><Link href="/categories/sale" className="hover:text-foreground transition-colors">Sale</Link></li>
+              <li><Link href={resolveShopLink("/categories/new")} className="hover:text-foreground transition-colors">New Arrivals</Link></li>
+              <li><Link href={resolveShopLink("/categories/sale")} className="hover:text-foreground transition-colors">Sale</Link></li>
               <li><Link href="/blog" className="hover:text-foreground transition-colors">Blog</Link></li>
             </ul>
           </div>
