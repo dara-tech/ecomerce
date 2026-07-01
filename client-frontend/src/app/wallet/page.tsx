@@ -8,6 +8,7 @@ import { useStore } from "@/context/StoreContext";
 import PriceDisplay from "@/components/features/PriceDisplay";
 import { toast } from "sonner";
 import { getApiUrl } from "@/lib/api";
+import { Input } from "@/components/ui/Input";
 
 export default function WalletPage() {
   const { user } = useAuth();
@@ -89,14 +90,14 @@ export default function WalletPage() {
         <div className="p-4 border border-border/60 rounded-xl">
           <h2 className="font-semibold mb-3">Top up wallet</h2>
           <div className="flex gap-2">
-            <input type="number" min="1" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} className="flex-1 h-10 px-3 border border-border rounded-lg bg-background" />
+            <Input type="number" min="1" value={topUpAmount} onChange={(e) => setTopUpAmount(e.target.value)} className="flex-1 h-10 px-3 border border-border rounded-lg bg-background" />
             <button type="button" onClick={topUp} className="px-4 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Add funds</button>
           </div>
         </div>
         <div className="p-4 border border-border/60 rounded-xl">
           <h2 className="font-semibold mb-3">Redeem loyalty points</h2>
           <div className="flex gap-2">
-            <input type="number" min="100" step="100" value={redeemPoints} onChange={(e) => setRedeemPoints(e.target.value)} className="flex-1 h-10 px-3 border border-border rounded-lg bg-background" />
+            <Input type="number" min="100" step="100" value={redeemPoints} onChange={(e) => setRedeemPoints(e.target.value)} className="flex-1 h-10 px-3 border border-border rounded-lg bg-background" />
             <button type="button" onClick={redeem} className="px-4 h-10 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Redeem</button>
           </div>
         </div>

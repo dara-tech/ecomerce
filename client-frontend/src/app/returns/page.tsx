@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { getApiUrl } from '@/lib/api';
+import { Input } from '@/components/ui/Input';
 
 export default function ReturnsPage() {
   const { user } = useAuth();
@@ -71,7 +72,7 @@ export default function ReturnsPage() {
         {!user && (
           <div>
             <label className="text-sm font-medium">Email used at checkout</label>
-            <input
+            <Input
               type="email"
               value={guestEmail}
               onChange={(e) => setGuestEmail(e.target.value)}

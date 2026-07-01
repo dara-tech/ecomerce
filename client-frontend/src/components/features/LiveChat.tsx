@@ -62,6 +62,7 @@ export default function LiveChat() {
             />
             <button
               type="button"
+              aria-label="Send message"
               onClick={send}
               className="h-9 w-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
             >

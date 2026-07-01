@@ -643,10 +643,16 @@ router.post('/payway/generate-qr', protect, async (req, res) => {
 
     if (!result.ok || !isPaywayQrGenerated(result.data)) {
       const code = result.data?.status?.code;
-      const message =
+      let message =
         result.data?.status?.message ||
         result.raw ||
         'Failed to generate PayWay QR';
+      if (code === '21' || code === 21) {
+        message =
+          'PayWay API key expired. Request a new Public Key from ABA PayWay (merchant ec462711).';
+      } else if (code === '6' || code === '102' || code === 6 || code === 102) {
+        message = 'PayWay domain not whitelisted. Ask ABA to whitelist lunakh.vercel.app and your VPS IP.';
+      }
       console.error('PayWay QR error:', code, message);
       return res.status(400).json({
         message,
