@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { useAuth } from "./AuthContext";
+import { authFetch } from "@/lib/authSession";
 import { getApiUrl } from "@/lib/api";
 
 export interface WishlistProduct {
@@ -41,16 +42,8 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user?.token) return;
-    fetch(`${apiUrl}/customer/wishlist`, {
-      headers: { Authorization: `Bearer ${user.token}` },
-    })
-      .then((r) => {
-        if (r.status === 401) {
-          // Stale session — local wishlist from storage is kept
-          return null;
-        }
-        return r.ok ? r.json() : null;
-      })
+    authFetch(`${apiUrl}/customer/wishlist`)
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (Array.isArray(data) && data.length) setItems(data);
       })

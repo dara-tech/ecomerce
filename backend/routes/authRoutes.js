@@ -2,6 +2,8 @@ import express from 'express';
 import {
   authUser,
   registerUser,
+  googleAuth,
+  telegramAuth,
   getUserProfile,
   updateUserProfile,
   refreshAccessToken,
@@ -23,6 +25,8 @@ const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', authUser);
+router.post('/google', googleAuth);
+router.post('/telegram', telegramAuth);
 router.post('/2fa/verify-login', verify2FALogin);
 router.post('/refresh', refreshAccessToken);
 

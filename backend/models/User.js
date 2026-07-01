@@ -18,6 +18,24 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 6,
     },
+    googleId: {
+      type: String,
+      sparse: true,
+      unique: true,
+    },
+    telegramId: {
+      type: String,
+      sparse: true,
+      unique: true,
+    },
+    telegramUsername: {
+      type: String,
+      default: '',
+    },
+    authProviders: {
+      type: [String],
+      default: ['local'],
+    },
     role: {
       type: String,
       enum: ['customer', 'admin', 'manager', 'support'],
@@ -91,7 +109,7 @@ const userSchema = new mongoose.Schema(
 
 // Hash password before saving (Mongoose 9: async hook — no next callback)
 userSchema.pre('save', async function () {
-  if (!this.isModified('password')) {
+  if (!this.isModified('password') || !this.password) {
     return;
   }
   const salt = await bcrypt.genSalt(10);

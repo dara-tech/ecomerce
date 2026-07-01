@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { CartProvider } from "./CartContext";
 import { AuthProvider } from "./AuthContext";
+import { GoogleAuthProvider } from "./GoogleAuthProvider";
 import { ThemeProvider } from "./ThemeProvider";
 import { StoreProvider } from "./StoreContext";
 import { WishlistProvider } from "./WishlistContext";
@@ -14,6 +15,7 @@ export function Providers({ children }: { children: ReactNode }) {
     <ThemeProvider>
       <StoreProvider>
         <AuthProvider>
+          <GoogleAuthProvider>
           <WishlistProvider>
             <CompareProvider>
               <RecentlyViewedProvider>
@@ -21,6 +23,7 @@ export function Providers({ children }: { children: ReactNode }) {
               </RecentlyViewedProvider>
             </CompareProvider>
           </WishlistProvider>
+          </GoogleAuthProvider>
         </AuthProvider>
       </StoreProvider>
     </ThemeProvider>

@@ -1,7 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+  registerSessionHandlers,
+  clearSessionHandlers,
+  validateStoredSession,
+} from "@/lib/authSession";
 
 export interface User {
   _id: string;
@@ -14,6 +20,7 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
+  isInitialized: boolean;
   login: (user: User) => void;
   logout: () => void;
 }
@@ -25,33 +32,74 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
-  // Load from localStorage on mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem("userInfo");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Failed to parse user info:", error);
-      }
-    }
-    setIsInitialized(true);
-  }, []);
-
-  const login = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem("userInfo", JSON.stringify(userData));
-  };
-
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     localStorage.removeItem("userInfo");
     localStorage.removeItem("refreshToken");
     router.push("/login");
-  };
+  }, [router]);
+
+  const login = useCallback((userData: User) => {
+    setUser(userData);
+    localStorage.setItem("userInfo", JSON.stringify(userData));
+    if (userData.refreshToken) {
+      localStorage.setItem("refreshToken", userData.refreshToken);
+    }
+  }, []);
+
+  useEffect(() => {
+    registerSessionHandlers({
+      onExpired: () => {
+        toast.error("Session expired. Please sign in again.");
+        logout();
+      },
+      onRefreshed: (nextUser) => setUser(nextUser),
+    });
+
+    return () => clearSessionHandlers();
+  }, [logout]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      const storedUser = localStorage.getItem("userInfo");
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch {
+          localStorage.removeItem("userInfo");
+        }
+      }
+
+      const status = await validateStoredSession();
+      if (cancelled) return;
+
+      if (status === "expired") {
+        setUser(null);
+        localStorage.removeItem("userInfo");
+        localStorage.removeItem("refreshToken");
+      } else if (status === "refreshed") {
+        const updated = localStorage.getItem("userInfo");
+        if (updated) {
+          try {
+            setUser(JSON.parse(updated));
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+
+      setIsInitialized(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, isInitialized, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -51,6 +51,9 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('sessionId');
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        window.location.assign('/login');
+      }
       return Promise.reject(error);
     }
 
@@ -82,6 +85,9 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('sessionId');
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        window.location.assign('/login');
+      }
       return Promise.reject(refreshErr);
     } finally {
       isRefreshing = false;

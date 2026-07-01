@@ -9,6 +9,99 @@ import { getClientIp, getUserAgent, parseDeviceLabel } from '../utils/requestMet
 import { getUserPermissions } from '../middleware/authMiddleware.js';
 import { canAccessAdminPanel, getPermissionsForRole, PERMISSIONS, ROLE_PERMISSIONS } from '../config/permissions.js';
 import { seedAdminNotification } from './opsController.js';
+import {
+  verifyGoogleCredential,
+  verifyTelegramLogin,
+  telegramPlaceholderEmail,
+} from '../utils/oauthProviders.js';
+
+function oauthRandomPassword() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+async function finalizeOAuthLogin(req, res, user, action) {
+  if (user.status === 'banned') {
+    await recordLoginAttempt({
+      user,
+      email: user.email,
+      success: false,
+      req,
+      failureReason: 'Account banned',
+    });
+    return res.status(403).json({ message: 'Account is banned' });
+  }
+
+  if (user.twoFactorEnabled && canAccessAdminPanel(user.role)) {
+    return res.status(400).json({
+      message: 'Staff accounts with 2FA must sign in via the admin portal.',
+    });
+  }
+
+  user.lastLogin = new Date();
+  await user.save();
+  await recordLoginAttempt({ user, email: user.email, success: true, req });
+  await logActivity({ req, user, action });
+  await issueTokensResponse(res, user, req);
+}
+
+async function findOrCreateGoogleUser(profile) {
+  let user = await User.findOne({ googleId: profile.googleId });
+  if (user) return { user, isNew: false };
+
+  user = await User.findOne({ email: profile.email });
+  if (user) {
+    if (!user.googleId) {
+      user.googleId = profile.googleId;
+      if (!user.authProviders.includes('google')) {
+        user.authProviders.push('google');
+      }
+      if (profile.avatar && !user.avatar) user.avatar = profile.avatar;
+      if (profile.emailVerified) user.isEmailVerified = true;
+      await user.save();
+    }
+    return { user, isNew: false };
+  }
+
+  user = await User.create({
+    name: profile.name,
+    email: profile.email,
+    password: oauthRandomPassword(),
+    googleId: profile.googleId,
+    authProviders: ['google'],
+    avatar: profile.avatar,
+    isEmailVerified: profile.emailVerified,
+    role: 'customer',
+  });
+
+  return { user, isNew: true };
+}
+
+async function findOrCreateTelegramUser(profile) {
+  let user = await User.findOne({ telegramId: profile.telegramId });
+  if (user) {
+    if (profile.avatar && !user.avatar) {
+      user.avatar = profile.avatar;
+      await user.save();
+    }
+    return { user, isNew: false };
+  }
+
+  const email = telegramPlaceholderEmail(profile.telegramId);
+
+  user = await User.create({
+    name: profile.name,
+    email,
+    password: oauthRandomPassword(),
+    telegramId: profile.telegramId,
+    telegramUsername: profile.username,
+    authProviders: ['telegram'],
+    avatar: profile.avatar,
+    isEmailVerified: false,
+    role: 'customer',
+  });
+
+  return { user, isNew: true };
+}
 
 function formatUser(user, permissions) {
   return {
@@ -162,6 +255,69 @@ export const registerUser = async (req, res) => {
     await issueTokensResponse(res, user, req, 201);
   } catch (err) {
     res.status(400).json({ message: err.message || 'Invalid user data' });
+  }
+};
+
+// @desc    Google OAuth (ID token from Google Identity Services)
+export const googleAuth = async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return res.status(400).json({ message: 'Google credential is required' });
+    }
+
+    const profile = await verifyGoogleCredential(credential);
+    if (!profile) {
+      return res.status(401).json({ message: 'Invalid Google sign-in' });
+    }
+
+    const { user, isNew } = await findOrCreateGoogleUser(profile);
+
+    if (isNew) {
+      seedAdminNotification(
+        'new_customer',
+        'New customer registered',
+        `${user.name} (${user.email}) joined via Google`,
+        '/users',
+        { userId: user._id }
+      ).catch(() => {});
+    }
+
+    await finalizeOAuthLogin(req, res, user, isNew ? 'auth.register_google' : 'auth.login_google');
+  } catch (err) {
+    console.error('Google auth error:', err);
+    res.status(err.status || 500).json({
+      message: err.message || 'Google sign-in failed',
+    });
+  }
+};
+
+// @desc    Telegram Login Widget
+export const telegramAuth = async (req, res) => {
+  try {
+    const profile = verifyTelegramLogin(req.body);
+    if (!profile) {
+      return res.status(401).json({ message: 'Invalid Telegram sign-in' });
+    }
+
+    const { user, isNew } = await findOrCreateTelegramUser(profile);
+
+    if (isNew) {
+      seedAdminNotification(
+        'new_customer',
+        'New customer registered',
+        `${user.name} joined via Telegram`,
+        '/users',
+        { userId: user._id }
+      ).catch(() => {});
+    }
+
+    await finalizeOAuthLogin(req, res, user, isNew ? 'auth.register_telegram' : 'auth.login_telegram');
+  } catch (err) {
+    console.error('Telegram auth error:', err);
+    res.status(err.status || 500).json({
+      message: err.message || 'Telegram sign-in failed',
+    });
   }
 };
 
