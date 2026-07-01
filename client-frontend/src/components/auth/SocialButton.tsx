@@ -65,10 +65,3 @@ export function TelegramIcon() {
     </svg>
   );
 }
-
-/** Telegram Login Widget only works on domains registered in BotFather. */
-export function isTelegramDomainAllowed() {
-  if (typeof window === "undefined") return false;
-  const host = window.location.hostname;
-  return host === "lunakh.vercel.app" || host.endsWith(".vercel.app");
-}

@@ -12,6 +12,7 @@ import { seedAdminNotification } from './opsController.js';
 import {
   verifyGoogleCredential,
   verifyTelegramLogin,
+  verifyTelegramOidcCode,
   telegramPlaceholderEmail,
 } from '../utils/oauthProviders.js';
 
@@ -315,6 +316,36 @@ export const telegramAuth = async (req, res) => {
     await finalizeOAuthLogin(req, res, user, isNew ? 'auth.register_telegram' : 'auth.login_telegram');
   } catch (err) {
     console.error('Telegram auth error:', err);
+    res.status(err.status || 500).json({
+      message: err.message || 'Telegram sign-in failed',
+    });
+  }
+};
+
+// @desc    Telegram OpenID Connect (BotFather Web Login)
+export const telegramOidcAuth = async (req, res) => {
+  try {
+    const { code, codeVerifier, redirectUri } = req.body;
+    const profile = await verifyTelegramOidcCode({ code, codeVerifier, redirectUri });
+    if (!profile) {
+      return res.status(401).json({ message: 'Invalid Telegram sign-in' });
+    }
+
+    const { user, isNew } = await findOrCreateTelegramUser(profile);
+
+    if (isNew) {
+      seedAdminNotification(
+        'new_customer',
+        'New customer registered',
+        `${user.name} joined via Telegram`,
+        '/users',
+        { userId: user._id }
+      ).catch(() => {});
+    }
+
+    await finalizeOAuthLogin(req, res, user, isNew ? 'auth.register_telegram' : 'auth.login_telegram');
+  } catch (err) {
+    console.error('Telegram OIDC auth error:', err);
     res.status(err.status || 500).json({
       message: err.message || 'Telegram sign-in failed',
     });

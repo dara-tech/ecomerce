@@ -4,6 +4,7 @@ import {
   registerUser,
   googleAuth,
   telegramAuth,
+  telegramOidcAuth,
   getUserProfile,
   updateUserProfile,
   refreshAccessToken,
@@ -27,6 +28,7 @@ router.post('/register', registerUser);
 router.post('/login', authUser);
 router.post('/google', googleAuth);
 router.post('/telegram', telegramAuth);
+router.post('/telegram/oidc', telegramOidcAuth);
 router.post('/2fa/verify-login', verify2FALogin);
 router.post('/refresh', refreshAccessToken);
 

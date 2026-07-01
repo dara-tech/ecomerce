@@ -148,4 +148,9 @@
     box-shadow: 0 0 0 1000px var(--background) inset !important;
     transition: background-color 99999s ease-out 0s;
   }
+
+  .telegram-widget-hitarea iframe {
+    opacity: 0.001 !important;
+    cursor: pointer;
+  }
 }
