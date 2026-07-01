@@ -60,6 +60,7 @@ export default function ProductCatalog({
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [sort, setSort] = useState<SortValue>("featured");
 
   const fetchPage = useCallback(
@@ -101,11 +102,15 @@ export default function ProductCatalog({
 
   useEffect(() => {
     setLoading(true);
+    setFetchError(null);
     fetchPage(1, false)
       .catch(() => {
         setProducts([]);
         setTotal(0);
         setHasMore(false);
+        setFetchError(
+          "Could not load products. Check your connection or try again in a moment."
+        );
       })
       .finally(() => setLoading(false));
   }, [fetchPage]);
@@ -169,9 +174,30 @@ export default function ProductCatalog({
             <div className="flex justify-center py-20">
               <Loader2 className="size-8 animate-spin text-muted-foreground" />
             </div>
+          ) : fetchError ? (
+            <div className="text-center py-20 space-y-4">
+              <p className="text-muted-foreground">{fetchError}</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setLoading(true);
+                  setFetchError(null);
+                  fetchPage(1, false)
+                    .catch(() =>
+                      setFetchError(
+                        "Could not load products. Check your connection or try again in a moment."
+                      )
+                    )
+                    .finally(() => setLoading(false));
+                }}
+              >
+                Retry
+              </Button>
+            </div>
           ) : products.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">
-              No products found. Please ensure the backend is running and seeded.
+              No products found in this category.
             </div>
           ) : (
             <>
