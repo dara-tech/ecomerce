@@ -1,13 +1,19 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, Package, ArrowRight, ArrowLeft, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { PageLoader } from "@/components/ui/PageLoader";
-import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { getApiUrl } from "@/lib/api";
+import { verifyPaymentStatus } from "@/lib/verifyPayment";
+import {
+  OrderInfoCard,
+  PaymentStatusButton,
+  PaymentStatusLayout,
+  PaymentStatusLink,
+} from "@/components/features/PaymentStatusLayout";
 
 type OrderState = {
   _id: string;
@@ -21,9 +27,27 @@ function isStripeMethod(method?: string) {
   return method?.toLowerCase() === "stripe";
 }
 
+function isKhqrMethod(method?: string) {
+  const m = method?.toLowerCase() || "";
+  return m === "khqr" || m.includes("khqr");
+}
+
 function isPaywayMethod(method?: string) {
   const m = method?.toLowerCase() || "";
   return m.includes("aba") || m.includes("payway");
+}
+
+function pendingMessage(method: string) {
+  if (method === "KHQR") {
+    return "Your KHQR payment has not been confirmed yet. If you already paid, wait a moment and refresh, or check Orders.";
+  }
+  if (isPaywayMethod(method)) {
+    return "Your ABA PayWay payment has not been confirmed yet. If you already paid, wait a moment and refresh, or check Orders.";
+  }
+  if (isStripeMethod(method)) {
+    return "Your card payment is still being confirmed. Refresh this page in a few seconds.";
+  }
+  return "Your payment has not been confirmed yet. Refresh in a moment or check Orders.";
 }
 
 function SuccessContent() {
@@ -87,35 +111,11 @@ function SuccessContent() {
       return current;
     };
 
-    const confirmKhqr = async (current: OrderState) => {
-      if (current.isPaid || current.paymentMethod !== "KHQR") return current;
+    const confirmQrPayment = async (current: OrderState) => {
+      if (current.isPaid || !user?.token) return current;
 
-      const khqrRes = await fetch(`${apiUrl}/payments/khqr/check-status/${orderId}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-
-      if (!khqrRes.ok) return current;
-
-      const khqrData = await khqrRes.json();
-      if (khqrData.isPaid || khqrData.status === "SUCCESS") {
-        const refreshed = await fetchOrder();
-        return refreshed || { ...current, isPaid: true };
-      }
-
-      return current;
-    };
-
-    const confirmPayway = async (current: OrderState) => {
-      if (current.isPaid || !isPaywayMethod(current.paymentMethod)) return current;
-
-      const paywayRes = await fetch(`${apiUrl}/payments/payway/check-status/${orderId}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-
-      if (!paywayRes.ok) return current;
-
-      const paywayData = await paywayRes.json();
-      if (paywayData.isPaid || paywayData.status === "SUCCESS") {
+      const result = await verifyPaymentStatus(orderId, user.token);
+      if (result.paid) {
         const refreshed = await fetchOrder();
         return refreshed || { ...current, isPaid: true };
       }
@@ -132,8 +132,9 @@ function SuccessContent() {
         }
 
         data = await confirmStripeSession(data);
-        data = await confirmKhqr(data);
-        data = await confirmPayway(data);
+        if (!data.isPaid && (isKhqrMethod(data.paymentMethod) || isPaywayMethod(data.paymentMethod))) {
+          data = await confirmQrPayment(data);
+        }
 
         if (cancelled) return;
 
@@ -144,7 +145,6 @@ function SuccessContent() {
           return;
         }
 
-        // Keep polling briefly — webhook or Bakong may lag behind redirect
         let attempts = 0;
         pollTimer = setInterval(async () => {
           if (cancelled || attempts >= 15) {
@@ -158,8 +158,9 @@ function SuccessContent() {
           if (!latest) return;
 
           latest = await confirmStripeSession(latest);
-          latest = await confirmKhqr(latest);
-          latest = await confirmPayway(latest);
+          if (!latest.isPaid && (isKhqrMethod(latest.paymentMethod) || isPaywayMethod(latest.paymentMethod))) {
+            latest = await confirmQrPayment(latest);
+          }
 
           if (cancelled) return;
 
@@ -187,31 +188,35 @@ function SuccessContent() {
 
   if (!orderId) {
     return (
-      <div className="container mx-auto px-4 py-20 max-w-3xl flex flex-col items-center text-center">
-        <AlertCircle className="w-16 h-16 text-destructive mb-6" />
-        <h1 className="text-2xl font-bold mb-3">Missing order reference</h1>
-        <Link href="/orders" className="text-primary underline font-medium">
-          View My Orders
-        </Link>
-      </div>
+      <PaymentStatusLayout
+        icon={<AlertCircle className="size-16 text-destructive" />}
+        title="Something went wrong"
+        description="We could not find your order reference. Check your orders or return to the store."
+        actions={
+          <>
+            <PaymentStatusLink href="/orders" variant="primary">
+              View Orders
+            </PaymentStatusLink>
+            <PaymentStatusLink href="/">Continue Shopping</PaymentStatusLink>
+          </>
+        }
+      />
     );
   }
 
   if (!user?.token) {
+    const redirect = `/checkout/success?order_id=${orderId}${sessionId ? `&session_id=${sessionId}` : ""}`;
     return (
-      <div className="container mx-auto px-4 py-20 max-w-3xl flex flex-col items-center text-center">
-        <AlertCircle className="w-16 h-16 text-amber-500 mb-6" />
-        <h1 className="text-2xl font-bold mb-3">Sign in to view your order</h1>
-        <p className="text-muted-foreground mb-8 max-w-md">
-          Your payment may have completed. Sign in with the same account used at checkout.
-        </p>
-        <Link
-          href={`/login?redirect=${encodeURIComponent(`/checkout/success?order_id=${orderId}${sessionId ? `&session_id=${sessionId}` : ""}`)}`}
-          className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-primary text-primary-foreground font-semibold"
-        >
-          Sign in
-        </Link>
-      </div>
+      <PaymentStatusLayout
+        icon={<AlertCircle className="size-16 text-amber-500" />}
+        title="Sign in required"
+        description="Your payment may have completed. Sign in with the same account you used at checkout."
+        actions={
+          <PaymentStatusLink href={`/login?redirect=${encodeURIComponent(redirect)}`} variant="primary">
+            Sign in
+          </PaymentStatusLink>
+        }
+      />
     );
   }
 
@@ -221,126 +226,75 @@ function SuccessContent() {
 
   if (verificationFailed || !order) {
     return (
-      <div className="container mx-auto px-4 py-20 max-w-3xl flex flex-col items-center text-center">
-        <AlertCircle className="w-16 h-16 text-destructive mb-6" />
-        <h1 className="text-2xl font-bold mb-3">Unable to verify order</h1>
-        <p className="text-muted-foreground mb-8 max-w-md">
-          We could not load your order details. Please check your orders page or contact support.
-        </p>
-        <Link
-          href="/orders"
-          className="inline-flex items-center gap-2 h-12 px-6 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
-        >
-          View My Orders
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
+      <PaymentStatusLayout
+        icon={<AlertCircle className="size-16 text-destructive" />}
+        title="Unable to verify payment"
+        description="We could not load your order details. Try again or view your orders."
+        actions={
+          <>
+            <PaymentStatusButton variant="primary" onClick={() => window.location.reload()}>
+              Try again
+            </PaymentStatusButton>
+            <PaymentStatusLink href="/orders">View Orders</PaymentStatusLink>
+          </>
+        }
+      />
     );
   }
 
-  const isPaid = order.isPaid;
+  const displayId = order._id || orderId;
 
-  if (!isPaid) {
+  if (!order.isPaid) {
     return (
-      <div className="container mx-auto px-4 py-20 max-w-3xl flex flex-col items-center text-center">
-        <Clock className="w-16 h-16 text-amber-500 mb-6" />
-        <h1 className="text-2xl font-bold mb-3">Payment pending</h1>
-        <p className="text-muted-foreground mb-8 max-w-md">
-          {order.paymentMethod === "KHQR"
-            ? "Your KHQR payment has not been confirmed yet. If you already paid, wait a moment and refresh, or check Orders."
-            : isPaywayMethod(order.paymentMethod)
-              ? "Your ABA PayWay payment has not been confirmed yet. If you already paid, wait a moment and refresh, or check Orders."
-              : "Your Stripe payment is still being confirmed. Refresh this page in a few seconds."}
-        </p>
-        <div className="w-full max-w-md bg-muted/30 border rounded-2xl p-6 mb-8 text-left">
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Order Number</span>
-            <span className="font-mono font-medium">{orderId}</span>
-          </div>
-        </div>
-        <div className="flex flex-col-reverse sm:flex-row gap-4 w-full max-w-md">
-          <Link
-            href="/orders"
-            className="flex-1 inline-flex justify-center items-center gap-2 h-12 px-6 rounded-full border border-border bg-background font-semibold hover:bg-muted transition-colors"
-          >
-            View Orders
-          </Link>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="flex-1 inline-flex justify-center items-center gap-2 h-12 px-6 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
-          >
-            Refresh status
-          </button>
-        </div>
-      </div>
+      <PaymentStatusLayout
+        icon={<Clock className="size-16 text-amber-500" />}
+        title="Payment pending"
+        description={pendingMessage(order.paymentMethod)}
+        actions={
+          <>
+            <PaymentStatusButton variant="primary" onClick={() => window.location.reload()}>
+              Refresh status
+            </PaymentStatusButton>
+            <PaymentStatusLink href="/orders">View Orders</PaymentStatusLink>
+          </>
+        }
+      >
+        <OrderInfoCard rows={[{ label: "Order Number", value: displayId }]} />
+      </PaymentStatusLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-20 max-w-3xl flex flex-col items-center text-center">
-      <div className="relative mb-8">
-        <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full animate-pulse" />
-        <CheckCircle2 className="w-24 h-24 text-green-500 relative z-10" />
-      </div>
-
-      <h1 className="text-4xl font-black mb-4">Payment Successful!</h1>
-      <p className="text-muted-foreground text-lg mb-8 max-w-md">
-        Thank you for your purchase. Your order has been securely processed and is now being prepared for shipping.
-      </p>
-
-      <div className="w-full max-w-md bg-muted/30 border rounded-2xl p-6 mb-10 text-left">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
-          <Package className="w-4 h-4" /> Order Details
-        </h3>
-
-        <div className="flex flex-col gap-3">
-          <div className="flex justify-between items-center border-b border-border/50 pb-3">
-            <span className="text-muted-foreground">Order Number</span>
-            <span className="font-mono font-medium text-foreground">{orderId}</span>
-          </div>
-          <div className="flex justify-between items-center border-b border-border/50 pb-3">
-            <span className="text-muted-foreground">Payment Method</span>
-            <span className="font-medium">{order.paymentMethod}</span>
-          </div>
-          <div className="flex justify-between items-center border-b border-border/50 pb-3">
-            <span className="text-muted-foreground">Status</span>
-            <span className="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-500">
-              Paid
-            </span>
-          </div>
-          <div className="flex justify-between items-center pt-1">
-            <span className="text-muted-foreground">Estimated Delivery</span>
-            <span className="font-medium text-foreground">3-5 Business Days</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col-reverse sm:flex-row gap-4 w-full max-w-md">
-        <Link
-          href="/"
-          className="flex-1 inline-flex justify-center items-center gap-2 h-12 px-6 rounded-full border border-border bg-background font-semibold hover:bg-muted transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Continue Shopping
-        </Link>
-        <Link
-          href="/orders"
-          className="flex-1 inline-flex justify-center items-center gap-2 h-12 px-6 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
-        >
-          View Order Status
-          <ArrowRight className="w-4 h-4" />
-        </Link>
-      </div>
-    </div>
+    <PaymentStatusLayout
+      icon={<CheckCircle2 className="size-16 text-green-600" />}
+      title="Payment successful"
+      description="Thank you for your purchase. Your order is confirmed and being prepared."
+      actions={
+        <>
+          <PaymentStatusLink href="/orders" variant="primary">
+            View Orders
+          </PaymentStatusLink>
+          <PaymentStatusLink href="/">Continue Shopping</PaymentStatusLink>
+        </>
+      }
+    >
+      <OrderInfoCard
+        rows={[
+          { label: "Order Number", value: displayId },
+          { label: "Payment", value: order.paymentMethod },
+          {
+            label: "Status",
+            value: <span className="text-green-600">Paid</span>,
+          },
+        ]}
+      />
+    </PaymentStatusLayout>
   );
 }
 
 export default function CheckoutSuccessPage() {
   return (
-    <Suspense
-      fallback={<PageLoader />}
-    >
+    <Suspense fallback={<PageLoader label="Loading…" />}>
       <SuccessContent />
     </Suspense>
   );

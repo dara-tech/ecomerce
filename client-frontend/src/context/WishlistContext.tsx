@@ -25,7 +25,7 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 const STORAGE_KEY = "wishlist";
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, isInitialized } = useAuth();
   const [items, setItems] = useState<WishlistProduct[]>([]);
   const apiUrl = getApiUrl();
 
@@ -41,14 +41,14 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!user?.token) return;
+    if (!isInitialized || !user?.token) return;
     authFetch(`${apiUrl}/customer/wishlist`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (Array.isArray(data) && data.length) setItems(data);
       })
       .catch(() => {});
-  }, [user?.token, apiUrl]);
+  }, [isInitialized, user?.token, apiUrl]);
 
   const persist = useCallback((next: WishlistProduct[]) => {
     setItems(next);
@@ -57,21 +57,17 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
   const syncAdd = (productId: string) => {
     if (!user?.token) return;
-    fetch(`${apiUrl}/customer/wishlist`, {
+    authFetch(`${apiUrl}/customer/wishlist`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${user.token}`,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId }),
     }).catch(() => {});
   };
 
   const syncRemove = (productId: string) => {
     if (!user?.token) return;
-    fetch(`${apiUrl}/customer/wishlist/${productId}`, {
+    authFetch(`${apiUrl}/customer/wishlist/${productId}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${user.token}` },
     }).catch(() => {});
   };
 

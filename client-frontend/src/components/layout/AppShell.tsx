@@ -32,7 +32,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <main
         className={
           authScreen
-            ? "flex-grow"
+            ? "flex min-h-0 flex-1 flex-col overflow-hidden md:flex-grow md:overflow-visible"
             : chatScreen
               ? "flex h-[calc(100dvh-var(--mobile-header-h))] min-h-0 flex-col overflow-hidden pb-0 md:h-auto md:grow md:overflow-visible md:pb-0"
               : noTabBar

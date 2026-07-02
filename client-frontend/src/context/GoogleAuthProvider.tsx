@@ -1,14 +1,15 @@
 "use client";
 
-import { GoogleOAuthProvider } from "@react-oauth/google";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { ensureGoogleSignInInitialized } from "@/lib/googleSignIn";
 
 export function GoogleAuthProvider({ children }: { children: ReactNode }) {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
-  if (!clientId) {
-    return <>{children}</>;
-  }
+  useEffect(() => {
+    if (!clientId) return;
+    void ensureGoogleSignInInitialized(clientId);
+  }, [clientId]);
 
-  return <GoogleOAuthProvider clientId={clientId}>{children}</GoogleOAuthProvider>;
+  return <>{children}</>;
 }

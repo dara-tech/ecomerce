@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useStore } from "@/context/StoreContext";
 
 type AuthShellProps = {
@@ -17,8 +17,26 @@ export function AuthShell({ title, subtitle, footer, children, topLink }: AuthSh
   const { settings } = useStore();
   const storeName = settings?.storeName || "Store";
 
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => {
+      const locked = mq.matches;
+      document.documentElement.style.overflow = locked ? "hidden" : "";
+      document.body.style.overflow = locked ? "hidden" : "";
+      document.body.style.overscrollBehavior = locked ? "none" : "";
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.overscrollBehavior = "";
+    };
+  }, []);
+
   return (
-    <div className="relative flex min-h-dvh flex-col bg-background md:min-h-[calc(100dvh-5rem)] md:items-center md:justify-center md:py-14">
+    <div className="relative flex h-dvh max-h-dvh flex-col overflow-hidden bg-background md:h-auto md:max-h-none md:min-h-[calc(100dvh-5rem)] md:overflow-visible md:items-center md:justify-center md:py-14">
       <div className="pointer-events-none absolute inset-0 hidden overflow-hidden md:block">
         <div className="absolute -left-24 top-1/4 size-72 rounded-full bg-muted/40 blur-3xl" />
         <div className="absolute -right-24 bottom-1/4 size-72 rounded-full bg-muted/30 blur-3xl" />
@@ -59,7 +77,7 @@ export function AuthShell({ title, subtitle, footer, children, topLink }: AuthSh
         )}
       </header>
 
-      <div className="relative flex w-full flex-1 flex-col md:max-w-[400px] md:flex-none md:px-4">
+      <div className="relative flex min-h-0 w-full flex-1 flex-col md:max-w-[400px] md:flex-none md:px-4">
         <div className="mb-6 hidden items-center justify-between gap-4 md:mb-8 md:flex">
           <Link
             href="/"
@@ -77,7 +95,7 @@ export function AuthShell({ title, subtitle, footer, children, topLink }: AuthSh
           )}
         </div>
 
-        <div className="flex flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-5 md:overflow-visible md:px-0 md:py-0">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-5 no-scrollbar md:overflow-visible md:px-0 md:py-0">
           <div className="mb-5 space-y-1 md:mb-8">
             <h1 className="text-[1.625rem] font-bold leading-tight tracking-tight text-foreground md:text-2xl md:font-semibold">
               {title}

@@ -49,6 +49,49 @@ function getRefreshToken(user: StoredUser | null) {
   return user?.refreshToken || localStorage.getItem('refreshToken') || '';
 }
 
+function decodeJwtPayload(token: string): { exp?: number } | null {
+  try {
+    const segment = token.split('.')[1];
+    if (!segment) return null;
+    const normalized = segment.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+    return JSON.parse(atob(padded)) as { exp?: number };
+  } catch {
+    return null;
+  }
+}
+
+function isAccessTokenExpired(token: string, leewaySec = 30): boolean {
+  const payload = decodeJwtPayload(token);
+  if (!payload?.exp) return false;
+  return payload.exp * 1000 <= Date.now() + leewaySec * 1000;
+}
+
+let sessionValidation: Promise<'valid' | 'refreshed' | 'expired' | 'none'> | null = null;
+
+async function fetchAuthMe(token: string) {
+  return fetch(`${getApiUrl()}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+async function validateStoredSessionInternal(): Promise<'valid' | 'refreshed' | 'expired' | 'none'> {
+  const user = readStoredUser();
+  if (!user?.token) return 'none';
+
+  if (!isAccessTokenExpired(user.token)) {
+    const res = await fetchAuthMe(user.token);
+    if (res.ok) return 'valid';
+    if (res.status !== 401) return 'valid';
+  }
+
+  const refreshed = await refreshAccessToken();
+  if (!refreshed) return 'expired';
+
+  const retry = await fetchAuthMe(refreshed.token);
+  return retry.ok ? 'refreshed' : 'expired';
+}
+
 export async function refreshAccessToken(): Promise<StoredUser | null> {
   const current = readStoredUser();
   const refreshToken = getRefreshToken(current);
@@ -130,23 +173,10 @@ export async function authFetch(
 }
 
 export async function validateStoredSession(): Promise<'valid' | 'refreshed' | 'expired' | 'none'> {
-  const user = readStoredUser();
-  if (!user?.token) return 'none';
-
-  const res = await fetch(`${getApiUrl()}/auth/me`, {
-    headers: { Authorization: `Bearer ${user.token}` },
-  });
-
-  if (res.ok) return 'valid';
-
-  if (res.status !== 401) return 'valid';
-
-  const refreshed = await refreshAccessToken();
-  if (!refreshed) return 'expired';
-
-  const retry = await fetch(`${getApiUrl()}/auth/me`, {
-    headers: { Authorization: `Bearer ${refreshed.token}` },
-  });
-
-  return retry.ok ? 'refreshed' : 'expired';
+  if (!sessionValidation) {
+    sessionValidation = validateStoredSessionInternal().finally(() => {
+      sessionValidation = null;
+    });
+  }
+  return sessionValidation;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -27,15 +27,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function clearStoredAuth() {
+  localStorage.removeItem("userInfo");
+  localStorage.removeItem("refreshToken");
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
+  const bootstrappingRef = useRef(true);
 
   const logout = useCallback(() => {
     setUser(null);
-    localStorage.removeItem("userInfo");
-    localStorage.removeItem("refreshToken");
+    clearStoredAuth();
     router.push("/login");
   }, [router]);
 
@@ -50,46 +55,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     registerSessionHandlers({
       onExpired: () => {
+        setUser(null);
+        clearStoredAuth();
+        if (bootstrappingRef.current) return;
         toast.error("Session expired. Please sign in again.");
-        logout();
+        router.push("/login");
       },
       onRefreshed: (nextUser) => setUser(nextUser),
     });
 
     return () => clearSessionHandlers();
-  }, [logout]);
+  }, [router]);
 
   useEffect(() => {
     let cancelled = false;
 
     (async () => {
-      const storedUser = localStorage.getItem("userInfo");
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch {
-          localStorage.removeItem("userInfo");
-        }
-      }
-
       const status = await validateStoredSession();
       if (cancelled) return;
 
-      if (status === "expired") {
+      if (status === "none" || status === "expired") {
         setUser(null);
-        localStorage.removeItem("userInfo");
-        localStorage.removeItem("refreshToken");
-      } else if (status === "refreshed") {
+        clearStoredAuth();
+      } else {
         const updated = localStorage.getItem("userInfo");
         if (updated) {
           try {
             setUser(JSON.parse(updated));
           } catch {
-            /* ignore */
+            clearStoredAuth();
           }
         }
       }
 
+      bootstrappingRef.current = false;
       setIsInitialized(true);
     })();
 

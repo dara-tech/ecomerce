@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, QrCode, MapPin } from "lucide-react";
 import { useCart, type CartItem } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { authFetch } from "@/lib/authSession";
+import { verifyPaymentStatus } from "@/lib/verifyPayment";
 import { useStore } from "@/context/StoreContext";
 import ProductImage from "@/components/ui/ProductImage";
 import PriceDisplay from "@/components/features/PriceDisplay";
@@ -17,13 +19,118 @@ import { validateCartItems, formatRemovedCartMessage } from "@/lib/cartValidatio
 import { PageLoader, InlineLoader } from "@/components/ui/PageLoader";
 import { cn } from "@/lib/utils";
 
+function QrPaymentActions({
+  providerIssue,
+  onCheckPayment,
+  orderId,
+}: {
+  providerIssue: boolean;
+  onCheckPayment: () => Promise<void>;
+  orderId: string | null;
+}) {
+  return (
+    <div className="flex w-full flex-col gap-3">
+      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <InlineLoader />
+        <span>Confirming payment…</span>
+      </div>
+      {providerIssue && (
+        <p className="text-center text-xs text-amber-600">Auto-confirm delayed — tap below if you paid.</p>
+      )}
+      <button
+        type="button"
+        onClick={onCheckPayment}
+        className="inline-flex h-12 w-full items-center justify-center rounded-full bg-foreground text-sm font-semibold text-background transition-transform active:scale-[0.98]"
+      >
+        I already paid
+      </button>
+      {orderId && (
+        <Link
+          href={`/checkout/success?order_id=${orderId}`}
+          className="inline-flex h-10 items-center justify-center text-sm font-medium text-muted-foreground hover:text-foreground"
+        >
+          View order
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function QrPaymentModal({
+  open,
+  amount,
+  qrNode,
+  waiting,
+  providerIssue,
+  onCheckPayment,
+  orderId,
+}: {
+  open: boolean;
+  amount: number;
+  qrNode: ReactNode;
+  waiting: boolean;
+  providerIssue: boolean;
+  onCheckPayment: () => Promise<void>;
+  orderId: string | null;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      document.body.style.overscrollBehavior = "";
+    };
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex md:items-center md:justify-center md:bg-black/50 md:p-4 md:backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Scan QR to pay"
+    >
+      <div className="flex h-[100dvh] w-full flex-col bg-background md:h-auto md:max-h-[min(92dvh,640px)] md:max-w-lg md:rounded-2xl md:shadow-2xl md:ring-1 md:ring-border/60">
+        <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border/60 px-5 pb-4 pt-[max(0.75rem,env(safe-area-inset-top))] md:px-6 md:pt-5">
+          <p className="text-base font-semibold md:text-lg">Scan to pay</p>
+          <p className="text-xl font-bold tabular-nums md:text-2xl">
+            <PriceDisplay amount={amount} />
+          </p>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 md:overflow-visible md:py-5">
+          <div className="mx-auto w-full max-w-[280px] overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-border/60">
+            <div className="flex w-full justify-center [&_img]:max-h-[min(42dvh,300px)] [&_img]:w-full [&_img]:object-contain [&_svg]:h-auto [&_svg]:max-h-[min(42dvh,300px)] [&_svg]:w-full">
+              {qrNode}
+            </div>
+          </div>
+        </div>
+
+        {waiting && (
+          <div className="shrink-0 border-t border-border/60 bg-background px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] md:px-6 md:pb-5">
+            <QrPaymentActions
+              providerIssue={providerIssue}
+              onCheckPayment={onCheckPayment}
+              orderId={orderId}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isBuyNow = searchParams.get("buyNow") === "1";
   const payOrderId = searchParams.get("payOrder");
   const { cartItems, cartTotal, clearCart, syncCart } = useCart();
-  const { user } = useAuth();
+  const { user, isInitialized } = useAuth();
   const { t } = useStore();
   const apiUrl = getApiUrl();
   const [buyNowItem, setBuyNowItem] = useState<any>(null);
@@ -40,6 +147,7 @@ function CheckoutContent() {
   const [paywayQrImage, setPaywayQrImage] = useState<string | null>(null);
   const [paywayWaiting, setPaywayWaiting] = useState(false);
   const [paywayProviderIssue, setPaywayProviderIssue] = useState(false);
+  const [qrDisplaySize, setQrDisplaySize] = useState(320);
 
   const [contactEmail, setContactEmail] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -83,11 +191,26 @@ function CheckoutContent() {
   }, [isBuyNow]);
 
   useEffect(() => {
+    const syncQrSize = () => {
+      const width = window.innerWidth;
+      if (width < 768) {
+        setQrDisplaySize(Math.min(380, Math.round(width * 0.92)));
+      } else {
+        setQrDisplaySize(280);
+      }
+    };
+    syncQrSize();
+    window.addEventListener("resize", syncQrSize);
+    return () => window.removeEventListener("resize", syncQrSize);
+  }, []);
+
+  useEffect(() => {
     if (!payOrderId) {
       setPendingOrder(null);
       setLoadingPendingOrder(false);
       return;
     }
+    if (!isInitialized) return;
     if (!user?.token) {
       setLoadingPendingOrder(false);
       return;
@@ -96,9 +219,7 @@ function CheckoutContent() {
     let cancelled = false;
     setLoadingPendingOrder(true);
 
-    fetch(`${apiUrl}/orders/${payOrderId}`, {
-      headers: { Authorization: `Bearer ${user.token}` },
-    })
+    authFetch(`${apiUrl}/orders/${payOrderId}`)
       .then(async (res) => {
         if (!res.ok) throw new Error("Order not found");
         return res.json();
@@ -139,7 +260,7 @@ function CheckoutContent() {
     return () => {
       cancelled = true;
     };
-  }, [payOrderId, user, apiUrl, router]);
+  }, [payOrderId, isInitialized, user, apiUrl, router]);
 
   const isPayExistingOrder = !!pendingOrder;
   const existingOrderId = pendingOrder?._id ?? null;
@@ -300,79 +421,19 @@ function CheckoutContent() {
   const khqrMd5Ref = useRef(khqrMd5);
   khqrMd5Ref.current = khqrMd5;
 
-  const checkKhqrPaymentNow = useCallback(async (orderId: string, token: string) => {
-    const md5Query = khqrMd5Ref.current ? `?md5=${encodeURIComponent(khqrMd5Ref.current)}` : '';
+  const checkPaymentNow = useCallback(async (orderId: string, token: string, md5?: string | null) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
-      const statusRes = await fetch(
-        `${apiUrl}/payments/khqr/check-status/${orderId}${md5Query}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          signal: controller.signal,
-        }
-      );
-
-      if (statusRes.ok) {
-        const statusData = await statusRes.json();
-        if (statusData.isPaid || statusData.status === 'SUCCESS') {
-          return { paid: true as const };
-        }
-        return {
-          paid: false as const,
-          providerUnavailable: Boolean(statusData.providerUnavailable),
-        };
-      }
-
-      if (statusRes.status === 401) {
-        return { paid: false as const, authExpired: true as const };
-      }
-    } finally {
-      clearTimeout(timeoutId);
-    }
-
-    const orderRes = await fetch(`${apiUrl}/orders/${orderId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (orderRes.ok) {
-      const orderData = await orderRes.json();
-      if (orderData?.isPaid) return { paid: true as const };
-    }
-
-    return { paid: false as const };
-  }, [apiUrl]);
-
-  const checkPaywayPaymentNow = useCallback(async (orderId: string, token: string) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-    try {
-      const statusRes = await fetch(`${apiUrl}/payments/payway/check-status/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+      return await verifyPaymentStatus(orderId, token, {
+        md5,
         signal: controller.signal,
       });
-
-      if (statusRes.ok) {
-        const statusData = await statusRes.json();
-        if (statusData.isPaid || statusData.status === 'SUCCESS') {
-          return { paid: true as const };
-        }
-        return {
-          paid: false as const,
-          providerUnavailable: Boolean(statusData.providerUnavailable),
-        };
-      }
-
-      if (statusRes.status === 401) {
-        return { paid: false as const, authExpired: true as const };
-      }
     } finally {
       clearTimeout(timeoutId);
     }
-
-    return { paid: false as const };
-  }, [apiUrl]);
+  }, []);
 
   useEffect(() => {
     if (!khqrString || !createdOrderId || !user?.token) {
@@ -382,7 +443,7 @@ function CheckoutContent() {
 
     let cancelled = false;
     let intervalId: ReturnType<typeof setInterval>;
-    let pollDelayMs = 4000;
+    let pollDelayMs = 3000;
     let errorStreak = 0;
     const orderId = createdOrderId;
     const token = user.token;
@@ -408,9 +469,9 @@ function CheckoutContent() {
     const poll = async () => {
       if (cancelled) return;
       try {
-        const result = await checkKhqrPaymentNow(orderId, token);
+        const result = await checkPaymentNow(orderId, token, khqrMd5Ref.current);
         errorStreak = 0;
-        pollDelayMs = 4000;
+        pollDelayMs = 3000;
 
         if (result.paid) {
           handlePaymentSuccess();
@@ -441,7 +502,7 @@ function CheckoutContent() {
       cancelled = true;
       clearInterval(intervalId);
     };
-  }, [khqrString, createdOrderId, user?.token, checkKhqrPaymentNow, finishCheckout, router]);
+  }, [khqrString, createdOrderId, user?.token, checkPaymentNow, finishCheckout, router]);
 
   useEffect(() => {
     if ((!paywayQrString && !paywayQrImage) || !createdOrderId || !user?.token) {
@@ -451,7 +512,7 @@ function CheckoutContent() {
 
     let cancelled = false;
     let intervalId: ReturnType<typeof setInterval>;
-    let pollDelayMs = 4000;
+    let pollDelayMs = 3000;
     let errorStreak = 0;
     const orderId = createdOrderId;
     const token = user.token;
@@ -477,9 +538,9 @@ function CheckoutContent() {
     const poll = async () => {
       if (cancelled) return;
       try {
-        const result = await checkPaywayPaymentNow(orderId, token);
+        const result = await checkPaymentNow(orderId, token);
         errorStreak = 0;
-        pollDelayMs = 4000;
+        pollDelayMs = 3000;
 
         if (result.paid) {
           handlePaymentSuccess();
@@ -510,7 +571,7 @@ function CheckoutContent() {
       cancelled = true;
       clearInterval(intervalId);
     };
-  }, [paywayQrString, paywayQrImage, createdOrderId, user?.token, checkPaywayPaymentNow, finishCheckout, router]);
+  }, [paywayQrString, paywayQrImage, createdOrderId, user?.token, checkPaymentNow, finishCheckout, router]);
 
   const handleAutoFillLocation = () => {
     if (!navigator.geolocation) {
@@ -573,146 +634,37 @@ function CheckoutContent() {
     }
 
     if (paymentMethod === "payway") {
+      if (paywayQrString || paywayQrImage) {
+        return (
+          <div className="flex items-center gap-3 py-1">
+            <InlineLoader />
+            <p className="text-sm text-muted-foreground">QR payment open — scan in the popup to complete.</p>
+          </div>
+        );
+      }
       return (
-        <div className="flex flex-col items-center justify-center space-y-4 py-4 animate-in fade-in zoom-in-95 duration-300">
-          {paywayQrString || paywayQrImage ? (
-            <>
-              <div className="bg-white p-4 rounded-xl shadow-sm border">
-                {paywayQrImage ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={paywayQrImage} alt="ABA PayWay KHQR" className="w-[180px] h-[180px] object-contain" />
-                ) : paywayQrString ? (
-                  <QRCode value={paywayQrString} size={180} />
-                ) : null}
-              </div>
-              <div className="text-center space-y-2">
-                <p className="font-semibold">Scan with ABA / KHQR app</p>
-                <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
-                  PayWay ABA KHQR — open ABA Mobile or any KHQR banking app and scan to pay.
-                </p>
-                {paywayWaiting && (
-                  <div className="flex flex-col items-center gap-3 pt-2">
-                    <div className="flex items-center justify-center gap-2 text-sm text-primary">
-                      <InlineLoader />
-                      Waiting for payment confirmation...
-                    </div>
-                    {paywayProviderIssue && (
-                      <p className="text-xs text-amber-600 max-w-[280px]">
-                        Auto-confirm may be delayed. If you already paid, check status below.
-                      </p>
-                    )}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!createdOrderId || !user?.token) return;
-                        try {
-                          const result = await checkPaywayPaymentNow(createdOrderId, user.token);
-                          if (result.paid) {
-                            toast.success("Payment confirmed!");
-                            finishCheckout();
-                            router.push(`/checkout/success?order_id=${createdOrderId}`);
-                          } else {
-                            toast.info("Payment not detected yet.");
-                          }
-                        } catch {
-                          toast.error("Network error. Try again.");
-                        }
-                      }}
-                      className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
-                    >
-                      I already paid — check now
-                    </button>
-                    <Link
-                      href={`/checkout/success?order_id=${createdOrderId}`}
-                      className="text-xs font-semibold text-primary underline hover:opacity-80"
-                    >
-                      View order status
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-6">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <QrCode className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <p className="font-semibold text-lg">Generate ABA KHQR</p>
-              <p className="text-sm text-muted-foreground max-w-[250px] mx-auto mt-2">
-                Click &quot;Place Order&quot; to generate a PayWay KHQR code for this order.
-              </p>
-            </div>
-          )}
+        <div className="py-4 text-center">
+          <QrCode className="mx-auto mb-3 size-10 text-muted-foreground" />
+          <p className="text-sm font-semibold">ABA PayWay KHQR</p>
+          <p className="mt-1 text-sm text-muted-foreground">Place order to open the scan popup.</p>
         </div>
       );
     }
 
-    if (paymentMethod === 'khqr') {
+    if (paymentMethod === "khqr") {
+      if (khqrString) {
+        return (
+          <div className="flex items-center gap-3 py-1">
+            <InlineLoader />
+            <p className="text-sm text-muted-foreground">QR payment open — scan in the popup to complete.</p>
+          </div>
+        );
+      }
       return (
-        <div className="flex flex-col items-center justify-center space-y-4 py-4 animate-in fade-in zoom-in-95 duration-300">
-          {khqrString ? (
-            <>
-              <div className="bg-white p-4 rounded-xl shadow-sm border">
-                <QRCode value={khqrString} size={180} />
-              </div>
-              <div className="text-center space-y-2">
-                <p className="font-semibold">Scan to pay with KHQR</p>
-                <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
-                  Open your banking app (ABA, Bakong, ACLEDA, etc.) and scan this code to complete payment.
-                </p>
-                {khqrWaiting && (
-                  <div className="flex flex-col items-center gap-3 pt-2">
-                    <div className="flex items-center justify-center gap-2 text-sm text-primary">
-                      <InlineLoader />
-                      Waiting for payment confirmation...
-                    </div>
-                    {khqrProviderIssue && (
-                      <p className="text-xs text-amber-600 max-w-[280px]">
-                        Auto-confirm may be delayed. If you already paid, open order status below.
-                      </p>
-                    )}
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!createdOrderId || !user?.token) return;
-                        try {
-                          const result = await checkKhqrPaymentNow(createdOrderId, user.token);
-                          if (result.paid) {
-                            toast.success("Payment confirmed!");
-                            finishCheckout();
-                            router.push(`/checkout/success?order_id=${createdOrderId}`);
-                          } else {
-                            toast.info("Payment not detected yet. You can still open order status if you already paid.");
-                          }
-                        } catch {
-                          toast.error("Network error. Try again or open order status.");
-                        }
-                      }}
-                      className="text-xs text-muted-foreground underline hover:text-foreground transition-colors"
-                    >
-                      I already paid — check now
-                    </button>
-                    <Link
-                      href={`/checkout/success?order_id=${createdOrderId}`}
-                      className="text-xs font-semibold text-primary underline hover:opacity-80"
-                    >
-                      View order status
-                    </Link>
-                  </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-6">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                <QrCode className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <p className="font-semibold text-lg">Generate KHQR Code</p>
-              <p className="text-sm text-muted-foreground max-w-[250px] mx-auto mt-2">
-                Click &quot;Place Order&quot; below to generate your unique KHQR code for this order.
-              </p>
-            </div>
-          )}
+        <div className="py-4 text-center">
+          <QrCode className="mx-auto mb-3 size-10 text-muted-foreground" />
+          <p className="text-sm font-semibold">KHQR</p>
+          <p className="mt-1 text-sm text-muted-foreground">Place order to open the scan popup.</p>
         </div>
       );
     }
@@ -735,6 +687,75 @@ function CheckoutContent() {
     (acc: number, item: { qty: number }) => acc + item.qty,
     0
   );
+
+  const handleManualPaywayCheck = useCallback(async () => {
+    if (!createdOrderId || !user?.token) return;
+    try {
+      const result = await checkPaymentNow(createdOrderId, user.token);
+      if (result.paid) {
+        toast.success("Payment confirmed!");
+        finishCheckout();
+        router.push(`/checkout/success?order_id=${createdOrderId}`);
+      } else {
+        toast.info(result.message || "Payment not detected yet. Wait a moment and try again.");
+      }
+    } catch {
+      toast.error("Network error. Try again.");
+    }
+  }, [createdOrderId, user?.token, checkPaymentNow, finishCheckout, router]);
+
+  const handleManualKhqrCheck = useCallback(async () => {
+    if (!createdOrderId || !user?.token) return;
+    try {
+      const result = await checkPaymentNow(createdOrderId, user.token, khqrMd5Ref.current);
+      if (result.paid) {
+        toast.success("Payment confirmed!");
+        finishCheckout();
+        router.push(`/checkout/success?order_id=${createdOrderId}`);
+      } else {
+        toast.info(result.message || "Payment not detected yet. Wait a moment and try again.");
+      }
+    } catch {
+      toast.error("Network error. Try again.");
+    }
+  }, [createdOrderId, user?.token, checkPaymentNow, finishCheckout, router]);
+
+  const qrPaymentModal = useMemo(() => {
+    if (paymentMethod === "payway" && (paywayQrString || paywayQrImage)) {
+      return {
+        waiting: paywayWaiting,
+        providerIssue: paywayProviderIssue,
+        onCheckPayment: handleManualPaywayCheck,
+        qrNode: paywayQrImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={paywayQrImage} alt="ABA PayWay KHQR" className="w-full" />
+        ) : paywayQrString ? (
+          <QRCode value={paywayQrString} size={qrDisplaySize} />
+        ) : null,
+      };
+    }
+    if (paymentMethod === "khqr" && khqrString) {
+      return {
+        waiting: khqrWaiting,
+        providerIssue: khqrProviderIssue,
+        onCheckPayment: handleManualKhqrCheck,
+        qrNode: <QRCode value={khqrString} size={qrDisplaySize} />,
+      };
+    }
+    return null;
+  }, [
+    paymentMethod,
+    paywayQrString,
+    paywayQrImage,
+    khqrString,
+    paywayWaiting,
+    paywayProviderIssue,
+    khqrWaiting,
+    khqrProviderIssue,
+    handleManualPaywayCheck,
+    handleManualKhqrCheck,
+    qrDisplaySize,
+  ]);
 
   const placeOrderLabel = isProcessing
     ? t("processing")
@@ -1210,6 +1231,18 @@ function CheckoutContent() {
             </button>
           </div>
         </div>
+      )}
+
+      {awaitingQrPayment && qrPaymentModal && (
+        <QrPaymentModal
+          open
+          amount={finalTotal}
+          waiting={qrPaymentModal.waiting}
+          providerIssue={qrPaymentModal.providerIssue}
+          onCheckPayment={qrPaymentModal.onCheckPayment}
+          orderId={createdOrderId}
+          qrNode={qrPaymentModal.qrNode}
+        />
       )}
     </div>
   );

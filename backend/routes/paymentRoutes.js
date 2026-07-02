@@ -161,13 +161,182 @@ async function markPaywayOrderPaid(order, paywayData = {}) {
 }
 
 function isBakongPaymentSuccess(bakongResponse) {
-  // Bakong success: responseCode 0 + transaction data with hash (no "status" field)
-  return (
-    bakongResponse?.responseCode === 0 &&
-    bakongResponse?.data &&
-    typeof bakongResponse.data === 'object' &&
-    (bakongResponse.data.hash || bakongResponse.data.fromAccountId)
+  const code = bakongResponse?.responseCode;
+  const successCode = code === 0 || code === '0';
+  if (!successCode || !bakongResponse?.data || typeof bakongResponse.data !== 'object') {
+    return false;
+  }
+
+  const tx = bakongResponse.data;
+  return Boolean(
+    tx.hash ||
+      tx.fromAccountId ||
+      tx.toAccountId ||
+      tx.externalReference ||
+      tx.transactionId
   );
+}
+
+async function fetchBakongTransactionByMd5(md5) {
+  const bakongToken = process.env.BAKONG_TOKEN;
+  if (!bakongToken) {
+    return {
+      ok: false,
+      providerUnavailable: true,
+      message: 'Bakong token not configured; cannot verify KHQR payment',
+    };
+  }
+
+  const bakongApiUrl = process.env.BAKONG_API_URL || 'https://api-bakong.nbc.gov.kh/v1';
+  let response;
+  try {
+    response = await fetch(`${bakongApiUrl}/check_transaction_by_md5`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${bakongToken}`,
+      },
+      body: JSON.stringify({ md5 }),
+    });
+  } catch (fetchError) {
+    console.error('Bakong network error:', fetchError);
+    return {
+      ok: false,
+      providerUnavailable: true,
+      message: 'Payment provider unreachable; still waiting',
+    };
+  }
+
+  const rawBody = await response.text();
+  let data;
+  try {
+    data = rawBody ? JSON.parse(rawBody) : {};
+  } catch {
+    console.error('Bakong non-JSON response:', rawBody.slice(0, 200));
+    return {
+      ok: false,
+      providerUnavailable: true,
+      message: 'Unexpected payment provider response',
+    };
+  }
+
+  if (isBakongPaymentSuccess(data)) {
+    return { ok: true, success: true, data: data.data, raw: data };
+  }
+
+  return {
+    ok: true,
+    success: false,
+    message: data.responseMessage || 'Payment still pending',
+    bakongResponseCode: data.responseCode ?? response.status,
+    providerUnavailable: !response.ok && (response.status === 401 || response.status === 403),
+    raw: data,
+  };
+}
+
+async function verifyOrderPayment(order, { md5Query } = {}) {
+  if (order.isPaid) {
+    if (!order.stockDeducted) {
+      await fulfillOrderStock(order);
+    }
+    return {
+      message: 'Order already paid',
+      status: 'SUCCESS',
+      isPaid: true,
+      orderId: order._id,
+      gateway: order.paymentMethod,
+    };
+  }
+
+  const checked = [];
+  let lastPending = {
+    message: 'Payment still pending',
+    status: 'PENDING',
+    isPaid: false,
+    orderId: order._id,
+    checked,
+  };
+
+  const md5 = md5Query || order.khqrMd5;
+  if (md5) {
+    if (md5Query && md5Query !== order.khqrMd5) {
+      order.khqrMd5 = md5Query;
+      await order.save();
+    }
+
+    checked.push('KHQR');
+    const bakong = await fetchBakongTransactionByMd5(md5);
+    if (bakong.success) {
+      try {
+        await markKhqrOrderPaid(order, bakong.data);
+      } catch (fulfillError) {
+        console.error('KHQR fulfill error:', fulfillError);
+        throw fulfillError;
+      }
+      return {
+        message: 'Payment confirmed',
+        status: 'SUCCESS',
+        isPaid: true,
+        orderId: order._id,
+        gateway: 'KHQR',
+        checked,
+        data: bakong.data,
+      };
+    }
+
+    lastPending = {
+      ...lastPending,
+      message: bakong.message || lastPending.message,
+      providerUnavailable: Boolean(bakong.providerUnavailable),
+      bakongResponseCode: bakong.bakongResponseCode,
+      gateway: 'KHQR',
+    };
+  }
+
+  if (order.paywayTranId && isPaywayConfigured()) {
+    checked.push('ABA Pay');
+    let result;
+    try {
+      result = await checkPaywayTransaction(order.paywayTranId);
+    } catch (fetchError) {
+      console.error('PayWay network error:', fetchError);
+      lastPending = {
+        ...lastPending,
+        providerUnavailable: true,
+        message: 'Payment provider unreachable',
+        gateway: 'ABA Pay',
+        checked,
+      };
+      return lastPending;
+    }
+
+    if (result.ok && result.data && isPaywayPaymentApproved(result.data)) {
+      await markPaywayOrderPaid(order, result.data);
+      return {
+        message: 'Payment confirmed',
+        status: 'SUCCESS',
+        isPaid: true,
+        orderId: order._id,
+        gateway: 'ABA Pay',
+        checked,
+        data: result.data,
+      };
+    }
+
+    lastPending = {
+      ...lastPending,
+      message:
+        result.data?.description ||
+        result.data?.payment_status ||
+        lastPending.message,
+      paywayStatus: result.data?.status,
+      paymentStatus: result.data?.payment_status,
+      gateway: order.paywayTranId && !md5 ? 'ABA Pay' : lastPending.gateway,
+      checked,
+    };
+  }
+
+  return lastPending;
 }
 
 async function resolvePaymentOrder(req, body, paymentMethod) {
@@ -436,6 +605,15 @@ router.post('/khqr/generate', protect, async (req, res) => {
     const order = await resolvePaymentOrder(req, req.body, 'KHQR');
     const formattedAmount = Number(Number(order.totalPrice).toFixed(2));
 
+    if (order.khqrMd5 && order.khqrString && !order.isPaid) {
+      return res.status(200).json({
+        qrString: order.khqrString,
+        md5: order.khqrMd5,
+        orderId: order._id,
+        reused: true,
+      });
+    }
+
     const bakongAccount = process.env.BAKONG_ACCOUNT_ID || 'test_merchant@bakong';
 
     const optionalData = {
@@ -463,6 +641,7 @@ router.post('/khqr/generate', protect, async (req, res) => {
 
     if (qrPayload.status && qrPayload.status.code === 0) {
        order.khqrMd5 = qrPayload.data.md5;
+       order.khqrString = qrPayload.data.qr;
        await order.save();
        res.status(200).json({ 
          qrString: qrPayload.data.qr, 
@@ -495,104 +674,36 @@ router.get('/khqr/check-status/:orderId', protect, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized for this order' });
     }
 
-    if (order.isPaid) {
-      if (!order.stockDeducted) {
-        await fulfillOrderStock(order);
-      }
-      return res.status(200).json({
-        message: 'Order already paid',
-        status: 'SUCCESS',
-        isPaid: true,
-        orderId: order._id,
-      });
-    }
-
-    if (!order.khqrMd5 && req.query.md5) {
-      order.khqrMd5 = String(req.query.md5);
-      await order.save();
-    }
-
-    if (!order.khqrMd5) {
-      return res.status(400).json({ message: 'No KHQR payment associated with this order' });
-    }
-
-    const bakongToken = process.env.BAKONG_TOKEN;
-    if (!bakongToken) {
-      return res.status(200).json({
-        message: 'Bakong token not configured; waiting for order update',
-        status: 'PENDING',
-        isPaid: false,
-      });
-    }
-
-    const bakongApiUrl = process.env.BAKONG_API_URL || 'https://api-bakong.nbc.gov.kh/v1';
-    let response;
-    try {
-      response = await fetch(`${bakongApiUrl}/check_transaction_by_md5`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${bakongToken}`,
-        },
-        body: JSON.stringify({ md5: order.khqrMd5 }),
-      });
-    } catch (fetchError) {
-      console.error('Bakong network error:', fetchError);
-      return res.status(200).json({
-        message: 'Payment provider unreachable; still waiting',
-        status: 'PENDING',
-        isPaid: false,
-        providerUnavailable: true,
-      });
-    }
-
-    const rawBody = await response.text();
-    let data;
-    try {
-      data = rawBody ? JSON.parse(rawBody) : {};
-    } catch {
-      console.error('Bakong non-JSON response:', rawBody.slice(0, 200));
-      return res.status(200).json({
-        message: 'Unexpected payment provider response',
-        status: 'PENDING',
-        isPaid: false,
-        providerUnavailable: true,
-      });
-    }
-
-    if (!response.ok) {
-      return res.status(200).json({
-        message: data.responseMessage || 'Payment still pending',
-        status: 'PENDING',
-        isPaid: false,
-        bakongResponseCode: data.responseCode ?? response.status,
-      });
-    }
-
-    if (isBakongPaymentSuccess(data)) {
-      try {
-        await markKhqrOrderPaid(order, data.data);
-      } catch (fulfillError) {
-        console.error('KHQR fulfill error:', fulfillError);
-        return res.status(500).json({ message: 'Payment received but order update failed' });
-      }
-      return res.status(200).json({
-        message: 'Payment confirmed',
-        status: 'SUCCESS',
-        isPaid: true,
-        orderId: order._id,
-        data: data.data,
-      });
-    }
-
-    res.status(200).json({
-      message: data.responseMessage || 'Status checked',
-      status: 'PENDING',
-      isPaid: false,
-      bakongResponseCode: data.responseCode,
-    });
+    const result = await verifyOrderPayment(order, { md5Query: req.query.md5 });
+    res.status(200).json(result);
   } catch (error) {
     console.error('Bakong check error:', error);
+    if (error.message?.includes('order update failed')) {
+      return res.status(500).json({ message: 'Payment received but order update failed' });
+    }
+    res.status(500).json({ message: 'Server Error' });
+  }
+});
+
+// @route   GET /api/payments/verify/:orderId
+// @desc    Verify payment via Bakong KHQR and/or PayWay (whichever applies)
+// @access  Private
+router.get('/verify/:orderId', protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized for this order' });
+    }
+
+    const result = await verifyOrderPayment(order, { md5Query: req.query.md5 });
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Payment verify error:', error);
     res.status(500).json({ message: 'Server Error' });
   }
 });
@@ -758,7 +869,7 @@ async function handlePaywayCallback(body) {
     return;
   }
 
-  if (isPaywayPaymentApproved({ status })) {
+  if (isPaywayPaymentApproved(body)) {
     await markPaywayOrderPaid(order, body);
     console.log(`Order ${order._id} marked paid via PayWay callback (apv: ${apv}).`);
   }
@@ -779,69 +890,8 @@ router.get('/payway/check-status/:orderId', protect, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized for this order' });
     }
 
-    if (order.isPaid) {
-      if (!order.stockDeducted) {
-        await fulfillOrderStock(order);
-      }
-      return res.status(200).json({
-        message: 'Order already paid',
-        status: 'SUCCESS',
-        isPaid: true,
-        orderId: order._id,
-      });
-    }
-
-    if (!order.paywayTranId) {
-      return res.status(400).json({ message: 'No PayWay transaction for this order' });
-    }
-
-    if (!isPaywayConfigured()) {
-      return res.status(200).json({
-        message: 'PayWay not configured',
-        status: 'PENDING',
-        isPaid: false,
-      });
-    }
-
-    let result;
-    try {
-      result = await checkPaywayTransaction(order.paywayTranId);
-    } catch (fetchError) {
-      console.error('PayWay network error:', fetchError);
-      return res.status(200).json({
-        message: 'Payment provider unreachable',
-        status: 'PENDING',
-        isPaid: false,
-        providerUnavailable: true,
-      });
-    }
-
-    if (!result.ok || !result.data) {
-      return res.status(200).json({
-        message: 'Could not verify PayWay transaction',
-        status: 'PENDING',
-        isPaid: false,
-        providerUnavailable: true,
-      });
-    }
-
-    if (isPaywayPaymentApproved(result.data)) {
-      await markPaywayOrderPaid(order, result.data);
-      return res.status(200).json({
-        message: 'Payment confirmed',
-        status: 'SUCCESS',
-        isPaid: true,
-        orderId: order._id,
-        data: result.data,
-      });
-    }
-
-    res.status(200).json({
-      message: result.data.description || 'Payment pending',
-      status: 'PENDING',
-      isPaid: false,
-      paywayStatus: result.data.status,
-    });
+    const result = await verifyOrderPayment(order);
+    res.status(200).json(result);
   } catch (error) {
     console.error('PayWay check-status error:', error);
     res.status(500).json({ message: 'Server Error' });

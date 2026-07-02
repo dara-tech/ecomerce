@@ -17,12 +17,18 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 import { getApiUrl } from "@/lib/api";
+import { verifyPaymentStatus } from "@/lib/verifyPayment";
 import { PageLoader, InlineLoader } from "@/components/ui/PageLoader";
 import PriceDisplay from "@/components/features/PriceDisplay";
 import ProductImage from "@/components/ui/ProductImage";
 import { cn } from "@/lib/utils";
 
 type FilterType = "all" | "paid" | "pending";
+
+function isQrPaymentMethod(method?: string) {
+  const m = method?.toLowerCase() || "";
+  return m === "khqr" || m.includes("khqr") || m.includes("aba") || m.includes("payway");
+}
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Order placed",
@@ -143,19 +149,16 @@ export default function OrdersPage() {
     .filter((o) => selectedOrderIds.includes(o._id))
     .reduce((acc, curr) => acc + curr.totalPrice, 0);
 
-  const handleVerifyKhqrPayment = async (orderId: string) => {
+  const handleVerifyPayment = async (orderId: string) => {
     if (!user?.token) return;
     setVerifyingOrderId(orderId);
     try {
-      const res = await fetch(`${apiUrl}/payments/khqr/check-status/${orderId}`, {
-        headers: { Authorization: `Bearer ${user.token}` },
-      });
-      const data = await res.json();
-      if (res.ok && (data.isPaid || data.status === "SUCCESS")) {
-        toast.success("KHQR payment confirmed!");
+      const result = await verifyPaymentStatus(orderId, user.token);
+      if (result.paid) {
+        toast.success("Payment confirmed!");
         await fetchOrders();
       } else {
-        toast.info(data.message || "Payment not found yet. Try again in a moment.");
+        toast.info(result.message || "Payment not found yet. Try again in a moment.");
       }
     } catch (e) {
       console.error(e);
@@ -319,10 +322,10 @@ export default function OrdersPage() {
                       {t("payNow")}
                     </Link>
                   )}
-                  {!order.isPaid && order.paymentMethod === "KHQR" && (
+                  {!order.isPaid && isQrPaymentMethod(order.paymentMethod) && (
                     <button
                       type="button"
-                      onClick={() => handleVerifyKhqrPayment(order._id)}
+                      onClick={() => handleVerifyPayment(order._id)}
                       disabled={verifyingOrderId === order._id}
                       className="inline-flex h-8 items-center gap-1 rounded-full border border-border/60 bg-background px-3 text-[11px] font-semibold disabled:opacity-50"
                     >

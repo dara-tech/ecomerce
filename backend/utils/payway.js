@@ -291,12 +291,39 @@ export function isPaywayQrGenerated(data) {
 }
 
 export function isPaywayPaymentApproved(data) {
-  if (data?.status && typeof data.status === 'object') {
-    const code = data.status.code;
-    return code === '0' || code === 0;
+  if (!data || typeof data !== 'object') return false;
+
+  const payload = data.data && typeof data.data === 'object' ? data.data : data;
+
+  const paymentStatus = String(payload.payment_status ?? data.payment_status ?? '').toUpperCase();
+  if (['APPROVED', 'PRE-AUTH', 'PRE_AUTH', 'PREAUTH_APPROVED'].includes(paymentStatus)) {
+    return true;
   }
-  const status = data?.status;
-  return status === 0 || status === '0';
+
+  const paymentStatusCode = payload.payment_status_code ?? data.payment_status_code;
+  if (paymentStatusCode === 0 || paymentStatusCode === '0') {
+    return true;
+  }
+
+  const rawStatus = data.status;
+  if (typeof rawStatus === 'number' || typeof rawStatus === 'string') {
+    if (rawStatus === 0 || rawStatus === '0') {
+      const desc = String(data.description ?? payload.description ?? '').toLowerCase();
+      if (desc.includes('pending')) return false;
+      return desc.includes('approv') || Boolean(data.apv ?? payload.apv);
+    }
+    return false;
+  }
+
+  if (rawStatus && typeof rawStatus === 'object') {
+    const wrapperCode = String(rawStatus.code ?? '');
+      if (wrapperCode === '00' || wrapperCode === '0') {
+      if (['APPROVED', 'PRE-AUTH', 'PRE_AUTH'].includes(paymentStatus)) return true;
+      if (paymentStatusCode === 0 || paymentStatusCode === '0') return true;
+    }
+  }
+
+  return false;
 }
 
 export function isPaywayConfigured() {
