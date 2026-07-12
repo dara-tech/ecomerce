@@ -64,9 +64,6 @@ export default function MobileTabBar() {
                 <Icon className={`size-5 sm:size-[22px] ${active ? "stroke-[2.25px]" : "stroke-[1.75px]"}`} />
                 {tab.badge != null && <TabBadge count={tab.badge} />}
               </span>
-              <span className={`max-w-full truncate px-0.5 text-[9px] leading-tight sm:text-[10px] ${active ? "font-semibold" : "font-medium"}`}>
-                {tab.label}
-              </span>
             </Link>
           );
         })}
