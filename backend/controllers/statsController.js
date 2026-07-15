@@ -13,15 +13,31 @@ export const getDashboardStats = async (req, res) => {
   const endOfToday = new Date(startOfToday);
   endOfToday.setDate(endOfToday.getDate() + 1);
 
+  const isVendor = req.user && req.user.role === 'vendor';
+  let storeId = null;
+  if (isVendor) {
+    const { Store } = await import('../models/Store.js');
+    const store = await Store.findOne({ vendor: req.user._id });
+    if (store) storeId = store._id;
+  }
+
+  const queryUser = isVendor ? { _id: null } : {}; 
+  const queryProduct = isVendor ? { store: storeId } : {};
+  const queryOrder = isVendor ? { store: storeId } : { parentOrder: { $exists: false } }; // Admin sees master orders or all? Let's just say parentOrder not exists for admin, or all. Actually admin should see all orders or just parent orders. Let's just do all for admin.
+  if (!isVendor) {
+     // Admin sees master orders only (parentOrder doesn't exist) to avoid double counting revenue
+     // or they can see all. Let's just query { parentOrder: null } or similar.
+  }
+
   const [usersCount, productsCount, ordersCount, allOrders, lowStockCount, pendingRefunds, activeCoupons] =
     await Promise.all([
-    User.countDocuments({}),
-    Product.countDocuments({}),
-    Order.countDocuments({}),
-    Order.find({}).sort({ createdAt: -1 }).populate('user', 'id name email'),
-    Product.countDocuments({ countInStock: { $lte: 5 } }),
-    RefundRequest.countDocuments({ status: 'pending' }),
-    Coupon.countDocuments({ isActive: true }),
+    User.countDocuments(queryUser),
+    Product.countDocuments(queryProduct),
+    Order.countDocuments(queryOrder),
+    Order.find(queryOrder).sort({ createdAt: -1 }).populate('user', 'id name email'),
+    Product.countDocuments({ ...queryProduct, countInStock: { $lte: 5 } }),
+    RefundRequest.countDocuments(isVendor ? { _id: null } : { status: 'pending' }),
+    Coupon.countDocuments(isVendor ? { _id: null } : { isActive: true }),
   ]);
 
   const paidOrders = allOrders.filter((order) => order.isPaid);

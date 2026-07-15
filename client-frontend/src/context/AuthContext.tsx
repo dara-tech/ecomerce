@@ -13,10 +13,14 @@ export interface User {
   _id: string;
   name: string;
   email: string;
+  role?: string;
   isAdmin: boolean;
   token: string;
+  avatar?: string;
   refreshToken?: string;
+  addresses?: any[];
 }
+
 
 interface AuthContextType {
   user: User | null;
@@ -71,7 +75,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     (async () => {
-      const status = await validateStoredSession();
+      let status: "valid" | "refreshed" | "expired" | "none" = "none";
+      try {
+        status = await validateStoredSession();
+      } catch (err) {
+        console.warn("Auth validation network error, falling back to local session", err);
+        status = "valid";
+      }
       if (cancelled) return;
 
       if (status === "none" || status === "expired") {

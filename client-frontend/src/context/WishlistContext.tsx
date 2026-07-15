@@ -11,6 +11,7 @@ export interface WishlistProduct {
   image: string;
   price: number;
   category?: string;
+  store?: { _id: string; name: string };
 }
 
 interface WishlistContextType {

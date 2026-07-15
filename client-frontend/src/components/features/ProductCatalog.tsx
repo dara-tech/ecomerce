@@ -63,8 +63,10 @@ function CatalogSort({
 
 export default function ProductCatalog({
   initialCategory,
+  storeId,
 }: {
   initialCategory?: string;
+  storeId?: string;
 }) {
   const searchParams = useSearchParams();
   const categoryFromUrl = searchParams.get("category") ?? undefined;
@@ -102,6 +104,7 @@ export default function ProductCatalog({
       if (sort === "price-asc") params.set("sort", "price-asc");
       if (sort === "price-desc") params.set("sort", "price-desc");
       if (sort === "newest") params.set("sort", "newest");
+      if (storeId) params.set("store", storeId);
 
       const res = await fetch(`${apiUrl}/products?${params.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch products");
@@ -113,7 +116,7 @@ export default function ProductCatalog({
       setPage(pageNumber);
       setHasMore(pageNumber < (data.pages ?? 1));
     },
-    [activeCategory, sort]
+    [activeCategory, sort, storeId]
   );
 
   useEffect(() => {

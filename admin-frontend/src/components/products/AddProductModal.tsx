@@ -64,7 +64,7 @@ const AddProductModal = ({ isOpen, onClose, onSave, initialData }: AddProductMod
       const { data } = await api.post('/upload', uploadData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setFormData((prev) => ({ ...prev, image: data.image }));
+      setFormData((prev) => ({ ...prev, image: data.url || data.image }));
     } catch (error) {
       console.error('Upload failed', error);
       alert('Image upload failed');

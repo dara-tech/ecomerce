@@ -22,6 +22,7 @@ export function mapAuthResponse(data: AuthApiResponse): User {
     _id: data._id,
     name: data.name,
     email: data.email,
+    role: data.role,
     isAdmin: data.role === "admin",
     token,
     refreshToken: data.refreshToken,

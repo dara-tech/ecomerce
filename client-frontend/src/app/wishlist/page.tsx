@@ -83,6 +83,7 @@ export default function WishlistPage() {
                       price: p.price,
                       qty: 1,
                       countInStock: 99,
+                      store: p.store,
                     });
                     toast.success("Added to cart");
                   }}

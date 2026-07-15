@@ -63,6 +63,14 @@ export const admin = (req, res, next) => {
   }
 };
 
+export const vendor = (req, res, next) => {
+  if (req.user && (req.user.role === 'vendor' || req.user.role === 'admin')) {
+    next();
+  } else {
+    res.status(403).json({ message: 'Not authorized as a vendor' });
+  }
+};
+
 export const staff = (req, res, next) => {
   if (req.user && ['admin', 'manager', 'support'].includes(req.user.role)) {
     next();

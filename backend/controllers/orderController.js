@@ -37,11 +37,33 @@ export const addOrderItems = async (req, res) => {
     return;
   }
 
-  const order = new Order({
-    orderItems: orderItems.map((item) => ({
-      ...item,
-      product: item.product || item._id,
-    })),
+  // Find products to get their stores
+  const { Product } = await import('../models/Product.js');
+  const { Store } = await import('../models/Store.js');
+  
+  const populatedItems = await Promise.all(
+    orderItems.map(async (item) => {
+      const product = await Product.findById(item.product || item._id).populate('store');
+      return {
+        ...item,
+        product: product._id,
+        store: product.store ? product.store._id : null,
+        commissionRate: product.store ? product.store.commissionRate : 10.0
+      };
+    })
+  );
+
+  // Group by store
+  const itemsByStore = {};
+  for (const item of populatedItems) {
+    const storeId = item.store ? item.store.toString() : 'platform';
+    if (!itemsByStore[storeId]) itemsByStore[storeId] = [];
+    itemsByStore[storeId].push(item);
+  }
+
+  // Create Parent Order
+  const parentOrder = new Order({
+    orderItems: populatedItems,
     user: req.user?._id,
     isGuest: !req.user,
     guestEmail: req.user ? undefined : guestEmail,
@@ -56,7 +78,38 @@ export const addOrderItems = async (req, res) => {
     discountAmount: discountAmount || 0,
   });
 
-  const createdOrder = await order.save();
+  const createdOrder = await parentOrder.save();
+
+  // Create Child Orders for Vendors
+  const childOrderPromises = Object.entries(itemsByStore).map(async ([storeId, items]) => {
+    if (storeId === 'platform') return; // no store associated
+
+    const childItemsPrice = items.reduce((acc, item) => acc + item.price * item.qty, 0);
+    // simplistic tax/shipping split (could be improved)
+    const childTaxPrice = (childItemsPrice / itemsPrice) * taxPrice;
+    const childShippingPrice = (childItemsPrice / itemsPrice) * shippingPrice;
+    const childTotalPrice = childItemsPrice + childTaxPrice + childShippingPrice;
+    const commissionRate = items[0].commissionRate || 10.0;
+    const vendorEarnings = childTotalPrice * ((100 - commissionRate) / 100);
+
+    const childOrder = new Order({
+      parentOrder: createdOrder._id,
+      store: storeId,
+      orderItems: items,
+      user: req.user?._id,
+      isGuest: !req.user,
+      shippingAddress,
+      paymentMethod,
+      itemsPrice: childItemsPrice,
+      taxPrice: childTaxPrice,
+      shippingPrice: childShippingPrice,
+      totalPrice: childTotalPrice,
+      vendorEarnings,
+    });
+    return childOrder.save();
+  });
+
+  await Promise.all(childOrderPromises);
 
   if (couponCode) {
     await incrementCouponUsage(couponCode);
@@ -121,6 +174,33 @@ export const updateOrderToPaid = async (req, res) => {
     }
 
     const updatedOrder = await order.save();
+
+    // Mark child orders as paid and update vendor balance
+    const childOrders = await Order.find({ parentOrder: order._id });
+    if (childOrders.length > 0) {
+      const { Store } = await import('../models/Store.js');
+      await Promise.all(
+        childOrders.map(async (childOrder) => {
+          childOrder.isPaid = true;
+          childOrder.paidAt = Date.now();
+          childOrder.paymentResult = order.paymentResult;
+          await childOrder.save();
+
+          if (childOrder.store && childOrder.vendorEarnings > 0) {
+            await Store.findByIdAndUpdate(childOrder.store, {
+              $inc: { balance: childOrder.vendorEarnings, totalEarned: childOrder.vendorEarnings },
+            });
+          }
+        })
+      );
+    } else if (order.store && order.vendorEarnings > 0) {
+      // In case they pay a child order directly
+      const { Store } = await import('../models/Store.js');
+      await Store.findByIdAndUpdate(order.store, {
+        $inc: { balance: order.vendorEarnings, totalEarned: order.vendorEarnings },
+      });
+    }
+
     res.json(updatedOrder);
   } else {
     res.status(404).json({ message: 'Order not found' });
@@ -179,14 +259,33 @@ export const deleteOrder = async (req, res) => {
 // @route   GET /api/orders/myorders
 // @access  Private
 export const getMyOrders = async (req, res) => {
-  const orders = await Order.find({ user: req.user._id });
-  res.json(orders);
+  const parentOrders = await Order.find({ user: req.user._id, parentOrder: { $exists: false } }).sort({ createdAt: -1 }).lean();
+  
+  const parentIds = parentOrders.map(o => o._id);
+  const subOrders = await Order.find({ parentOrder: { $in: parentIds } }).populate('store', 'name logo').lean();
+
+  const ordersWithSub = parentOrders.map(parent => ({
+    ...parent,
+    subOrders: subOrders.filter(sub => sub.parentOrder.toString() === parent._id.toString())
+  }));
+  
+  res.json(ordersWithSub);
 };
 
 // @desc    Get all orders
 // @route   GET /api/orders
 // @access  Private/Admin
 export const getOrders = async (req, res) => {
-  const orders = await Order.find({}).populate('user', 'id name');
+  const isVendor = req.user && req.user.role === 'vendor';
+  let query = {};
+  if (isVendor) {
+    const { Store } = await import('../models/Store.js');
+    const store = await Store.findOne({ vendor: req.user._id });
+    query = { store: store ? store._id : null };
+  } else {
+    // Optional: filter out sub-orders for admin if preferred, but usually admin wants to see all.
+  }
+  
+  const orders = await Order.find(query).populate('user', 'id name').sort({ createdAt: -1 });
   res.json(orders);
 };

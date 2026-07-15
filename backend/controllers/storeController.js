@@ -291,3 +291,28 @@ export async function incrementCouponUsage(code) {
   if (!code) return;
   await Coupon.findOneAndUpdate({ code: code.toUpperCase() }, { $inc: { usedCount: 1 } });
 }
+
+export async function getPublicStores(req, res) {
+  try {
+    const { Store } = await import('../models/Store.js');
+    const stores = await Store.find({ status: 'active' }).select('name logo description createdAt').sort({ createdAt: -1 });
+    res.json(stores);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+export async function getPublicStoreById(req, res) {
+  try {
+    const { Store } = await import('../models/Store.js');
+    const store = await Store.findById(req.params.id).select('name logo description status createdAt');
+    
+    if (!store) {
+      return res.status(404).json({ message: 'Store not found' });
+    }
+    
+    res.json(store);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}

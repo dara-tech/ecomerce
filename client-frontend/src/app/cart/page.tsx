@@ -1,12 +1,14 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { useCart } from "@/context/CartContext";
 import ProductImage from "@/components/ui/ProductImage";
 import PriceDisplay from "@/components/features/PriceDisplay";
 import SmartShopRecommendations from "@/components/features/SmartShopRecommendations";
 import { useStore } from "@/context/StoreContext";
 import Link from "next/link";
-import { ShoppingBag, Trash2, Plus, Minus } from "lucide-react";
+import { ShoppingBag, Trash2, Plus, Minus, Store as StoreIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function CartPage() {
@@ -46,8 +48,25 @@ export default function CartPage() {
       <h1 className="mb-4 text-xl font-bold tracking-tight md:mb-8 md:text-3xl">{t("yourCart")}</h1>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-        <div className="space-y-3 lg:col-span-2 lg:space-y-4">
-          {cartItems.map((item) => (
+        <div className="space-y-6 lg:col-span-2 lg:space-y-8">
+          {useMemo(() => {
+            const groups: Record<string, { store: { _id: string, name: string } | null, items: typeof cartItems }> = {};
+            cartItems.forEach((item) => {
+              const storeId = item.store?._id || "platform";
+              if (!groups[storeId]) {
+                groups[storeId] = { store: item.store || null, items: [] };
+              }
+              groups[storeId].items.push(item);
+            });
+            return Object.values(groups);
+          }, [cartItems]).map((group) => (
+            <div key={group.store?._id || "platform"} className="space-y-3">
+              <div className="flex items-center gap-2 px-1 text-sm text-muted-foreground">
+                <StoreIcon className="size-4" />
+                <span>Sold by: <strong className="text-foreground font-semibold">{group.store ? group.store.name : "Platform Products"}</strong></span>
+              </div>
+              <div className="space-y-3 lg:space-y-4">
+                {group.items.map((item) => (
             <article
               key={item._id}
               className="overflow-hidden rounded-2xl border border-border/60 bg-card"
@@ -121,6 +140,9 @@ export default function CartPage() {
                 </div>
               </div>
             </article>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
 

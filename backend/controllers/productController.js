@@ -18,7 +18,19 @@ export const getProducts = async (req, res) => {
     ? { brand: req.query.brand }
     : {};
 
-  const query = { ...keyword, ...categoryFilter, ...brandFilter };
+  const storeFilter = req.query.store
+    ? { store: req.query.store }
+    : {};
+
+  const isVendor = req.user && req.user.role === 'vendor';
+  let vendorQuery = {};
+  if (isVendor) {
+    const { Store } = await import('../models/Store.js');
+    const store = await Store.findOne({ vendor: req.user._id });
+    vendorQuery = { store: store ? store._id : null };
+  }
+
+  const query = { ...keyword, ...categoryFilter, ...brandFilter, ...storeFilter, ...vendorQuery };
   
   let sortQuery = { createdAt: -1 }; // Default: Newest
   if (req.query.sort) {
@@ -29,6 +41,7 @@ export const getProducts = async (req, res) => {
 
   const count = await Product.countDocuments(query);
   const products = await Product.find(query)
+    .populate('store', 'name logo')
     .sort(sortQuery)
     .limit(pageSize)
     .skip(pageSize * (page - 1));
@@ -40,7 +53,7 @@ export const getProducts = async (req, res) => {
 // @route   GET /api/products/:id
 // @access  Public
 export const getProductById = async (req, res) => {
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findById(req.params.id).populate('store', 'name logo');
 
   if (product) {
     res.json(product);
@@ -55,10 +68,18 @@ export const getProductById = async (req, res) => {
 export const createProduct = async (req, res) => {
   const { name, price, description, image, brand, category, countInStock } = req.body || {};
   
+  let storeId = null;
+  if (req.user.role === 'vendor') {
+    const { Store } = await import('../models/Store.js');
+    const store = await Store.findOne({ vendor: req.user._id });
+    if (store) storeId = store._id;
+  }
+
   const product = new Product({
     name: name || 'Sample name',
     price: price || 0,
     user: req.user._id,
+    store: storeId,
     image: image || '/images/sample.jpg',
     brand: brand || 'Sample brand',
     category: category || 'Sample category',

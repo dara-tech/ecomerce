@@ -1,7 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import ProductImage from "@/components/ui/ProductImage";
 import PriceDisplay from "@/components/features/PriceDisplay";
 import { ReactNode } from "react";
+import { Plus } from "lucide-react";
+import { useCart } from "@/context/CartContext";
+import { toast } from "sonner";
 
 export const MOBILE_PRODUCT_CARD_WIDTH = "w-[152px]";
 
@@ -13,6 +18,8 @@ type MobileProductCardProps = {
   category?: string;
   footer?: ReactNode;
   priority?: boolean;
+  countInStock?: number;
+  store?: { _id: string; name: string };
 };
 
 export function MobileSectionHeader({
@@ -61,6 +68,8 @@ export function CatalogProductCard({
   price,
   category,
   priority,
+  countInStock = 99,
+  store,
 }: {
   id: string;
   name: string;
@@ -68,7 +77,18 @@ export function CatalogProductCard({
   price: number;
   category?: string;
   priority?: boolean;
+  countInStock?: number;
+  store?: { _id: string; name: string };
 }) {
+  const { addToCart } = useCart();
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart({ _id: id, name, image, price, qty: 1, countInStock, store });
+    toast.success("Added to cart");
+  };
+
   return (
     <Link
       href={`/products/${id}`}
@@ -84,11 +104,20 @@ export function CatalogProductCard({
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           sizes="(max-width: 768px) 50vw, 33vw"
         />
+        <button
+          onClick={handleAdd}
+          className="absolute bottom-2 right-2 flex size-8 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-transform hover:scale-110 hover:bg-background active:scale-95"
+          aria-label="Add to cart"
+        >
+          <Plus className="size-5" />
+        </button>
       </div>
       <h3 className="line-clamp-2 min-h-10 text-[13px] font-semibold leading-5 text-foreground">
         {name}
       </h3>
-      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{category || "\u00A0"}</p>
+      <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+        {store?.name ? `By ${store.name}` : (category || "\u00A0")}
+      </p>
       <p className="mt-1 text-sm font-bold tabular-nums text-foreground">
         <PriceDisplay amount={price} />
       </p>
@@ -104,7 +133,18 @@ export default function MobileProductCard({
   category,
   footer,
   priority,
+  countInStock = 99,
+  store,
 }: MobileProductCardProps) {
+  const { addToCart } = useCart();
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart({ _id: id, name, image, price, qty: 1, countInStock, store });
+    toast.success("Added to cart");
+  };
+
   return (
     <article className={`${MOBILE_PRODUCT_CARD_WIDTH} shrink-0 snap-start snap-always flex flex-col`}>
       <Link href={`/products/${id}`} className="group flex flex-1 flex-col active:scale-[0.98] transition-transform">
@@ -118,12 +158,19 @@ export default function MobileProductCard({
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="152px"
           />
+          <button
+            onClick={handleAdd}
+            className="absolute bottom-2 right-2 flex size-8 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition-transform hover:scale-110 hover:bg-background active:scale-95"
+            aria-label="Add to cart"
+          >
+            <Plus className="size-5" />
+          </button>
         </div>
 
         <div className="flex min-h-[4.75rem] flex-col">
           <h3 className="line-clamp-2 h-10 text-[13px] font-semibold leading-5 text-foreground">{name}</h3>
           <p className="mt-0.5 h-4 truncate text-[11px] text-muted-foreground">
-            {category || "\u00A0"}
+            {store?.name ? `By ${store.name}` : (category || "\u00A0")}
           </p>
           <p className="mt-auto pt-1.5 text-sm font-bold tabular-nums text-foreground">
             <PriceDisplay amount={price} />

@@ -11,6 +11,7 @@ export interface CartItem {
   price: number;
   qty: number;
   countInStock: number;
+  store?: { _id: string; name: string };
 }
 
 interface CartContextType {

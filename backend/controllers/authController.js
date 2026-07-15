@@ -113,6 +113,7 @@ function formatUser(user, permissions) {
     status: user.status,
     twoFactorEnabled: user.twoFactorEnabled,
     lastLogin: user.lastLogin,
+    addresses: user.addresses || [],
     permissions,
     canAccessAdmin: canAccessAdminPanel(user.role),
   };
@@ -405,7 +406,9 @@ export const updateUserProfile = async (req, res) => {
 
   user.name = req.body.name || user.name;
   user.email = req.body.email || user.email;
+  if (req.body.avatar !== undefined) user.avatar = req.body.avatar;
   if (req.body.password) user.password = req.body.password;
+  if (req.body.addresses) user.addresses = req.body.addresses;
 
   const updated = await user.save();
   await logActivity({ req, user, action: 'auth.profile_update' });

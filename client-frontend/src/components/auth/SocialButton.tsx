@@ -15,7 +15,7 @@ export function SocialButton({ label, icon, loading, disabled, hint }: SocialBut
   return (
     <div className="w-full">
       <div
-        className={`relative flex h-12 w-full items-center justify-center gap-2.5 rounded-full border border-border bg-background text-sm font-medium text-foreground transition-colors md:h-11 md:rounded-xl ${
+        className={`relative flex h-12 w-full items-center justify-center gap-2.5 rounded-full border border-border bg-background text-sm font-medium text-foreground transition-all hover:bg-muted group-hover:bg-muted group-active:bg-muted md:h-11 md:rounded-xl ${
           disabled ? "cursor-not-allowed opacity-50" : ""
         }`}
       >

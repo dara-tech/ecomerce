@@ -10,6 +10,8 @@ import {
   ArrowLeft,
   Heart,
   GitCompare,
+  Store as StoreIcon,
+  MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
 import ProductImage from "@/components/ui/ProductImage";
@@ -75,6 +77,7 @@ export default function ProductDetailsPage() {
     price: product.price,
     qty,
     countInStock: product.countInStock,
+    store: product.store,
   });
 
   const handleAddToCart = () => {
@@ -105,6 +108,7 @@ export default function ProductDetailsPage() {
     image: product.image,
     price: product.price,
     category: product.category,
+    store: product.store,
   };
 
   return (
@@ -192,6 +196,36 @@ export default function ProductDetailsPage() {
           <p className="mt-4 text-2xl font-bold tabular-nums md:mt-6 md:text-3xl">
             <PriceDisplay amount={product.price} />
           </p>
+
+          {product.store && (
+            <div className="mt-4 flex items-center justify-between rounded-xl border border-border/60 bg-muted/50 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background border border-border/60 overflow-hidden">
+                  {product.store.logo ? (
+                    <img src={product.store.logo} alt={product.store.name} className="size-full object-cover" />
+                  ) : (
+                    <StoreIcon className="size-5 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground">Sold by</span>
+                  <Link href={`/store/${product.store._id}`} className="text-sm font-semibold hover:underline">
+                    {product.store.name}
+                  </Link>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 rounded-full" 
+                onClick={() => router.push(`/chat?vendor=${product.store._id}`)}
+              >
+                <MessageCircle className="size-4" />
+                <span className="hidden sm:inline">Contact Seller</span>
+                <span className="sm:hidden">Contact</span>
+              </Button>
+            </div>
+          )}
 
           <p className="mt-4 text-sm leading-relaxed text-muted-foreground md:mt-6 md:text-base">
             {product.description}

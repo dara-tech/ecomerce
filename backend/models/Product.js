@@ -23,6 +23,10 @@ const productSchema = new mongoose.Schema(
       required: true,
       ref: 'User', // Admin who created the product
     },
+    store: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Store',
+    },
     name: {
       type: String,
       required: true,

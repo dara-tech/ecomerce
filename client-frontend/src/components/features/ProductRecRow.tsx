@@ -16,6 +16,7 @@ export type RecProduct = {
   price: number;
   category?: string;
   countInStock?: number;
+  store?: { _id: string; name: string };
 };
 
 export default function ProductRecRow({
@@ -49,6 +50,7 @@ export default function ProductRecRow({
       price: p.price,
       qty: 1,
       countInStock: p.countInStock ?? 99,
+      store: p.store,
     });
     toast.success("Added to cart");
   };
@@ -93,6 +95,7 @@ export default function ProductRecRow({
               price={p.price}
               category={p.category}
               priority={index === 0}
+              store={p.store}
             />
             {quickAddFooter(p)}
           </div>

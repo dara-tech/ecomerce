@@ -17,6 +17,10 @@ import settingsRoutes from './routes/settingsRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
 import storeRoutes from './routes/storeRoutes.js';
 import opsRoutes from './routes/opsRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
+import vendorRoutes from './routes/vendorRoutes.js';
+import payoutRoutes from './routes/payoutRoutes.js';
+import { initTelegramBot } from './services/telegramBotService.js';
 
 const app = express();
 
@@ -41,6 +45,9 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/customer', customerRoutes);
 app.use('/api/store', storeRoutes);
 app.use('/api/ops', opsRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/vendor', vendorRoutes);
+app.use('/api/payouts', payoutRoutes);
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/e-commerce';
@@ -49,6 +56,7 @@ mongoose
   .connect(MONGO_URI)
   .then(() => {
     console.log('Connected to MongoDB');
+    initTelegramBot();
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

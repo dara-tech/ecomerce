@@ -71,7 +71,7 @@ export default function RootLayout({
         <Providers>
           <AppShell>{children}</AppShell>
         </Providers>
-        <Toaster position="top-center" className="md:!bottom-4 md:!top-auto md:!right-4" />
+        <Toaster position="top-center" />
       </body>
     </html>
   );

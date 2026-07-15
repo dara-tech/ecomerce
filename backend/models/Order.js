@@ -6,6 +6,18 @@ const orderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
+    store: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Store',
+    },
+    parentOrder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Order',
+    },
+    vendorEarnings: {
+      type: Number,
+      default: 0.0,
+    },
     isGuest: { type: Boolean, default: false },
     guestEmail: { type: String },
     guestName: { type: String },
@@ -105,6 +117,43 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+orderSchema.pre('save', function () {
+  this._isNew = this.isNew;
+  this._paymentJustPaid = this.isModified('isPaid') && this.isPaid;
+  this._statusJustChanged = this.isModified('status') ? this.status : null;
+});
+
+orderSchema.post('save', async function (doc) {
+  if (!doc.parentOrder) {
+    if (doc._isNew) {
+      try {
+        const { splitOrderIntoVendorSubOrders } = await import('../utils/multiVendor.js');
+        await splitOrderIntoVendorSubOrders(doc);
+      } catch (err) {
+        console.error('Error in post-save order split hook:', err);
+      }
+    }
+
+    if (doc._paymentJustPaid) {
+      try {
+        const { propagateOrderPayment } = await import('../utils/multiVendor.js');
+        await propagateOrderPayment(doc);
+      } catch (err) {
+        console.error('Error in post-save payment propagation hook:', err);
+      }
+    }
+
+    if (doc._statusJustChanged) {
+      try {
+        const { propagateOrderStatus } = await import('../utils/multiVendor.js');
+        await propagateOrderStatus(doc, doc._statusJustChanged);
+      } catch (err) {
+        console.error('Error in post-save status propagation hook:', err);
+      }
+    }
+  }
+});
 
 const Order = mongoose.model('Order', orderSchema);
 

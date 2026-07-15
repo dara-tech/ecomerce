@@ -9,6 +9,7 @@ import { StoreProvider } from "./StoreContext";
 import { WishlistProvider } from "./WishlistContext";
 import { CompareProvider } from "./CompareContext";
 import { RecentlyViewedProvider } from "./RecentlyViewedContext";
+import { ChatProvider } from "./ChatContext";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -16,13 +17,15 @@ export function Providers({ children }: { children: ReactNode }) {
       <StoreProvider>
         <AuthProvider>
           <GoogleAuthProvider>
-          <WishlistProvider>
-            <CompareProvider>
-              <RecentlyViewedProvider>
-                <CartProvider>{children}</CartProvider>
-              </RecentlyViewedProvider>
-            </CompareProvider>
-          </WishlistProvider>
+            <ChatProvider>
+              <WishlistProvider>
+                <CompareProvider>
+                  <RecentlyViewedProvider>
+                    <CartProvider>{children}</CartProvider>
+                  </RecentlyViewedProvider>
+                </CompareProvider>
+              </WishlistProvider>
+            </ChatProvider>
           </GoogleAuthProvider>
         </AuthProvider>
       </StoreProvider>

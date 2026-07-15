@@ -20,14 +20,18 @@ import PushNotifications from './pages/marketing/PushNotifications';
 import BannerManagement from './pages/marketing/BannerManagement';
 import Popups from './pages/marketing/Popups';
 import FlashSales from './pages/marketing/FlashSales';
+import LiveChat from './pages/LiveChat';
 import Shipping from './pages/Shipping';
 import Inventory from './pages/Inventory';
 import Coupons from './pages/Coupons';
 import Reviews from './pages/Reviews';
+import Stores from './pages/Stores';
 import Wishlists from './pages/Wishlists';
 import Notifications from './pages/Notifications';
 import Reports from './pages/Reports';
 import Returns from './pages/Returns';
+import Payouts from './pages/Payouts';
+import MyStore from './pages/MyStore';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -49,6 +53,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace state={{ message: 'Admin access required' }} />;
   }
   
+  return <>{children}</>;
+};
+
+// Admin-only Route Wrapper
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  if (user?.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
   return <>{children}</>;
 };
 
@@ -77,9 +90,13 @@ function App() {
             <Route path="notifications" element={<Notifications />} />
             <Route path="reports" element={<Reports />} />
             <Route path="users" element={<Users />} />
+            <Route path="stores" element={<Stores />} />
+            <Route path="my-store" element={<MyStore />} />
+            <Route path="live-chat" element={<LiveChat />} />
             <Route path="payments" element={<Payments />} />
+            <Route path="payouts" element={<Payouts />} />
             <Route path="returns" element={<Returns />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="settings" element={<AdminRoute><Settings /></AdminRoute>} />
             <Route path="security" element={<Security />} />
             <Route path="marketing/email-campaigns" element={<EmailCampaigns />} />
             <Route path="marketing/push-notifications" element={<PushNotifications />} />

@@ -10,6 +10,8 @@ import {
   requestReturn,
   getMyReturns,
   payWithWallet,
+  getPublicStoreById,
+  getPublicStores,
 } from '../controllers/storeController.js';
 
 const router = express.Router();
@@ -23,5 +25,7 @@ router.post('/reviews', protect, submitProductReview);
 router.post('/returns', optionalProtect, requestReturn);
 router.get('/returns/mine', protect, getMyReturns);
 router.post('/wallet/pay/:orderId', protect, payWithWallet);
+router.get('/public', getPublicStores);
+router.get('/public/:id', getPublicStoreById);
 
 export default router;

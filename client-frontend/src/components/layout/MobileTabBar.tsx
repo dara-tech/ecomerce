@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, LayoutGrid, FolderTree, ShoppingBag, User, MessageCircle } from "lucide-react";
+import { Home, LayoutGrid, FolderTree, ShoppingBag, User, MessageCircle, Store } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useStore } from "@/context/StoreContext";
+import { useChat } from "@/context/ChatContext";
 
 const HIDDEN_PREFIXES = ["/login", "/register", "/checkout", "/auth"];
 
@@ -23,6 +24,7 @@ export default function MobileTabBar() {
   const { cartItems } = useCart();
   const { user } = useAuth();
   const { t } = useStore();
+  const { unreadCount, isAdminTyping } = useChat();
 
   const cartCount = cartItems.reduce((acc, item) => acc + item.qty, 0);
   const accountPath = user ? "/profile" : "/login";
@@ -35,7 +37,15 @@ export default function MobileTabBar() {
     { href: "/", label: t("home"), icon: Home, match: (p: string) => p === "/" },
     { href: "/products", label: t("products"), icon: LayoutGrid, match: (p: string) => p.startsWith("/products") },
     { href: "/categories", label: t("categories"), icon: FolderTree, match: (p: string) => p.startsWith("/categories") },
-    { href: "/chat", label: t("chat"), icon: MessageCircle, match: (p: string) => p === "/chat" },
+    { href: "/stores", label: "Stores", icon: Store, match: (p: string) => p.startsWith("/stores") },
+    {
+      href: "/chat",
+      label: t("chat"),
+      icon: MessageCircle,
+      match: (p: string) => p === "/chat",
+      badge: unreadCount,
+      isTyping: isAdminTyping,
+    },
     { href: "/cart", label: t("cart"), icon: ShoppingBag, match: (p: string) => p === "/cart", badge: cartCount },
     { href: accountPath, label: user ? t("account") : t("signIn"), icon: User, match: (p: string) =>
       p === accountPath || p.startsWith("/profile") || p.startsWith("/orders") || p.startsWith("/wallet"),
@@ -62,7 +72,13 @@ export default function MobileTabBar() {
             >
               <span className="relative flex h-6 w-6 items-center justify-center sm:h-7 sm:w-7">
                 <Icon className={`size-5 sm:size-[22px] ${active ? "stroke-[2.25px]" : "stroke-[1.75px]"}`} />
-                {tab.badge != null && <TabBadge count={tab.badge} />}
+                {tab.isTyping && (
+                  <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                  </span>
+                )}
+                {tab.badge != null && !tab.isTyping && <TabBadge count={tab.badge} />}
               </span>
             </Link>
           );

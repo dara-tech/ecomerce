@@ -13,6 +13,7 @@ import {
   ChevronDown,
   Truck,
   MapPin,
+  Store as StoreIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -371,80 +372,125 @@ export default function OrdersPage() {
               </div>
 
               {expandedOrderId === order._id && (
-                <div className="border-b border-border/60 bg-background px-3 py-4 md:px-6 md:py-5">
-                  <div className="mb-4 flex items-start gap-2">
-                    <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                    <div className="text-sm">
-                      <p className="font-medium">{t("shippingAddress")}</p>
-                      <p className="text-muted-foreground">
-                        {order.shippingAddress?.address}, {order.shippingAddress?.city}{" "}
-                        {order.shippingAddress?.postalCode}
-                      </p>
-                      {order.trackingNumber && (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Tracking:{" "}
-                          <span className="font-mono font-medium text-foreground">
-                            {order.trackingNumber}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <ol className="relative ml-2 space-y-5 border-l border-border">
-                    {buildTimeline(order).map((step: any, i: number) => (
-                      <li key={`${step.status}-${i}`} className="ml-6">
-                        <span
-                          className={cn(
-                            "absolute -left-1.5 flex size-3 rounded-full ring-4 ring-background",
-                            i === buildTimeline(order).length - 1
-                              ? "bg-foreground"
-                              : "bg-muted-foreground/40"
-                          )}
-                        />
-                        <p className="text-sm font-medium capitalize">
-                          {STATUS_LABELS[step.status] || step.status}
-                        </p>
-                        {step.note && (
-                          <p className="text-xs text-muted-foreground">{step.note}</p>
-                        )}
-                        <time className="text-xs text-muted-foreground">
-                          {step.timestamp ? new Date(step.timestamp).toLocaleString() : ""}
-                        </time>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
-
-              <div className="space-y-3 p-3 md:p-6">
-                {order.orderItems.map((item: any, idx: number) => (
-                  <div key={idx} className="flex items-stretch gap-3">
-                    <div className="relative h-[72px] w-[72px] shrink-0 overflow-hidden rounded-xl bg-muted md:h-16 md:w-16">
-                      <ProductImage
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        compactPlaceholder
-                        className="object-cover"
-                        sizes="72px"
-                      />
-                    </div>
-                    <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
-                      <div>
-                        <h4 className="line-clamp-2 text-sm font-medium leading-snug">
-                          {item.name}
-                        </h4>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          {t("qty")}: {item.qty}
+                <div className="border-b border-border/60 bg-background flex flex-col divide-y divide-border/60">
+                  <div className="px-3 py-4 md:px-6 md:py-5">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      <div className="text-sm">
+                        <p className="font-medium">{t("shippingAddress")}</p>
+                        <p className="text-muted-foreground">
+                          {order.shippingAddress?.address}, {order.shippingAddress?.city}{" "}
+                          {order.shippingAddress?.postalCode}
                         </p>
                       </div>
                     </div>
-                    <div className="shrink-0 self-end text-sm font-semibold tabular-nums">
-                      <PriceDisplay amount={item.price * item.qty} />
-                    </div>
                   </div>
-                ))}
-              </div>
+
+                  {(() => {
+                    const subOrders = order.subOrders || [];
+                    const subOrderItemsIds = new Set(
+                      subOrders.flatMap((sub: any) => sub.orderItems.map((item: any) => item.product.toString()))
+                    );
+                    const platformItems = order.orderItems.filter(
+                      (item: any) => !subOrderItemsIds.has(item.product.toString())
+                    );
+
+                    const sections = [];
+                    if (platformItems.length > 0) {
+                      sections.push({
+                        title: "Platform Products",
+                        icon: Package,
+                        timelineOrder: order,
+                        items: platformItems
+                      });
+                    }
+
+                    subOrders.forEach((sub: any) => {
+                      sections.push({
+                        title: `Sold by: ${sub.store?.name || "Vendor"}`,
+                        icon: StoreIcon,
+                        timelineOrder: sub,
+                        items: sub.orderItems
+                      });
+                    });
+
+                    return sections.map((section, idx) => (
+                      <div key={idx} className="px-3 py-4 md:px-6 md:py-5 space-y-4">
+                        <div className="flex items-center gap-2 font-semibold text-sm">
+                          <section.icon className="size-4 text-muted-foreground" />
+                          <span>{section.title}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            {section.timelineOrder.trackingNumber && (
+                              <p className="mb-3 text-xs text-muted-foreground">
+                                Tracking:{" "}
+                                <span className="font-mono font-medium text-foreground">
+                                  {section.timelineOrder.trackingNumber}
+                                </span>
+                              </p>
+                            )}
+                            <ol className="relative ml-2 space-y-5 border-l border-border">
+                              {buildTimeline(section.timelineOrder).map((step: any, i: number) => (
+                                <li key={`${step.status}-${i}`} className="ml-6">
+                                  <span
+                                    className={cn(
+                                      "absolute -left-1.5 flex size-3 rounded-full ring-4 ring-background",
+                                      i === buildTimeline(section.timelineOrder).length - 1
+                                        ? "bg-foreground"
+                                        : "bg-muted-foreground/40"
+                                    )}
+                                  />
+                                  <p className="text-sm font-medium capitalize">
+                                    {STATUS_LABELS[step.status] || step.status}
+                                  </p>
+                                  {step.note && (
+                                    <p className="text-xs text-muted-foreground">{step.note}</p>
+                                  )}
+                                  <time className="text-xs text-muted-foreground">
+                                    {step.timestamp ? new Date(step.timestamp).toLocaleString() : ""}
+                                  </time>
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            {section.items.map((item: any, itemIdx: number) => (
+                              <div key={itemIdx} className="flex items-stretch gap-3 rounded-xl border border-border/40 p-2 bg-muted/10">
+                                <div className="relative h-[60px] w-[60px] shrink-0 overflow-hidden rounded-lg bg-muted">
+                                  <ProductImage
+                                    src={item.image}
+                                    alt={item.name}
+                                    fill
+                                    compactPlaceholder
+                                    className="object-cover"
+                                    sizes="60px"
+                                  />
+                                </div>
+                                <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+                                  <div>
+                                    <h4 className="line-clamp-2 text-xs font-medium leading-snug">
+                                      {item.name}
+                                    </h4>
+                                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                                      {t("qty")}: {item.qty}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="shrink-0 self-end text-xs font-semibold tabular-nums">
+                                  <PriceDisplay amount={item.price * item.qty} />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ));
+                  })()}
+                </div>
+              )}
             </article>
           ))}
         </div>

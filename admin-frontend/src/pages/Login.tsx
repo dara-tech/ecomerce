@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../lib/axios';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
@@ -18,6 +18,7 @@ const Login = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const completeLogin = (data: any) => {
     const accessToken = data.accessToken || data.token;
@@ -33,6 +34,26 @@ const Login = () => {
     login(accessToken, refreshToken, userData, sessionId);
     navigate('/');
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token');
+    const userParam = params.get('user');
+
+    if (token && userParam) {
+      try {
+        const parsedUser = JSON.parse(userParam);
+        completeLogin({
+          token,
+          accessToken: token,
+          refreshToken: token,
+          ...parsedUser,
+        });
+      } catch (err) {
+        console.error('Direct SSO login parsing failed:', err);
+      }
+    }
+  }, [location, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -9,6 +9,7 @@ import {
   Settings,
   KeyRound,
   Check,
+  Store,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { cn } from '@/lib/utils';
@@ -150,6 +151,13 @@ export default function AdminLayout() {
 
                   <DropdownMenuSeparator />
 
+                  {user?.role === 'vendor' && (
+                    <DropdownMenuItem onClick={() => navigate('/my-store')}>
+                      <Store className="size-4" />
+                      My Store
+                    </DropdownMenuItem>
+                  )}
+
                   <DropdownMenuItem onClick={() => setIsEditProfileOpen(true)}>
                     <CircleUser className="size-4" />
                     Edit profile
@@ -158,10 +166,12 @@ export default function AdminLayout() {
                     <KeyRound className="size-4" />
                     Passwords
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/settings')}>
-                    <Settings className="size-4" />
-                    Settings
-                  </DropdownMenuItem>
+                  {user?.role !== 'vendor' && (
+                    <DropdownMenuItem onClick={() => navigate('/settings')}>
+                      <Settings className="size-4" />
+                      Settings
+                    </DropdownMenuItem>
+                  )}
 
                   <DropdownMenuSeparator />
 

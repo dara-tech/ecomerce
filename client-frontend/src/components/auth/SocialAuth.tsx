@@ -121,7 +121,7 @@ export default function SocialAuth({ onError, className = "" }: SocialAuthProps)
     <div className={className}>
       <div className="grid gap-3">
         {googleClientId && (
-          <div className="relative h-12 w-full md:h-11">
+          <div className="group relative h-12 w-full md:h-11">
             <SocialButton
               label="Continue with Google"
               icon={<GoogleIcon />}
@@ -139,7 +139,7 @@ export default function SocialAuth({ onError, className = "" }: SocialAuthProps)
             type="button"
             onClick={handleTelegramClick}
             disabled={loading === "telegram"}
-            className="w-full text-left"
+            className="group w-full text-left"
           >
             <SocialButton
               label="Continue with Telegram"

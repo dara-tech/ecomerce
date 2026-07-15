@@ -48,7 +48,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
       {!authScreen && <MobileTabBar />}
-      {!authScreen && <LiveChat />}
+      {!authScreen && !chatScreen && <LiveChat />}
       {!authScreen && <MarketingPopup />}
     </>
   );

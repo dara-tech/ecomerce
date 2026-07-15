@@ -38,7 +38,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['customer', 'admin', 'manager', 'support'],
+      enum: ['customer', 'admin', 'manager', 'support', 'vendor'],
       default: 'customer',
     },
     avatar: {
@@ -94,9 +94,12 @@ const userSchema = new mongoose.Schema(
     addresses: [
       {
         type: { type: String, enum: ['billing', 'shipping'], default: 'shipping' },
-        street: String,
+        firstName: String,
+        lastName: String,
+        address: String,
         city: String,
-        postalCode: String,
+        state: String,
+        zipCode: String,
         country: String,
         isDefault: { type: Boolean, default: false }
       }

@@ -11,12 +11,16 @@ import {
   Wallet,
   Heart,
   ChevronRight,
+  Camera,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { PageLoader } from "@/components/ui/PageLoader";
 import { useStore } from "@/context/StoreContext";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { toast } from "sonner";
+import { getApiUrl } from "@/lib/api";
 
 function ProfileMenuItem({
   href,
@@ -74,9 +78,10 @@ function ProfileMenuItem({
 }
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, login } = useAuth();
   const { t } = useStore();
   const router = useRouter();
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (user === null) {
@@ -91,6 +96,64 @@ export default function ProfilePage() {
     return <PageLoader label="Loading profile…" />;
   }
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    setUploading(true);
+    const toastId = toast.loading("Uploading avatar...");
+
+    try {
+      const res = await fetch(`${getApiUrl()}/upload/avatar`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to upload image.");
+      }
+
+      const data = await res.json();
+      const imageUrl = data.url;
+
+      const saveRes = await fetch(`${getApiUrl()}/auth/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({ avatar: imageUrl }),
+      });
+
+      if (!saveRes.ok) {
+        throw new Error("Failed to update profile.");
+      }
+
+      login({
+        ...user,
+        avatar: imageUrl,
+      });
+
+      toast.success("Avatar updated successfully!", { id: toastId });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to update avatar.", { id: toastId });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const initial = user.name.charAt(0).toUpperCase();
 
   return (
@@ -101,12 +164,33 @@ export default function ProfilePage() {
         <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
           <div className="border-b border-border/60 p-5 md:p-8">
             <div className="flex items-center gap-4">
-              <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 md:size-20">
-                {initial ? (
-                  <span className="text-xl font-bold text-white md:text-2xl">{initial}</span>
-                ) : (
-                  <User className="size-8 text-white/90 md:size-10" />
-                )}
+              <div className="relative group size-16 shrink-0 md:size-20">
+                <div className="flex size-full items-center justify-center rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 overflow-hidden border border-border/40">
+                  {user.avatar ? (
+                    <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                  ) : initial ? (
+                    <span className="text-xl font-bold text-white md:text-2xl">{initial}</span>
+                  ) : (
+                    <User className="size-8 text-white/90 md:size-10" />
+                  )}
+                </div>
+                <label
+                  htmlFor="avatar-upload"
+                  className={cn(
+                    "absolute inset-0 flex items-center justify-center rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity",
+                    uploading && "opacity-100"
+                  )}
+                >
+                  <Camera className="size-5 md:size-6" />
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    disabled={uploading}
+                    className="hidden"
+                  />
+                </label>
               </div>
               <div className="min-w-0 flex-1">
                 <h2 className="truncate text-lg font-bold leading-tight md:text-2xl">{user.name}</h2>

@@ -18,6 +18,8 @@ import { getApiUrl } from "@/lib/api";
 import { validateCartItems, formatRemovedCartMessage } from "@/lib/cartValidation";
 import { PageLoader, InlineLoader } from "@/components/ui/PageLoader";
 import { cn } from "@/lib/utils";
+import LocationMapModal from "@/components/ui/LocationMapModal";
+import SavedAddressSelector from "@/components/ui/SavedAddressSelector";
 
 function QrPaymentActions({
   providerIssue,
@@ -166,6 +168,70 @@ function CheckoutContent() {
   const [shippingMethods, setShippingMethods] = useState<any[]>([]);
   const [selectedShippingId, setSelectedShippingId] = useState('');
   const [shippingFee, setShippingFee] = useState(0);
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  const [isMapOpen, setIsMapOpen] = useState(false);
+  const [saveAddressToProfile, setSaveAddressToProfile] = useState(false);
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState("");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("checkout_address");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.contactEmail) setContactEmail(parsed.contactEmail);
+        if (parsed.firstName) setFirstName(parsed.firstName);
+        if (parsed.lastName) setLastName(parsed.lastName);
+        if (parsed.phone) setPhone(parsed.phone);
+        if (parsed.address) setAddress(parsed.address);
+        if (parsed.city) setCity(parsed.city);
+        if (parsed.state) setState(parsed.state);
+        if (parsed.zipCode) setZipCode(parsed.zipCode);
+      }
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const data = { contactEmail, firstName, lastName, phone, address, city, state, zipCode };
+      localStorage.setItem("checkout_address", JSON.stringify(data));
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [contactEmail, firstName, lastName, phone, address, city, state, zipCode]);
+
+  useEffect(() => {
+    if (payOrderId) {
+      setCurrentStep(2);
+    }
+  }, [payOrderId]);
+
+  const handleContinueToPayment = async () => {
+    setHasSubmitted(true);
+    if (!firstName || !lastName || !address || !city || !state || !zipCode || !contactEmail) {
+      toast.error("Please fill in all contact and shipping address fields.");
+      return;
+    }
+
+    if (user && saveAddressToProfile) {
+      try {
+        const currentAddresses = user.addresses || [];
+        const newAddress = { firstName, lastName, address, city, state, zipCode, country: "Cambodia" };
+        const res = await authFetch(`${apiUrl}/users/profile`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ addresses: [...currentAddresses, newAddress] })
+        });
+        if (res.ok) {
+          toast.success("Address saved to your profile!");
+          setSaveAddressToProfile(false);
+        }
+      } catch (err) {
+        console.error("Failed to save address", err);
+      }
+    }
+
+    setCurrentStep(2);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     if (payOrderId && !user) {
@@ -763,17 +829,20 @@ function CheckoutContent() {
       ? t("waitingKhqr")
       : paymentMethod === "payway" && (paywayQrString || paywayQrImage)
         ? t("waitingAba")
-        : isPayExistingOrder
-          ? t("continueToPayment")
-          : t("placeOrder");
+        : !isPayExistingOrder && currentStep === 1
+          ? "Continue to Payment"
+          : isPayExistingOrder
+            ? t("pay")
+            : t("placeOrder");
 
-  const placeOrderLabelShort = isPayExistingOrder ? t("pay") : t("placeOrder");
+  const placeOrderLabelShort = !isPayExistingOrder && currentStep === 1 ? "Continue" : isPayExistingOrder ? t("pay") : t("placeOrder");
 
   const sectionClass = "rounded-2xl border border-border/60 bg-card p-4 md:p-5";
   const paymentOptionClass = (active: boolean) =>
     cn(
-      "relative flex shrink-0 flex-col items-start gap-2 rounded-2xl border-2 p-3 text-left transition-all md:gap-3 md:p-5",
-      "min-w-[8.75rem] md:min-w-0",
+      "relative flex shrink-0 flex-col items-start gap-2 rounded-2xl border-2 p-3 text-left transition-all",
+      "md:flex-row md:items-center md:gap-4 md:p-4",
+      "min-w-[8.75rem] md:w-full md:min-w-0",
       active
         ? "border-foreground bg-background shadow-sm"
         : "border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40"
@@ -784,11 +853,9 @@ function CheckoutContent() {
   const handlePlaceOrder = async () => {
     setHasSubmitted(true);
 
-    if (!isPayExistingOrder) {
-      if (!contactEmail || !firstName || !lastName || !address || !city || !state || !zipCode) {
-        toast.error("Please fill out all contact and shipping information.");
-        return;
-      }
+    if (!isPayExistingOrder && currentStep === 1) {
+      handleContinueToPayment();
+      return;
     }
 
     if (!user?.token) {
@@ -936,6 +1003,20 @@ function CheckoutContent() {
         </div>
       )}
 
+      {!isPayExistingOrder && (
+        <div className="mb-6 flex items-center justify-between md:mb-8 md:max-w-md">
+          <div className="flex flex-col items-center gap-2 flex-1">
+            <div className={cn("flex size-8 items-center justify-center rounded-full text-sm font-bold transition-colors", currentStep >= 1 ? "bg-foreground text-background" : "bg-muted text-muted-foreground")}>1</div>
+            <span className={cn("text-xs font-semibold", currentStep >= 1 ? "text-foreground" : "text-muted-foreground")}>Shipping</span>
+          </div>
+          <div className={cn("h-0.5 flex-1 transition-colors", currentStep >= 2 ? "bg-foreground" : "bg-border/60")} />
+          <div className="flex flex-col items-center gap-2 flex-1">
+            <div className={cn("flex size-8 items-center justify-center rounded-full text-sm font-bold transition-colors", currentStep >= 2 ? "bg-foreground text-background" : "bg-muted text-muted-foreground")}>2</div>
+            <span className={cn("text-xs font-semibold", currentStep >= 2 ? "text-foreground" : "text-muted-foreground")}>Payment</span>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
         {/* Order summary — first on mobile */}
         <div className="order-1 md:order-2">
@@ -1019,8 +1100,8 @@ function CheckoutContent() {
 
         {/* Forms + payment */}
         <div className="order-2 space-y-4 md:order-1 md:space-y-5">
-          {!isPayExistingOrder && (
-            <>
+          {!isPayExistingOrder && currentStep === 1 && (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-4 md:space-y-5">
               <section className={sectionClass}>
                 <h2 className="mb-3 text-base font-bold md:text-lg">{t("contactInfo")}</h2>
                 {!user && (
@@ -1037,17 +1118,33 @@ function CheckoutContent() {
                 </div>
               </section>
 
+              {user && user.addresses && user.addresses.length > 0 && (
+                <SavedAddressSelector 
+                  addresses={user.addresses} 
+                  selectedId={selectedSavedAddressId}
+                  onSelect={(addr) => {
+                    setFirstName(addr.firstName || "");
+                    setLastName(addr.lastName || "");
+                    setAddress(addr.address || "");
+                    setCity(addr.city || "");
+                    setState(addr.state || "");
+                    setZipCode(addr.zipCode || "");
+                    setSelectedSavedAddressId(addr._id);
+                    toast.success("Address auto-filled");
+                  }} 
+                />
+              )}
+
               <section className={sectionClass}>
                 <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <h2 className="text-base font-bold md:text-lg">{t("shippingAddress")}</h2>
                   <button
                     type="button"
-                    onClick={handleAutoFillLocation}
-                    disabled={isLocating}
+                    onClick={() => setIsMapOpen(true)}
                     className="inline-flex h-9 items-center justify-center gap-1.5 self-start rounded-full bg-primary/10 px-3 text-xs font-medium text-primary transition-colors hover:bg-primary/20 sm:self-auto"
                   >
-                    {isLocating ? <InlineLoader /> : <MapPin className="size-3.5" />}
-                    {isLocating ? t("locating") : t("useCurrentLocation")}
+                    <MapPin className="size-3.5" />
+                    Select Location on Map
                   </button>
                 </div>
                 <div className="space-y-3">
@@ -1061,8 +1158,26 @@ function CheckoutContent() {
                     <input type="text" placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className={getInputClass(state)} />
                     <input type="text" placeholder="ZIP" value={zipCode} onChange={(e) => setZipCode(e.target.value)} className={cn(getInputClass(zipCode), "col-span-2 sm:col-span-1")} />
                   </div>
+                  
+                  {user && (
+                    <label className="flex items-center gap-2 mt-4 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={saveAddressToProfile} 
+                        onChange={(e) => setSaveAddressToProfile(e.target.checked)} 
+                        className="rounded border-border accent-foreground"
+                      />
+                      <span className="text-sm font-medium">Save this address to my profile</span>
+                    </label>
+                  )}
                 </div>
               </section>
+            </div>
+          )}
+
+          {!isPayExistingOrder && currentStep === 2 && (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-4 md:space-y-5">
+              <button onClick={() => setCurrentStep(1)} className="text-sm font-medium text-muted-foreground flex items-center gap-1 hover:text-foreground">← Back to Shipping</button>
 
               {shippingMethods.length > 0 && (
                 <section className={sectionClass}>
@@ -1123,85 +1238,91 @@ function CheckoutContent() {
                   </p>
                 )}
               </section>
-            </>
+            </div>
           )}
 
-          <section className={sectionClass}>
-            <h2 className="mb-3 text-base font-bold md:text-lg">{t("paymentMethod")}</h2>
+          {(currentStep === 2 || isPayExistingOrder) && (
+            <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-4 md:space-y-5">
+              <section className={sectionClass}>
+                <h2 className="mb-3 text-base font-bold md:text-lg">{t("paymentMethod")}</h2>
 
-            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 no-scrollbar md:mx-0 md:grid md:grid-cols-3 md:gap-3 md:overflow-visible md:pb-0">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("stripe")}
-                className={paymentOptionClass(paymentMethod === "stripe")}
-              >
-                <div className="flex h-6 items-center md:h-7">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg"
-                    alt="Stripe"
-                    className="h-full w-auto object-contain"
-                  />
-                </div>
-                <span className={cn("text-sm font-semibold", paymentMethod !== "stripe" && "text-muted-foreground")}>
-                  {t("creditCard")}
-                </span>
-                <span className="hidden text-xs text-muted-foreground md:block">Visa, Mastercard, Apple Pay</span>
-                <div className={cn("absolute right-3 top-3 flex size-4 items-center justify-center rounded-full border-2", paymentMethod === "stripe" ? "border-foreground" : "border-border/60")}>
-                  {paymentMethod === "stripe" && <div className="size-2 rounded-full bg-foreground" />}
-                </div>
-              </button>
+                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 no-scrollbar md:mx-0 md:flex-col md:gap-3 md:overflow-visible md:pb-0">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("stripe")}
+                    className={paymentOptionClass(paymentMethod === "stripe")}
+                  >
+                    <div className="flex h-6 items-center md:h-7 md:w-16 md:shrink-0">
+                      <img
+                        src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg"
+                        alt="Stripe"
+                        className="h-full w-auto object-contain"
+                      />
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className={cn("text-sm font-semibold", paymentMethod !== "stripe" && "text-muted-foreground")}>
+                        {t("creditCard")}
+                      </span>
+                      <span className="hidden text-xs text-muted-foreground md:block">Visa, Mastercard, Apple Pay</span>
+                    </div>
+                    <div className={cn("absolute right-3 top-3 flex size-4 items-center justify-center rounded-full border-2 md:relative md:right-auto md:top-auto md:ml-auto", paymentMethod === "stripe" ? "border-foreground" : "border-border/60")}>
+                      {paymentMethod === "stripe" && <div className="size-2 rounded-full bg-foreground" />}
+                    </div>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("khqr")}
-                className={paymentOptionClass(paymentMethod === "khqr")}
-              >
-                <div className="flex h-6 items-center md:h-7">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/b/bb/KHQR_Logo.png"
-                    alt="KHQR"
-                    className="h-full w-auto object-contain"
-                  />
-                </div>
-                <span className={cn("text-sm font-semibold", paymentMethod !== "khqr" && "text-muted-foreground")}>
-                  {t("khqrScan")}
-                </span>
-                <span className="hidden text-xs text-muted-foreground md:block">ABA, Bakong, ACLEDA</span>
-                <div className={cn("absolute right-3 top-3 flex size-4 items-center justify-center rounded-full border-2", paymentMethod === "khqr" ? "border-foreground" : "border-border/60")}>
-                  {paymentMethod === "khqr" && <div className="size-2 rounded-full bg-foreground" />}
-                </div>
-              </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("khqr")}
+                    className={paymentOptionClass(paymentMethod === "khqr")}
+                  >
+                    <div className="flex h-6 items-center md:h-7 md:w-16 md:shrink-0">
+                      <img
+                        src="https://upload.wikimedia.org/wikipedia/commons/b/bb/KHQR_Logo.png"
+                        alt="KHQR"
+                        className="h-full w-auto object-contain"
+                      />
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className={cn("text-sm font-semibold", paymentMethod !== "khqr" && "text-muted-foreground")}>
+                        {t("khqrScan")}
+                      </span>
+                      <span className="hidden text-xs text-muted-foreground md:block">ABA, Bakong, ACLEDA</span>
+                    </div>
+                    <div className={cn("absolute right-3 top-3 flex size-4 items-center justify-center rounded-full border-2 md:relative md:right-auto md:top-auto md:ml-auto", paymentMethod === "khqr" ? "border-foreground" : "border-border/60")}>
+                      {paymentMethod === "khqr" && <div className="size-2 rounded-full bg-foreground" />}
+                    </div>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => setPaymentMethod("payway")}
-                className={paymentOptionClass(paymentMethod === "payway")}
-              >
-                <div className="flex h-6 items-center gap-1 md:h-7">
-                  <img
-                    src="https://www.ababank.com/wp-content/themes/ababank/images/aba-logo.svg"
-                    alt="ABA PayWay"
-                    className="h-full w-auto object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                    }}
-                  />
-                  <span className="text-xs font-bold text-[#005099] md:text-sm">ABA</span>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("payway")}
+                    className={paymentOptionClass(paymentMethod === "payway")}
+                  >
+                    <div className="flex h-6 items-center gap-1 md:h-7 md:w-16 md:shrink-0">
+                      <img
+                        src="https://www.ababank.com/wp-content/themes/ababank/images/aba-logo.svg"
+                        alt="ABA PayWay"
+                        className="h-full w-auto object-contain"
+                      />
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <span className={cn("text-sm font-semibold", paymentMethod !== "payway" && "text-muted-foreground")}>
+                        {t("abaPayway")}
+                      </span>
+                      <span className="hidden text-xs text-muted-foreground md:block">ABA KHQR scan</span>
+                    </div>
+                    <div className={cn("absolute right-3 top-3 flex size-4 items-center justify-center rounded-full border-2 md:relative md:right-auto md:top-auto md:ml-auto", paymentMethod === "payway" ? "border-foreground" : "border-border/60")}>
+                      {paymentMethod === "payway" && <div className="size-2 rounded-full bg-foreground" />}
+                    </div>
+                  </button>
                 </div>
-                <span className={cn("text-sm font-semibold", paymentMethod !== "payway" && "text-muted-foreground")}>
-                  {t("abaPayway")}
-                </span>
-                <span className="hidden text-xs text-muted-foreground md:block">ABA KHQR scan</span>
-                <div className={cn("absolute right-3 top-3 flex size-4 items-center justify-center rounded-full border-2", paymentMethod === "payway" ? "border-foreground" : "border-border/60")}>
-                  {paymentMethod === "payway" && <div className="size-2 rounded-full bg-foreground" />}
+
+                <div className="mt-4 rounded-2xl border border-border/60 bg-muted/20 p-4 md:p-6">
+                  {renderPaymentDetails()}
                 </div>
-              </button>
+              </section>
             </div>
-
-            <div className="mt-4 rounded-2xl border border-border/60 bg-muted/20 p-4 md:p-6">
-              {renderPaymentDetails()}
-            </div>
-          </section>
+          )}
         </div>
       </div>
 
@@ -1244,6 +1365,18 @@ function CheckoutContent() {
           qrNode={qrPaymentModal.qrNode}
         />
       )}
+
+      <LocationMapModal
+        open={isMapOpen}
+        onClose={() => setIsMapOpen(false)}
+        onConfirm={(data) => {
+          if (data.address) setAddress(data.address);
+          if (data.city) setCity(data.city);
+          if (data.state) setState(data.state);
+          if (data.zipCode) setZipCode(data.zipCode);
+          setIsMapOpen(false);
+        }}
+      />
     </div>
   );
 }

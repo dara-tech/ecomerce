@@ -16,6 +16,7 @@ import {
   Heart,
   GitCompare,
   Wallet,
+  Store,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
@@ -30,9 +31,10 @@ const pillShell =
 
 function Badge({ count, className }: { count: number; className?: string }) {
   if (count <= 0) return null;
+  const textColor = className?.includes('text-') ? '' : 'text-white';
   return (
     <span
-      className={`absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 flex items-center justify-center rounded-full text-[9px] font-black text-white ${className}`}
+      className={`absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 flex items-center justify-center rounded-full text-[9px] font-black ${textColor} ${className}`}
     >
       {count > 9 ? "9+" : count}
     </span>
@@ -57,6 +59,7 @@ export default function Navbar() {
     { name: t("home"), path: "/", icon: LayoutDashboard },
     { name: t("products"), path: "/products", icon: Package },
     { name: t("categories"), path: "/categories", icon: FolderTree },
+    { name: "Stores", path: "/stores", icon: Store },
     { name: "Blog", path: "/blog", icon: BookOpen, wideOnly: true },
     { name: "About", path: "/about", icon: Info, wideOnly: true },
   ];
@@ -171,7 +174,7 @@ export default function Navbar() {
 
           <Link href="/cart" className={iconBtn} aria-label={t("cart")}>
             <ShoppingCart className="size-4" />
-            <Badge count={cartItemCount} className="bg-primary" />
+            <Badge count={cartItemCount} className="bg-primary text-primary-foreground" />
           </Link>
 
           <div className="w-px h-5 bg-border/50 mx-0.5 hidden sm:block" />
@@ -185,8 +188,12 @@ export default function Navbar() {
                   className="flex items-center gap-1.5 pl-1.5 pr-2 h-9 rounded-full hover:bg-muted transition-colors"
                   aria-expanded={userOpen ? "true" : "false"}
                 >
-                  <div className="size-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0">
-                    {user.name.charAt(0).toUpperCase()}
+                  <div className="size-6 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-[10px] font-bold text-white shrink-0 overflow-hidden">
+                    {user.avatar ? (
+                      <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                    ) : (
+                      user.name.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <span className="text-sm font-medium max-w-[68px] truncate hidden lg:block">
                     {user.name.split(" ")[0]}
@@ -221,6 +228,23 @@ export default function Navbar() {
                     >
                       <Wallet className="size-4 opacity-70" /> {t("wallet")}
                     </Link>
+                    {(!user?.role || user?.role === "customer") && (
+                      <Link
+                        href="/sell"
+                        onClick={() => setUserOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium hover:bg-muted text-primary"
+                      >
+                        <Store className="size-4 opacity-70" /> Become a Vendor
+                      </Link>
+                    )}
+                    {user?.role === "vendor" && (
+                      <a
+                        href={`http://localhost:5173/login?token=${user.token}&user=${encodeURIComponent(JSON.stringify(user))}`}
+                        className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium hover:bg-muted text-primary text-left"
+                      >
+                        <Store className="size-4 opacity-70" /> Vendor Dashboard
+                      </a>
+                    )}
                     <button
                       type="button"
                       onClick={() => {

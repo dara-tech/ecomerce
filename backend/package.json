@@ -27,6 +27,7 @@
     "mongoose": "^9.7.3",
     "multer": "^2.2.0",
     "multer-storage-cloudinary": "^4.0.0",
+    "node-telegram-bot-api": "^1.1.2",
     "otplib": "^13.4.1",
     "stripe": "^22.3.0"
   },

@@ -1,10 +1,12 @@
-import { Fragment } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { getApiBase } from '@/lib/axios';
 import {
   LayoutDashboard,
   Package,
   ShoppingCart,
   Users,
+  User,
   Settings,
   Shield,
   FolderTree,
@@ -28,8 +30,13 @@ import {
   BarChart3,
   ChevronRight,
   RotateCcw,
+  MessageCircle,
+  Search,
+  Store,
+  DollarSign,
   type LucideIcon,
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import {
   Collapsible,
   CollapsibleContent,
@@ -112,6 +119,7 @@ const NAV_GROUPS: NavGroup[] = [
       { name: 'Shipping', path: '/shipping', icon: Truck },
       { name: 'Inventory', path: '/inventory', icon: Warehouse },
       { name: 'Payments', path: '/payments', icon: CreditCard },
+      { name: 'Payouts', path: '/payouts', icon: DollarSign },
       { name: 'Returns', path: '/returns', icon: RotateCcw },
       { name: 'Coupons', path: '/coupons', icon: Ticket },
     ],
@@ -119,7 +127,9 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Customers',
     items: [
+      { name: 'Live Chat', path: '/live-chat', icon: MessageCircle },
       { name: 'Users', path: '/users', icon: Users },
+      { name: 'Stores', path: '/stores', icon: Store },
       { name: 'Reviews', path: '/reviews', icon: Star },
       { name: 'Wishlists', path: '/wishlists', icon: Heart },
     ],
@@ -181,19 +191,103 @@ function isCollapsibleActive(pathname: string, item: NavCollapsibleItem) {
   return item.paths.some((prefix) => pathname.startsWith(prefix));
 }
 
+function getIconBgColor(name: string): string {
+  switch (name) {
+    case 'Dashboard': return 'bg-[#0A84FF] text-white'; // Blue
+    case 'Products': return 'bg-[#FF9F0A] text-white'; // Orange
+    case 'All Products': return 'bg-[#FF9F0A] text-white';
+    case 'Categories': return 'bg-[#30D158] text-white'; // Green
+    case 'Brands': return 'bg-[#BF5AF2] text-white'; // Purple
+    case 'Orders': return 'bg-[#FF453A] text-white'; // Red
+    case 'Shipping': return 'bg-[#64D2FF] text-white'; // Teal
+    case 'Inventory': return 'bg-[#D4A373] text-white'; // Amber/brown
+    case 'Payments': return 'bg-[#34C759] text-white'; // Green
+    case 'Returns': return 'bg-[#5E5CE6] text-white'; // Indigo
+    case 'Coupons': return 'bg-[#FF375F] text-white'; // Pink
+    case 'Live Chat': return 'bg-[#30D158] text-white'; // Green
+    case 'Users': return 'bg-[#007AFF] text-white'; // Blue
+    case 'Stores': return 'bg-[#AF52DE] text-white'; // Purple/Indigo
+    case 'My Store': return 'bg-[#AF52DE] text-white';
+    case 'Reviews': return 'bg-[#FFD60A] text-white'; // Yellow
+    case 'Wishlists': return 'bg-[#FF2D55] text-white'; // Rose
+    case 'Marketing': return 'bg-gradient-to-tr from-[#FF2D55] to-[#FF9F0A] text-white';
+    case 'Email Campaigns': return 'bg-[#007AFF] text-white';
+    case 'Push Notifications': return 'bg-[#FF3B30] text-white';
+    case 'Banner Management': return 'bg-[#34C759] text-white';
+    case 'Popups': return 'bg-[#BF5AF2] text-white';
+    case 'Flash Sales': return 'bg-[#FF9F0A] text-white';
+    case 'CMS': return 'bg-[#8E8E93] text-white'; // Grey
+    case 'Pages': return 'bg-[#8E8E93] text-white';
+    case 'FAQs': return 'bg-[#8E8E93] text-white';
+    case 'Blogs': return 'bg-[#8E8E93] text-white';
+    case 'Notifications': return 'bg-[#FF3B30] text-white';
+    case 'Reports': return 'bg-[#00C7BE] text-white';
+    case 'Settings': return 'bg-[#8E8E93] text-white';
+    case 'Security': return 'bg-[#1C1C1E] text-white';
+    default: return 'bg-[#8E8E93] text-white';
+  }
+}
+
 function NavLinkButton({ item }: { item: NavLinkItem }) {
   const location = useLocation();
   const active = isPathActive(location.pathname, item.path);
+  const { token } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (item.name !== 'Live Chat' || !token) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await fetch(`${getApiBase()}/chat/admin/sessions`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const sessions = await res.json();
+          const count = sessions.filter((s: any) => {
+            if (!s.messages || s.messages.length === 0) return false;
+            const lastMsg = s.messages[s.messages.length - 1];
+            if (lastMsg.from !== 'user') return false;
+            if (!s.lastSeenByAdmin) return true;
+            return new Date(lastMsg.createdAt).getTime() > new Date(s.lastSeenByAdmin).getTime();
+          }).length;
+          setUnreadCount(count);
+        }
+      } catch (err) {
+        console.error('Failed to fetch unread count:', err);
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 4000); // Poll every 4 seconds
+    return () => clearInterval(interval);
+  }, [item.name, token]);
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
         isActive={active}
         tooltip={item.name}
+        className={cn(
+          "w-full h-9 flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all my-[2px]",
+          active
+            ? "bg-[#007AFF] text-white shadow-sm"
+            : "text-sidebar-foreground hover:bg-[#E5E5EA]/55 dark:hover:bg-[#2C2C2E]/55"
+        )}
         render={<NavLink to={item.path} end={item.path === '/'} />}
       >
-        <item.icon />
+        <div className={cn(
+          "size-6 flex items-center justify-center rounded-md shrink-0 shadow-sm",
+          getIconBgColor(item.name)
+        )}>
+          <item.icon className="size-3.5 stroke-[2.25]" />
+        </div>
         <span>{item.name}</span>
+        {item.name === 'Live Chat' && unreadCount > 0 && (
+          <span className="ml-auto flex size-4 items-center justify-center rounded-full bg-[#FF3B30] text-[9px] font-bold text-white shadow-sm animate-pulse">
+            {unreadCount}
+          </span>
+        )}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
@@ -209,7 +303,12 @@ function NavCollapsibleFlyout({ item }: { item: NavCollapsibleItem }) {
         <DropdownMenuTrigger
           render={<SidebarMenuButton isActive={active} />}
         >
-          <item.icon />
+          <div className={cn(
+            "size-6 flex items-center justify-center rounded-md shrink-0 shadow-sm",
+            getIconBgColor(item.name)
+          )}>
+            <item.icon className="size-3.5 stroke-[2.25]" />
+          </div>
           <span>{item.name}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -227,7 +326,12 @@ function NavCollapsibleFlyout({ item }: { item: NavCollapsibleItem }) {
                 location.pathname === child.path && 'bg-accent text-accent-foreground'
               )}
             >
-              <child.icon />
+              <div className={cn(
+                "size-5 flex items-center justify-center rounded-sm shrink-0 mr-1.5",
+                getIconBgColor(child.name)
+              )}>
+                <child.icon className="size-3 stroke-[2.25]" />
+              </div>
               {child.name}
             </DropdownMenuItem>
           ))}
@@ -250,26 +354,51 @@ function NavCollapsibleButton({ item }: { item: NavCollapsibleItem }) {
     <Collapsible defaultOpen={open} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger
+          className={cn(
+            "w-full h-9 flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all my-[2px]",
+            open
+              ? "text-sidebar-foreground"
+              : "text-sidebar-foreground hover:bg-[#E5E5EA]/55 dark:hover:bg-[#2C2C2E]/55"
+          )}
           render={<SidebarMenuButton isActive={open} />}
         >
-          <item.icon />
+          <div className={cn(
+            "size-6 flex items-center justify-center rounded-md shrink-0 shadow-sm",
+            getIconBgColor(item.name)
+          )}>
+            <item.icon className="size-3.5 stroke-[2.25]" />
+          </div>
           <span>{item.name}</span>
-          <ChevronRight className="sidebar-menu-chevron ml-auto size-4 transition-transform group-data-open/collapsible:rotate-90" />
+          <ChevronRight className="sidebar-menu-chevron ml-auto size-3.5 transition-transform group-data-open/collapsible:rotate-90 text-muted-foreground/60" />
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <SidebarMenuSub>
-            {item.children.map((child) => (
-              <SidebarMenuSubItem key={child.path}>
-                <SidebarMenuSubButton
-                  size="sm"
-                  isActive={location.pathname === child.path}
-                  render={<NavLink to={child.path} end />}
-                >
-                  <child.icon />
-                  <span>{child.name}</span>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            ))}
+          <SidebarMenuSub className="ml-3 border-l-0 pl-0">
+            {item.children.map((child) => {
+              const childActive = location.pathname === child.path;
+              return (
+                <SidebarMenuSubItem key={child.path}>
+                  <SidebarMenuSubButton
+                    size="sm"
+                    isActive={childActive}
+                    className={cn(
+                      "w-full h-8 flex items-center gap-2.5 px-1.5 py-1.5 rounded-lg text-xs font-semibold transition-all my-[2px]",
+                      childActive
+                        ? "bg-[#007AFF] text-white shadow-sm"
+                        : "text-sidebar-foreground/80 hover:bg-[#E5E5EA]/55 dark:hover:bg-[#2C2C2E]/55"
+                    )}
+                    render={<NavLink to={child.path} end />}
+                  >
+                    <div className={cn(
+                      "size-5 flex items-center justify-center rounded-sm shrink-0 shadow-sm",
+                      getIconBgColor(child.name)
+                    )}>
+                      <child.icon className="size-3 stroke-[2.25]" />
+                    </div>
+                    <span>{child.name}</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              );
+            })}
           </SidebarMenuSub>
         </CollapsibleContent>
       </SidebarMenuItem>
@@ -278,30 +407,89 @@ function NavCollapsibleButton({ item }: { item: NavCollapsibleItem }) {
 }
 
 export default function AppSidebar() {
+  const { user } = useAuth();
+  const initial = user?.name?.charAt(0).toUpperCase();
+
+  const isVendor = user?.role === 'vendor';
+  const filteredGroups = NAV_GROUPS.map((group) => {
+    if (isVendor) {
+      if (group.label === 'Overview') return group;
+      if (group.label === 'Catalog') {
+        const productsItem = group.items.find((item) => item.name === 'Products') as NavCollapsibleItem;
+        if (productsItem) {
+          return {
+            ...group,
+            items: [
+              {
+                ...productsItem,
+                paths: ['/products'],
+                children: productsItem.children.filter((c) => c.name === 'All Products'),
+              },
+            ],
+          };
+        }
+      }
+      if (group.label === 'Store') {
+        return {
+          ...group,
+          items: [
+            { name: 'My Store', path: '/my-store', icon: Store },
+            ...group.items.filter((item) => ['Orders', 'Payouts'].includes(item.name)),
+          ],
+        };
+      }
+      return null;
+    }
+    return group;
+  }).filter(Boolean) as NavGroup[];
+
   return (
-    <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="border-b border-border px-2 py-3 group-data-[collapsible=icon]:px-1.5">
-        <div className="flex items-center gap-2 px-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-none bg-primary text-[10px] font-black tracking-wider text-primary-foreground group-data-[collapsible=icon]:size-8">
-            AD
-          </span>
-          <div className="min-w-0 group-data-[collapsible=icon]:hidden">
-            <p className="truncate text-sm font-semibold text-sidebar-foreground">Admin Panel</p>
-            <p className="truncate text-xs text-muted-foreground">E-Commerce</p>
+    <Sidebar collapsible="icon" variant="sidebar" className="bg-[#F2F2F7] dark:bg-[#1C1C1E]">
+      <SidebarHeader className="border-b border-border/40 px-3 py-3 gap-2 group-data-[collapsible=icon]:px-1.5">
+        {/* macOS Search bar */}
+        <div className="px-0.5 py-0.5 group-data-[collapsible=icon]:hidden">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground/70" />
+            <input
+              type="text"
+              placeholder="Search"
+              className="w-full h-7 pl-8 pr-2.5 rounded-lg bg-[#E5E5EA]/70 dark:bg-[#2C2C2E]/70 text-xs border-none outline-none placeholder:text-muted-foreground/60 focus:bg-[#E5E5EA]/90 dark:focus:bg-[#2C2C2E]/90 transition-colors"
+            />
           </div>
         </div>
+
+        {/* macOS Apple Account profile section */}
+        {user && (
+          <div className="mt-1 group-data-[collapsible=icon]:hidden">
+            <div className="flex items-center gap-3 p-1.5 rounded-xl bg-card border border-border/40 shadow-sm cursor-pointer hover:bg-[#E5E5EA]/20 dark:hover:bg-[#2C2C2E]/20 transition-all">
+              <div className="size-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center text-xs font-black text-white shrink-0 overflow-hidden border border-border/20 shadow-inner">
+                {user.avatar ? (
+                  <img src={user.avatar} alt={user.name} className="h-full w-full object-cover" />
+                ) : (
+                  initial || <User className="size-4 text-white/90" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black text-sidebar-foreground truncate leading-tight">{user.name}</p>
+                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{user.email || 'Admin Account'}</p>
+              </div>
+            </div>
+          </div>
+        )}
       </SidebarHeader>
 
-      <SidebarContent className="gap-0">
-        {NAV_GROUPS.map((group, index) => (
+      <SidebarContent className="gap-0 px-1.5 py-2">
+        {filteredGroups.map((group, index) => (
           <Fragment key={group.label}>
             {index > 0 && (
-              <SidebarSeparator className="mx-auto my-1 hidden w-5 group-data-[collapsible=icon]:block" />
+              <SidebarSeparator className="mx-auto my-1.5 hidden w-5 group-data-[collapsible=icon]:block" />
             )}
-            <SidebarGroup>
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroup className="px-0.5 py-1">
+              <SidebarGroupLabel className="px-2 py-1 text-[10px] font-bold text-muted-foreground/90 uppercase tracking-wider group-data-[collapsible=icon]:hidden">
+                {group.label}
+              </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu className="group-data-[collapsible=icon]:gap-0.5">
+                <SidebarMenu className="group-data-[collapsible=icon]:gap-1">
                   {group.items.map((item) =>
                     isCollapsible(item) ? (
                       <NavCollapsibleButton key={item.name} item={item} />
@@ -316,9 +504,9 @@ export default function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border p-2 group-data-[collapsible=icon]:hidden">
-        <p className="px-2 text-[10px] text-muted-foreground">
-          Press <kbd className="rounded border px-1 font-mono">⌘B</kbd> to toggle
+      <SidebarFooter className="border-t border-border/40 p-2 group-data-[collapsible=icon]:hidden">
+        <p className="px-2 text-[10px] text-muted-foreground/80">
+          Press <kbd className="rounded border px-1 font-mono text-[9px]">⌘B</kbd> to toggle
         </p>
       </SidebarFooter>
     </Sidebar>

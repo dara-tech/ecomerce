@@ -141,7 +141,7 @@ export default function BannerCarousel({ banners }: { banners: Banner[] }) {
             className={cn(
               "mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold shadow-lg transition-transform active:scale-[0.98] sm:text-base",
               hasImage
-                ? "bg-white text-foreground hover:bg-white/95"
+                ? "bg-white text-neutral-900 hover:bg-white/95"
                 : "bg-foreground text-background hover:bg-foreground/90"
             )}
           >
