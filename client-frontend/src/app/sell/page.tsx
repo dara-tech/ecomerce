@@ -149,7 +149,7 @@ export default function SellPage() {
                     </p>
                     <div className="pt-6">
                       <a 
-                        href={`${process.env.NEXT_PUBLIC_ADMIN_URL || 'https://107-175-91-211.sslip.io'}/login?token=${newVendorAuth?.token}&user=${encodeURIComponent(JSON.stringify(newVendorAuth))}`}
+                        href={`${process.env.NEXT_PUBLIC_ADMIN_URL || 'https://lunakh-admin.vercel.app'}/login?token=${newVendorAuth?.token}&user=${encodeURIComponent(JSON.stringify(newVendorAuth))}`}
                         target="_blank" 
                         rel="noreferrer"
                         className="inline-flex items-center justify-center gap-2 h-14 px-8 rounded-full bg-foreground text-background font-semibold text-lg hover:scale-105 transition-transform active:scale-95 shadow-xl"

@@ -98,7 +98,7 @@ export default function VendorRegisterPage() {
           </p>
           <div className="pt-4">
             <a
-              href={`${process.env.NEXT_PUBLIC_ADMIN_URL || 'https://107-175-91-211.sslip.io'}/login?token=${encodeURIComponent(registeredVendor?.token || user?.token || "")}&user=${encodeURIComponent(JSON.stringify(registeredVendor || user || {}))}`}
+              href={`${process.env.NEXT_PUBLIC_ADMIN_URL || 'https://lunakh-admin.vercel.app'}/login?token=${encodeURIComponent(registeredVendor?.token || user?.token || "")}&user=${encodeURIComponent(JSON.stringify(registeredVendor || user || {}))}`}
               className="inline-flex h-9 items-center justify-center bg-primary px-4 text-xs font-semibold text-primary-foreground hover:bg-primary/95 transition-colors"
             >
               Go to Vendor Portal
@@ -117,7 +117,7 @@ export default function VendorRegisterPage() {
         !user ? (
           <>
             Already have a seller account?{" "}
-            <a href={`${process.env.NEXT_PUBLIC_ADMIN_URL || 'https://107-175-91-211.sslip.io'}/login`} className="font-medium text-foreground hover:underline">
+            <a href={`${process.env.NEXT_PUBLIC_ADMIN_URL || 'https://lunakh-admin.vercel.app'}/login`} className="font-medium text-foreground hover:underline">
               Sign in
             </a>
           </>
