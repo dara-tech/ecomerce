@@ -239,7 +239,7 @@ export default function Navbar() {
                     )}
                     {user?.role === "vendor" && (
                       <a
-                        href={`http://localhost:5173/login?token=${user.token}&user=${encodeURIComponent(JSON.stringify(user))}`}
+                        href={`${process.env.NEXT_PUBLIC_ADMIN_URL || 'https://107-175-91-211.sslip.io'}/login?token=${user.token}&user=${encodeURIComponent(JSON.stringify(user))}`}
                         className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium hover:bg-muted text-primary text-left"
                       >
                         <Store className="size-4 opacity-70" /> Vendor Dashboard
