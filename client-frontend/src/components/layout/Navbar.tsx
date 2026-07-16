@@ -239,7 +239,7 @@ export default function Navbar() {
                     )}
                     {user?.role === "vendor" && (
                       <a
-                        href={`${process.env.NEXT_PUBLIC_ADMIN_URL || 'https://lunakh-admin.vercel.app'}/login?token=${user.token}&user=${encodeURIComponent(JSON.stringify(user))}`}
+                        href={`https://lunakh-admin.vercel.app/login?token=${user.token}&user=${encodeURIComponent(JSON.stringify(user))}`}
                         className="flex w-full items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium hover:bg-muted text-primary text-left"
                       >
                         <Store className="size-4 opacity-70" /> Vendor Dashboard
