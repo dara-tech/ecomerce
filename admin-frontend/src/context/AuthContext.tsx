@@ -6,6 +6,7 @@ interface User {
   name: string;
   email: string;
   role: string;
+  avatar?: string;
   twoFactorEnabled?: boolean;
   permissions?: string[];
   canAccessAdmin?: boolean;

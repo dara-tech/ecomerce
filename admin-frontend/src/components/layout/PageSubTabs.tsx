@@ -6,12 +6,12 @@ export function PageStickyHeader({
   subTabs,
 }: {
   toolbar: ReactNode;
-  subTabs: ReactNode;
+  subTabs?: ReactNode;
 }) {
   return (
     <div className={PAGE_STICKY_SHELL_CLASS}>
       <div className={PAGE_TOOLBAR_INNER_CLASS}>{toolbar}</div>
-      <div className={PAGE_SUB_TABS_BAR_CLASS}>{subTabs}</div>
+      {subTabs && <div className={PAGE_SUB_TABS_BAR_CLASS}>{subTabs}</div>}
     </div>
   );
 }

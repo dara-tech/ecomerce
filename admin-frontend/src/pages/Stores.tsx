@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, X, ShieldAlert, Percent, Store as StoreIcon, Edit } from 'lucide-react';
+import { Check, X, Percent, Store as StoreIcon, Edit } from 'lucide-react';
 import api from '../lib/axios';
 import { opsTableClass, opsThClass, opsTdClass } from '../lib/opsUi';
 import { PageStickyHeader } from '../components/layout/PageSubTabs';
