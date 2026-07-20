@@ -34,7 +34,7 @@ export const getDashboardStats = async (req, res) => {
     User.countDocuments(queryUser),
     Product.countDocuments(queryProduct),
     Order.countDocuments(queryOrder),
-    Order.find(queryOrder).sort({ createdAt: -1 }).populate('user', 'id name email'),
+    Order.find(queryOrder).sort({ createdAt: -1 }).populate('user', 'id name email avatar'),
     Product.countDocuments({ ...queryProduct, countInStock: { $lte: 5 } }),
     RefundRequest.countDocuments(isVendor ? { _id: null } : { status: 'pending' }),
     Coupon.countDocuments(isVendor ? { _id: null } : { isActive: true }),

@@ -2,6 +2,8 @@ import './config/env.js';
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
@@ -23,6 +25,75 @@ import payoutRoutes from './routes/payoutRoutes.js';
 import { initTelegramBot } from './services/telegramBotService.js';
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+  },
+});
+
+// Attach io to req so routes can emit events
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+io.on('connection', (socket) => {
+  console.log(`Socket connected: ${socket.id}`);
+
+  socket.on('disconnect', () => {
+    console.log(`Socket disconnected: ${socket.id}`);
+  });
+
+  socket.on('join_session', (sessionId) => {
+    console.log(`Socket ${socket.id} joining session ${sessionId}`);
+    socket.join(sessionId);
+  });
+
+  socket.on('join_admin', () => {
+    console.log(`Socket ${socket.id} joining admin room`);
+    socket.join('admin');
+  });
+
+  socket.on('typing', ({ sessionId, role }) => {
+    console.log(`Typing event received for session ${sessionId} from ${role}`);
+    socket.to(sessionId).emit('typing', { role });
+  });
+
+  socket.on('stop_typing', ({ sessionId, role }) => {
+    console.log(`Stop typing event received for session ${sessionId} from ${role}`);
+    socket.to(sessionId).emit('stop_typing', { role });
+  });
+
+  // WebRTC Signaling
+  socket.on('webrtc_call_request', ({ sessionId, fromRole, withVideo }) => {
+    socket.to(sessionId).emit('webrtc_call_request', { fromRole, withVideo });
+  });
+
+  socket.on('webrtc_call_accepted', ({ sessionId, fromRole }) => {
+    socket.to(sessionId).emit('webrtc_call_accepted', { fromRole });
+  });
+
+  socket.on('webrtc_call_rejected', ({ sessionId, fromRole }) => {
+    socket.to(sessionId).emit('webrtc_call_rejected', { fromRole });
+  });
+
+  socket.on('webrtc_call_ended', ({ sessionId, fromRole }) => {
+    socket.to(sessionId).emit('webrtc_call_ended', { fromRole });
+  });
+
+  socket.on('webrtc_offer', ({ sessionId, fromRole, offer }) => {
+    socket.to(sessionId).emit('webrtc_offer', { fromRole, offer });
+  });
+
+  socket.on('webrtc_answer', ({ sessionId, fromRole, answer }) => {
+    socket.to(sessionId).emit('webrtc_answer', { fromRole, answer });
+  });
+
+  socket.on('webrtc_ice_candidate', ({ sessionId, fromRole, candidate }) => {
+    socket.to(sessionId).emit('webrtc_ice_candidate', { fromRole, candidate });
+  });
+});
 
 app.set('trust proxy', 1);
 
@@ -57,7 +128,7 @@ mongoose
   .then(() => {
     console.log('Connected to MongoDB');
     initTelegramBot();
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });
   })

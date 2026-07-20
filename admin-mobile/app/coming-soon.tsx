@@ -3,7 +3,7 @@ import { Hammer } from 'lucide-react-native';
 
 export default function ComingSoonScreen() {
   return (
-    <View className="flex-1 bg-system-bg dark:bg-black items-center justify-center p-6">
+    <View className="flex-1 bg-transparent items-center justify-center p-6">
       <View className="w-24 h-24 rounded-full bg-blue-100 items-center justify-center mb-6">
         <Hammer size={40} color="#007AFF" />
       </View>

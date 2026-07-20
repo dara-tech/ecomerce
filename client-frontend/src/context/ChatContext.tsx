@@ -3,6 +3,8 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { getApiUrl } from "@/lib/api";
+import { io, Socket } from "socket.io-client";
+import { useWebRTC, CallState } from "@/hooks/useWebRTC";
 
 export type ChatMessage = {
   _id?: string;
@@ -35,8 +37,18 @@ interface ChatContextType {
   fetchMessages: () => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
   markAsSeen: () => Promise<void>;
+  notifyTyping: () => void;
   lastSeenByAdmin: string | null;
   adminTypingUntil: string | null;
+  
+  // WebRTC
+  callState: CallState;
+  localStream: MediaStream | null;
+  remoteStream: MediaStream | null;
+  makeCall: (withVideo?: boolean) => Promise<void>;
+  acceptCall: () => Promise<void>;
+  rejectCall: () => void;
+  endCall: () => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -57,6 +69,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     sessionId,
     messagesLength: messages.length,
   });
+
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const webrtc = useWebRTC(socket, sessionId, 'user');
 
   useEffect(() => {
     stateRef.current = {
@@ -162,24 +180,83 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           setMessages(data.messages);
         }
       }
+
+      if (socketRef.current && typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        socketRef.current.emit('stop_typing', { sessionId, role: 'user' });
+      }
     } catch (e) {
       console.error("Failed to send message:", e);
     }
   }, [sessionId, user]);
 
-  // Handle periodic polling
+  const notifyTyping = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.emit('typing', { sessionId, role: 'user' });
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        socketRef.current?.emit('stop_typing', { sessionId, role: 'user' });
+      }, 2000);
+    }
+  }, [sessionId]);
+
+  // Handle socket.io connection
   useEffect(() => {
     fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
-    return () => clearInterval(interval);
-  }, [fetchMessages]);
+    
+    const rawSocketUrl = getApiUrl().replace('/api', '');
+    const socketUrl = rawSocketUrl === '' 
+      ? (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:5001' : '') 
+      : rawSocketUrl;
 
-  // Keep isAdminTyping active if expiration hasn't passed
+    const socket = io(socketUrl, {
+      transports: ['websocket'],
+    });
+    
+    socket.on('connect', () => {
+      socket.emit('join_session', sessionId);
+    });
+
+    socket.on('receive_message', (updatedMessages) => {
+      setMessages(updatedMessages);
+      
+      // Play sound if last message is from admin
+      if (updatedMessages.length > 0) {
+        const lastMsg = updatedMessages[updatedMessages.length - 1];
+        if (lastMsg.from === "admin") {
+          playNotificationSound();
+        }
+      }
+    });
+
+    socket.on('typing', ({ role }: { role: string }) => {
+      if (role === 'admin') setIsAdminTyping(true);
+    });
+
+    socket.on('stop_typing', ({ role }: { role: string }) => {
+      if (role === 'admin') setIsAdminTyping(false);
+    });
+
+    socket.on('seen_update', (data: any) => {
+      if (data.lastSeenByAdmin !== undefined) {
+        setLastSeenByAdmin(data.lastSeenByAdmin);
+      }
+    });
+
+    socketRef.current = socket;
+    setSocket(socket);
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [fetchMessages, sessionId]);
+
+  // Keep isAdminTyping active if expiration hasn't passed (legacy for polling, keeping it just in case)
   useEffect(() => {
     if (!adminTypingUntil) return;
     const checkTyping = () => {
       const isTyping = new Date(adminTypingUntil).getTime() > Date.now();
-      setIsAdminTyping(isTyping);
+      if (isTyping) setIsAdminTyping(true);
     };
     checkTyping();
     const interval = setInterval(checkTyping, 1000);
@@ -204,8 +281,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         fetchMessages,
         sendMessage,
         markAsSeen,
+        notifyTyping,
         lastSeenByAdmin,
         adminTypingUntil,
+        ...webrtc,
       }}
     >
       {children}

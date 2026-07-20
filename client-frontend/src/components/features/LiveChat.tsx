@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, X, Headphones } from "lucide-react";
+import { MessageCircle, X, Headphones, Video, Phone } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useStore } from "@/context/StoreContext";
 import { useChat } from "@/context/ChatContext";
@@ -9,7 +9,7 @@ import ChatPanel from "@/components/features/ChatPanel";
 /** Desktop floating chat — mobile uses /chat in the bottom tab bar. */
 export default function LiveChat() {
   const { t } = useStore();
-  const { isChatOpen: open, setIsChatOpen: setOpen, unreadCount, isAdminTyping } = useChat();
+  const { isChatOpen: open, setIsChatOpen: setOpen, unreadCount, isAdminTyping, makeCall } = useChat();
   const pathname = usePathname();
 
   if (pathname === "/chat") return null;
@@ -23,9 +23,17 @@ export default function LiveChat() {
               <Headphones className="size-4 shrink-0" />
               <span className="text-sm font-semibold">{t("liveChat")}</span>
             </div>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">
-              <X className="size-4" />
-            </button>
+            <div className="flex items-center gap-4">
+              <button type="button" onClick={() => makeCall(false)} aria-label="Voice Call">
+                <Phone className="size-4" />
+              </button>
+              <button type="button" onClick={() => makeCall(true)} aria-label="Video Call">
+                <Video className="size-4" />
+              </button>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">
+                <X className="size-4" />
+              </button>
+            </div>
           </div>
           <ChatPanel variant="widget" />
         </div>

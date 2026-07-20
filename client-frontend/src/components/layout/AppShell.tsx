@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import FlashSaleBar from "@/components/features/FlashSaleBar";
 import LiveChat from "@/components/features/LiveChat";
 import MarketingPopup from "@/components/features/MarketingPopup";
+import { VideoCallModal } from "@/components/features/VideoCallModal";
 
 const AUTH_PREFIXES = ["/login", "/register", "/auth"];
 const TAB_BAR_HIDDEN_PREFIXES = ["/login", "/register", "/checkout", "/auth"];
@@ -48,8 +49,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
       {!authScreen && <MobileTabBar />}
-      {!authScreen && !chatScreen && <LiveChat />}
+      {!authScreen && <LiveChat />}
       {!authScreen && <MarketingPopup />}
+      <VideoCallModal onClose={() => {}} />
     </>
   );
 }

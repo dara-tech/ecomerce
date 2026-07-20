@@ -56,6 +56,11 @@ router.post('/admin/reply', protect, admin, async (req, res) => {
     // We update the timestamp so it jumps to top
     await session.save();
 
+    if (req.io) {
+      req.io.to(sessionId).emit('receive_message', session.messages);
+      req.io.to('admin').emit('update_sessions');
+    }
+
     res.status(201).json({ success: true, messages: session.messages });
   } catch (error) {
     console.error(error);
@@ -66,7 +71,8 @@ router.post('/admin/reply', protect, admin, async (req, res) => {
 // Get chat history for a session
 router.get('/:sessionId', async (req, res) => {
   try {
-    const session = await ChatSession.findOne({ sessionId: req.params.sessionId });
+    const session = await ChatSession.findOne({ sessionId: req.params.sessionId })
+      .populate('user', 'name avatar');
     if (!session) {
       return res.json({ messages: [], lastSeenByAdmin: null, lastSeenByUser: null, adminTypingUntil: null });
     }
@@ -77,6 +83,7 @@ router.get('/:sessionId', async (req, res) => {
 
     res.json({
       messages: session.messages,
+      user: session.user,
       lastSeenByAdmin: session.lastSeenByAdmin,
       lastSeenByUser: session.lastSeenByUser,
       adminTypingUntil: session.adminTypingUntil
@@ -126,6 +133,11 @@ router.post('/send', optionalProtect, async (req, res) => {
     // Forward to Telegram
     const customerName = session.guestName || 'Customer';
     await sendToTelegram(sessionId, customerName, text);
+
+    if (req.io) {
+      req.io.to(sessionId).emit('receive_message', session.messages);
+      req.io.to('admin').emit('update_sessions');
+    }
 
     res.status(201).json({ success: true, messages: session.messages });
   } catch (error) {

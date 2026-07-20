@@ -99,10 +99,10 @@ export default function ProductEditScreen() {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: '#F2F2F7' }}
+      style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? '#0A0A0A' : '#F2F2F7' }}
     >
       {/* Modal Header */}
-      <View className="flex-row items-center justify-between px-4 pt-10 pb-4 bg-system-bg dark:bg-black border-b border-gray-200 dark:border-gray-800">
+      <View className="flex-row items-center justify-between px-4 pt-10 pb-4 bg-transparent border-b border-gray-200 dark:border-gray-800">
         <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
           <X size={24} color={colorScheme === 'dark' ? '#FFFFFF' : '#111827'} />
         </TouchableOpacity>
@@ -122,7 +122,7 @@ export default function ProductEditScreen() {
         
         <View className="gap-y-6">
           {/* Media Card */}
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none">
+          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-200 dark:border-gray-800">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-4">Product Image</Text>
             <View className="items-center mb-4">
               <View className="w-28 h-28 bg-gray-100 dark:bg-gray-800 rounded-[24px] items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-800">
@@ -139,7 +139,7 @@ export default function ProductEditScreen() {
           </View>
 
           {/* Basic Info Card */}
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Basic Details</Text>
             <Input label="Name" placeholder="Product name" value={name} onChangeText={setName} />
             <Input label="Category" placeholder="e.g. Electronics" value={category} onChangeText={setCategory} />
@@ -147,7 +147,7 @@ export default function ProductEditScreen() {
           </View>
 
           {/* Pricing & Inventory Card */}
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Pricing & Inventory</Text>
             <View className="flex-row gap-4">
               <View className="flex-1">
@@ -160,7 +160,7 @@ export default function ProductEditScreen() {
           </View>
 
           {/* Description Card */}
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Description</Text>
             <Input 
               placeholder="Detailed product description..." 

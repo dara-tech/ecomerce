@@ -66,7 +66,7 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-system-bg dark:bg-black">
+    <View className="flex-1 bg-transparent">
       <Stack.Screen 
         options={{
           headerShown: true,
@@ -88,7 +88,7 @@ export default function NotificationsScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity 
               onPress={() => markAsRead(item._id, item.isRead)}
-              className={`mb-4 bg-white dark:bg-gray-900 rounded-3xl p-4 flex-row shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none ${item.isRead ? 'opacity-60' : ''}`}
+              className={`mb-4 bg-white dark:bg-gray-900 rounded-3xl p-4 flex-row border border-gray-200 dark:border-gray-800 ${item.isRead ? 'opacity-60' : ''}`}
               activeOpacity={0.7}
             >
               <View className={`w-12 h-12 rounded-xl items-center justify-center mr-4 border ${getIconBgColor(item.type)}`}>

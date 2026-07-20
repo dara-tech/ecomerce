@@ -35,7 +35,7 @@ export default function WishlistsScreen() {
   }, []);
 
   return (
-    <View className="flex-1 bg-system-bg dark:bg-black">
+    <View className="flex-1 bg-transparent">
       <Stack.Screen 
         options={{
           headerShown: true,
@@ -55,7 +55,7 @@ export default function WishlistsScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={({ item }) => (
-            <View className="mb-4 bg-white dark:bg-gray-900 rounded-3xl p-4 flex-row items-center shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none">
+            <View className="mb-4 bg-white dark:bg-gray-900 rounded-3xl p-4 flex-row items-center border border-gray-200 dark:border-gray-800">
               <View className="w-12 h-12 rounded-xl bg-pink-50 items-center justify-center overflow-hidden mr-4 border border-pink-100">
                 {item.product?.image ? (
                   <Image source={{ uri: item.product.image }} className="w-full h-full" resizeMode="cover" />

@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 
 export default function ReturnsScreen() {
   return (
-    <View className="flex-1 bg-system-bg dark:bg-black">
+    <View className="flex-1 bg-transparent">
       <Stack.Screen 
         options={{
           headerShown: true,

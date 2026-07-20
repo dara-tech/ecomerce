@@ -80,9 +80,9 @@ export default function UserEditScreen() {
   const isSelf = (currentUser as any)?._id === userInfo._id || currentUser?.id === userInfo._id;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F2F2F7' }}>
+    <View style={{ flex: 1, backgroundColor: colorScheme === 'dark' ? '#0A0A0A' : '#F2F2F7' }}>
       {/* Modal Header */}
-      <View className="flex-row items-center justify-between px-4 pt-10 pb-4 bg-system-bg dark:bg-black border-b border-gray-200 dark:border-gray-800">
+      <View className="flex-row items-center justify-between px-4 pt-10 pb-4 bg-transparent border-b border-gray-200 dark:border-gray-800">
         <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
           <X size={24} color={colorScheme === 'dark' ? '#FFFFFF' : '#111827'} />
         </TouchableOpacity>
@@ -102,7 +102,7 @@ export default function UserEditScreen() {
 
       <ScrollView className="flex-1 px-4 py-6" contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="gap-y-6">
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none items-center">
+          <View className="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-200 dark:border-gray-800 items-center">
             <View className="w-20 h-20 rounded-full bg-cyan-100 items-center justify-center mb-4">
               <UserIcon size={40} color="#32ADE6" />
             </View>
@@ -116,7 +116,7 @@ export default function UserEditScreen() {
             )}
           </View>
 
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Account Permissions</Text>
             
             <View className="flex-row items-center justify-between py-1">

@@ -30,7 +30,7 @@ export function Button({ label, variant = 'primary', isLoading, className = '', 
 
   const baseStyle = 'flex-row items-center justify-center rounded-2xl px-5 py-4';
   const variantStyles = {
-    primary: 'bg-gray-900',
+    primary: 'bg-system-blue',
     secondary: 'bg-system-light',
     outline: 'border border-gray-300 dark:border-gray-700 bg-transparent',
     danger: 'bg-red-500',

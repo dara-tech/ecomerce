@@ -1,4 +1,5 @@
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { 
   Package, FolderTree, Bookmark, 
@@ -8,7 +9,7 @@ import {
   FileText, FileBox, HelpCircle,
   BellRing, BarChart3,
   Settings, Shield, LogOut,
-  ChevronRight, LucideIcon
+  ChevronRight, LucideIcon, Store, DollarSign, MessageCircle
 } from 'lucide-react-native';
 import { useAuth } from '../../src/store/auth';
 
@@ -29,7 +30,7 @@ const MENU_SECTIONS: MenuSection[] = [
     title: 'Catalog',
     items: [
       { name: 'Products', icon: Package, path: '/(tabs)/products', bgColor: 'bg-indigo-500' },
-      { name: 'Categories', icon: FolderTree, path: '/categories', bgColor: 'bg-blue-50 dark:bg-gray-8000' },
+      { name: 'Categories', icon: FolderTree, path: '/categories', bgColor: 'bg-blue-500' },
       { name: 'Brands', icon: Bookmark, path: '/brands', bgColor: 'bg-purple-500' },
     ]
   },
@@ -42,6 +43,7 @@ const MENU_SECTIONS: MenuSection[] = [
       { name: 'Payments', icon: CreditCard, path: '/payments', bgColor: 'bg-amber-500' },
       { name: 'Returns', icon: RotateCcw, path: '/returns', bgColor: 'bg-rose-500' },
       { name: 'Coupons', icon: Ticket, path: '/coupons', bgColor: 'bg-orange-500' },
+      { name: 'Payouts', icon: DollarSign, path: '/payouts', bgColor: 'bg-emerald-600' },
     ]
   },
   {
@@ -80,6 +82,7 @@ const MENU_SECTIONS: MenuSection[] = [
   {
     title: 'System',
     items: [
+      { name: 'Stores', icon: Store, path: '/stores', bgColor: 'bg-indigo-500' },
       { name: 'Settings', icon: Settings, path: '/settings', bgColor: 'bg-gray-800' },
       { name: 'Security', icon: Shield, path: '/security', bgColor: 'bg-emerald-600' },
     ]
@@ -91,12 +94,13 @@ export default function MenuScreen() {
   const user = useAuth((state) => state.user);
 
   return (
-    <ScrollView 
-      className="flex-1 bg-system-bg dark:bg-black"
-      contentContainerStyle={{ paddingBottom: 100 }}
-    >
-      <View className="px-4 py-6 mb-2">
-        <View className="bg-white dark:bg-gray-900 rounded-[24px] p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none flex-row items-center">
+    <SafeAreaView className="flex-1 bg-transparent">
+      <ScrollView 
+        className="flex-1 bg-transparent"
+        contentContainerStyle={{ paddingBottom: 100 }}
+      >
+      <View className="px-4 pt-6 pb-2 mb-2">
+        <View className="bg-white dark:bg-[#0A0A0A] rounded-[24px] p-5 border border-gray-200 dark:border-gray-800 flex-row items-center">
           <View className="w-16 h-16 rounded-full bg-system-blue/10 dark:bg-white/10 items-center justify-center mr-4">
             <Text className="text-xl font-bold text-system-blue dark:text-white">
               {user?.name?.charAt(0).toUpperCase() || 'A'}
@@ -114,7 +118,7 @@ export default function MenuScreen() {
           <Text className="ml-2 mb-2 text-[13px] font-semibold text-system-gray dark:text-gray-400 uppercase tracking-wider">
             {section.title}
           </Text>
-          <View className="bg-white dark:bg-gray-900 rounded-[24px] overflow-hidden shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none">
+          <View className="bg-white dark:bg-[#0A0A0A] rounded-[24px] overflow-hidden border border-gray-200 dark:border-gray-800">
             {section.items.map((item, index) => {
               const Icon = item.icon;
               const isLast = index === section.items.length - 1;
@@ -122,9 +126,9 @@ export default function MenuScreen() {
                 <TouchableOpacity
                   key={item.name}
                   onPress={() => router.push(item.path as any)}
-                  className="bg-white dark:bg-gray-900 flex-row items-center pl-4 active:bg-gray-50 dark:bg-gray-800"
+                  className="bg-white dark:bg-[#0A0A0A] flex-row items-center pl-4 active:bg-gray-50 dark:active:bg-gray-800"
                 >
-                  <View className={`w-8 h-8 rounded-lg mr-4 items-center justify-center ${item.bgColor}`}>
+                  <View className={`w-8 h-8 rounded-full mr-4 items-center justify-center ${item.bgColor}`}>
                     <Icon size={18} color="#FFFFFF" />
                   </View>
                   
@@ -140,15 +144,16 @@ export default function MenuScreen() {
       ))}
 
       <View className="mt-4 mb-8 px-4">
-        <View className="bg-white dark:bg-gray-900 rounded-3xl overflow-hidden shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none">
+        <View className="bg-white dark:bg-[#0A0A0A] rounded-[24px] overflow-hidden border border-gray-200 dark:border-gray-800">
           <TouchableOpacity
             onPress={logout}
-            className="bg-white dark:bg-gray-900 py-4 active:bg-gray-50 dark:bg-gray-800 flex-row items-center justify-center"
+            className="bg-white dark:bg-[#0A0A0A] py-4 active:bg-gray-50 dark:active:bg-gray-800 flex-row items-center justify-center"
           >
-            <Text className="text-[17px] font-semibold text-system-red">Log Out</Text>
+            <Text className="text-[17px] font-semibold text-red-500">Log Out</Text>
           </TouchableOpacity>
         </View>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

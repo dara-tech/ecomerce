@@ -67,7 +67,7 @@ export default function ReportsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-system-bg dark:bg-black">
+    <View className="flex-1 bg-transparent">
       <Stack.Screen 
         options={{
           headerShown: true,
@@ -76,7 +76,7 @@ export default function ReportsScreen() {
         }} 
       />
 
-      <View className="px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-row items-center">
+      <View className="px-4 py-3 bg-white dark:bg-[#0A0A0A] border-b border-gray-200 dark:border-gray-800 flex-row items-center">
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
           {['week', 'month', 'year', 'all'].map(tf => (
             <TouchableOpacity
@@ -104,7 +104,7 @@ export default function ReportsScreen() {
         >
           <Text className="px-2 pt-2 pb-1 text-[18px] font-bold text-gray-900 dark:text-white mb-2">Sales Overview</Text>
           
-          <View className="bg-white dark:bg-gray-900 rounded-3xl px-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none mt-2">
+          <View className="bg-white dark:bg-[#0A0A0A] rounded-3xl px-5 border border-gray-200 dark:border-gray-800 mt-2">
             <StatRow 
               title="Total Revenue" 
               value={salesData?.revenue} 
@@ -136,31 +136,34 @@ export default function ReportsScreen() {
           <View className="mt-8 px-2">
             <Text className="text-[18px] font-bold text-gray-900 dark:text-white mb-4">Top Selling Products</Text>
             
-            <View className="mt-2">
-              {productsData.length > 0 ? productsData.map((prod, idx) => (
-                <View 
-                  key={prod._id} 
-                  className="mb-4 bg-white dark:bg-gray-900 rounded-3xl p-4 flex-row items-center shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none"
-                >
-                  <View className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-gray-800 items-center justify-center mr-4 border border-blue-100 dark:border-gray-700">
-                    <Text className="font-bold text-system-blue dark:text-white text-[15px]">#{idx + 1}</Text>
+            <View className="mt-2 bg-white dark:bg-[#0A0A0A] rounded-[24px] overflow-hidden border border-gray-200 dark:border-gray-800">
+              {productsData.length > 0 ? productsData.map((prod, idx) => {
+                const isLast = idx === productsData.length - 1;
+                return (
+                  <View 
+                    key={prod._id} 
+                    className={`p-4 flex-row items-center ${!isLast ? 'border-b border-gray-100 dark:border-gray-800' : ''}`}
+                  >
+                    <View className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-gray-800 items-center justify-center mr-4 border border-blue-100 dark:border-gray-700">
+                      <Text className="font-bold text-system-blue dark:text-white text-[15px]">#{idx + 1}</Text>
+                    </View>
+                    <View className="flex-1 pr-2">
+                      <Text className="font-semibold text-[17px] text-gray-900 dark:text-white mb-1" numberOfLines={1}>{prod.name}</Text>
+                      <Text className="text-[13px] text-system-gray dark:text-gray-400">
+                        {prod.sold} units sold
+                      </Text>
+                    </View>
+                    <View className="items-end">
+                      <Text className="font-bold text-[15px] text-gray-900 dark:text-white">
+                        ${((prod.sold || 0) * (prod.price || 0)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </Text>
+                      <Text className="text-[11px] text-system-gray dark:text-gray-400 mt-1">Revenue</Text>
+                    </View>
                   </View>
-                  <View className="flex-1 pr-2">
-                    <Text className="font-semibold text-[17px] text-gray-900 dark:text-white mb-1" numberOfLines={1}>{prod.name}</Text>
-                    <Text className="text-[13px] text-system-gray dark:text-gray-400">
-                      {prod.totalSold} units sold
-                    </Text>
-                  </View>
-                  <View className="items-end">
-                    <Text className="font-semibold text-[16px] text-gray-900 dark:text-white">
-                      ${(prod.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </Text>
-                  </View>
-                </View>
-              )) : (
-                <View className="bg-white dark:bg-gray-900 rounded-3xl p-8 items-center justify-center shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none">
-                  <Package size={32} color="#D1D5DB" className="mb-2" />
-                  <Text className="text-system-gray dark:text-gray-400">No products sold in this period.</Text>
+                );
+              }) : (
+                <View className="items-center py-10">
+                  <Text className="text-system-gray dark:text-gray-400 text-[15px]">No products data available.</Text>
                 </View>
               )}
             </View>

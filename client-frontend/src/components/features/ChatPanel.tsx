@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Headphones } from "lucide-react";
+import { Send, Headphones, Check, CheckCheck } from "lucide-react";
 import { useStore } from "@/context/StoreContext";
 import { useAuth } from "@/context/AuthContext";
 import { useChat } from "@/context/ChatContext";
@@ -43,6 +43,7 @@ export default function ChatPanel({ variant = "page", className }: ChatPanelProp
     isAdminTyping,
     sendMessage,
     setIsChatOpen,
+    notifyTyping,
     lastSeenByAdmin,
   } = useChat();
 
@@ -64,19 +65,7 @@ export default function ChatPanel({ variant = "page", className }: ChatPanelProp
 
   const handleInputChange = (val: string) => {
     setMessage(val);
-    const now = Date.now();
-    if (now - lastTypingSentRef.current > 2000) {
-      lastTypingSentRef.current = now;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (user?.token) {
-        headers["Authorization"] = `Bearer ${user.token}`;
-      }
-      fetch(`${getApiUrl()}/chat/typing`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ sessionId, role: "user" }),
-      }).catch((err) => console.error(err));
-    }
+    notifyTyping();
   };
 
   const send = async () => {
@@ -115,28 +104,28 @@ export default function ChatPanel({ variant = "page", className }: ChatPanelProp
                   isUser ? "justify-end" : "justify-start"
                 )}
               >
-                <div
-                  className={cn(
-                    "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
-                    isUser
-                      ? "bg-foreground text-background"
-                      : "bg-muted text-foreground"
+              <div
+                className={cn(
+                  "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
+                  isUser
+                    ? "bg-foreground text-background"
+                    : "bg-muted text-foreground"
+                )}
+              >
+                <div className="flex flex-wrap items-end justify-end gap-1.5">
+                  <span className="text-left">{msg.text}</span>
+                  {isLast && isUser && (
+                    <span className="ml-auto -mr-1 -mb-0.5 flex items-center">
+                      {lastSeenByAdmin && new Date(lastSeenByAdmin).getTime() >= new Date(msg.createdAt || Date.now()).getTime() ? (
+                        <CheckCheck className="size-[14px] text-blue-400" strokeWidth={2.5} />
+                      ) : (
+                        <Check className="size-[14px] opacity-70" strokeWidth={2.5} />
+                      )}
+                    </span>
                   )}
-                >
-                  {msg.text}
                 </div>
               </div>
-              {isLast && isUser && (
-                <div className="flex justify-end pr-1.5 mt-0.5">
-                  <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider">
-                    {lastSeenByAdmin && new Date(lastSeenByAdmin).getTime() >= new Date(msg.createdAt || Date.now()).getTime() ? (
-                      "Seen"
-                    ) : (
-                      "Sent"
-                    )}
-                  </span>
-                </div>
-              )}
+              </div>
             </div>
           );
         })}

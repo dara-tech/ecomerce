@@ -35,7 +35,7 @@ export function FilterModal({
           </TouchableOpacity>
           <Text className="text-[17px] font-semibold text-gray-900 dark:text-white">{title}</Text>
           <TouchableOpacity onPress={onApply} className="p-2 -mr-2">
-            <Text className="text-[17px] font-semibold text-system-blue dark:text-white">Apply</Text>
+            <Text className="text-[17px] font-semibold text-system-blue">Apply</Text>
           </TouchableOpacity>
         </View>
         
@@ -60,9 +60,9 @@ export function FilterSection({ title, options, selectedValue, onSelect }: { tit
             <TouchableOpacity
               key={opt.value}
               onPress={() => onSelect(opt.value)}
-              className={`px-4 py-2 rounded-full border ${isSelected ? 'bg-gray-900 border-gray-900' : 'bg-transparent border-gray-300 dark:border-gray-700'}`}
+              className={`px-4 py-2 rounded-full border ${isSelected ? 'bg-gray-900 dark:bg-white border-gray-900 dark:border-white' : 'bg-transparent border-gray-300 dark:border-gray-700'}`}
             >
-              <Text className={`text-[14px] font-medium ${isSelected ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+              <Text className={`text-[14px] font-medium ${isSelected ? 'text-white dark:text-black' : 'text-gray-700 dark:text-gray-300'}`}>
                 {opt.label}
               </Text>
             </TouchableOpacity>

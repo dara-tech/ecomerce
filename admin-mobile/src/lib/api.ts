@@ -41,6 +41,9 @@ api.interceptors.response.use(
       } catch (e) {
         // Router might not be mounted yet
       }
+      
+      // Return a pending promise so we don't throw an unhandled rejection while redirecting
+      return new Promise(() => {});
     }
     return Promise.reject(error);
   }

@@ -1,5 +1,6 @@
-import { View, Text, FlatList, ActivityIndicator, RefreshControl, Image, Pressable, TouchableOpacity } from 'react-native';
-import { ChevronRight, Plus } from 'lucide-react-native';
+import { View, Text, FlatList, ActivityIndicator, RefreshControl, Image, Pressable, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ChevronRight, Plus, Check, X, Trash2 } from 'lucide-react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { router, useFocusEffect } from 'expo-router';
 import api from '../../src/lib/api';
@@ -25,6 +26,10 @@ export default function ProductsScreen() {
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [categoriesList, setCategoriesList] = useState<any[]>([]);
   const [brandsList, setBrandsList] = useState<any[]>([]);
+  
+  // Selection State
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Fetch filter options once
   useEffect(() => {
@@ -108,9 +113,61 @@ export default function ProductsScreen() {
     ...brandsList.map(b => ({ label: b.name, value: b.name }))
   ];
 
-  return (
-    <View className="flex-1 bg-system-bg dark:bg-black">
+  // Multi-select Handlers
+  const handleLongPress = (id: string) => {
+    setSelectionMode(true);
+    setSelectedIds([id]);
+  };
 
+  const handlePress = (id: string, item: any) => {
+    if (selectionMode) {
+      if (selectedIds.includes(id)) {
+        const newIds = selectedIds.filter(i => i !== id);
+        setSelectedIds(newIds);
+        if (newIds.length === 0) setSelectionMode(false);
+      } else {
+        setSelectedIds([...selectedIds, id]);
+      }
+    } else {
+      router.push({ pathname: '/product-edit', params: { id, product: JSON.stringify(item) } });
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    Alert.alert(
+      'Delete Products',
+      `Are you sure you want to delete ${selectedIds.length} selected products?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await Promise.all(selectedIds.map(id => api.delete(`/products/${id}`)));
+              setSelectionMode(false);
+              setSelectedIds([]);
+              fetchProducts(1);
+            } catch (err) {
+              console.error('Failed to delete products', err);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === products.length) {
+      setSelectedIds([]);
+      setSelectionMode(false);
+    } else {
+      setSelectedIds(products.map(p => p._id));
+    }
+  };
+
+  return (
+    <SafeAreaView className="flex-1 bg-transparent">
       <FilterModal 
         visible={isFilterVisible} 
         onClose={() => setIsFilterVisible(false)}
@@ -148,14 +205,37 @@ export default function ProductsScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           onEndReached={loadMore}
           ListHeaderComponent={() => (
-            <View className="mb-2">
-              <SearchBar 
-                value={keyword}
-                onChangeText={setKeyword}
-                onSubmitEditing={handleSearchSubmit}
-                onFilterPress={() => setIsFilterVisible(true)}
-                placeholder="Search products..."
-              />
+            <View className="mb-4">
+              {selectionMode ? (
+                <View className="flex-row items-center justify-between bg-sky-50 dark:bg-sky-900/20 rounded-2xl px-4 py-3 border border-sky-100 dark:border-sky-800">
+                  <View className="flex-row items-center">
+                    <TouchableOpacity onPress={() => { setSelectionMode(false); setSelectedIds([]); }} className="mr-3 p-1">
+                      <X size={24} color="#0EA5E9" />
+                    </TouchableOpacity>
+                    <Text className="text-[17px] font-bold text-sky-700 dark:text-sky-300">
+                      {selectedIds.length} Selected
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center">
+                    <TouchableOpacity onPress={toggleSelectAll} className="mr-4 p-1">
+                      <Text className="text-sky-600 dark:text-sky-400 font-medium">
+                        {selectedIds.length === products.length ? 'Deselect' : 'Select All'}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleDeleteSelected} className="p-1">
+                      <Trash2 size={22} color="#EF4444" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <SearchBar 
+                  value={keyword}
+                  onChangeText={setKeyword}
+                  onSubmitEditing={handleSearchSubmit}
+                  onFilterPress={() => setIsFilterVisible(true)}
+                  placeholder="Search products..."
+                />
+              )}
             </View>
           )}
           ListFooterComponent={
@@ -165,12 +245,24 @@ export default function ProductsScreen() {
               </View>
             ) : null
           }
-          renderItem={({ item }) => (
+          renderItem={({ item, index }) => {
+            const isLast = index === products.length - 1;
+            const isFirst = index === 0;
+            const isSelected = selectedIds.includes(item._id);
+
+            return (
             <Pressable 
-              onPress={() => router.push({ pathname: '/product-edit', params: { id: item._id, product: JSON.stringify(item) } })}
-              className="mb-4 bg-white dark:bg-gray-900 rounded-3xl p-4 flex-row items-center justify-between shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none active:opacity-70"
+              onLongPress={() => handleLongPress(item._id)}
+              onPress={() => handlePress(item._id, item)}
+              delayLongPress={200}
+              className={`flex-row items-center justify-between px-5 py-4 bg-white dark:bg-[#0A0A0A] active:bg-gray-50 dark:active:bg-gray-800 ${isSelected ? 'bg-sky-50 dark:bg-sky-900/10' : ''} ${isFirst ? 'rounded-t-[24px] border-t border-l border-r' : 'border-l border-r'} ${isLast ? 'rounded-b-[24px] border-b' : 'border-b'} border-gray-200 dark:border-gray-800 ${!isLast ? 'border-b-gray-100 dark:border-b-gray-800' : ''}`}
             >
               <View className="flex-row items-center flex-1">
+                {selectionMode && (
+                  <View className={`w-5 h-5 rounded-full mr-3 items-center justify-center border ${isSelected ? 'bg-sky-500 border-sky-500' : 'border-gray-300 dark:border-gray-600'}`}>
+                    {isSelected && <Check size={12} color="white" />}
+                  </View>
+                )}
                 <View className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-gray-800 items-center justify-center mr-4 overflow-hidden border border-blue-100 dark:border-gray-700">
                   {item.image ? (
                     <Image source={{ uri: item.image }} className="w-full h-full" resizeMode="cover" />
@@ -189,9 +281,10 @@ export default function ProductsScreen() {
                   </View>
                 </View>
               </View>
-              <ChevronRight size={20} color="#C7C7CC" />
+              {!selectionMode && <ChevronRight size={20} color="#C7C7CC" />}
             </Pressable>
-          )}
+            );
+          }}
           ListEmptyComponent={
             <View className="items-center py-10">
               <Text className="text-system-gray dark:text-gray-400 text-[15px]">No products found.</Text>
@@ -207,6 +300,6 @@ export default function ProductsScreen() {
       >
         <Plus color="#FFFFFF" size={28} />
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }

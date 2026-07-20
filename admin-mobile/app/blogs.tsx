@@ -35,7 +35,7 @@ export default function BlogsScreen() {
   }, []);
 
   return (
-    <View className="flex-1 bg-system-bg dark:bg-black">
+    <View className="flex-1 bg-transparent">
       <Stack.Screen 
         options={{
           headerShown: true,
@@ -65,7 +65,7 @@ export default function BlogsScreen() {
           renderItem={({ item }) => (
             <Pressable 
               onPress={() => router.push({ pathname: '/blog-edit', params: { id: item._id, blog: JSON.stringify(item) } })}
-              className="mb-4 bg-white dark:bg-gray-900 rounded-3xl p-4 flex-row items-center justify-between shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none active:opacity-70"
+              className="mb-4 bg-white dark:bg-gray-900 rounded-3xl p-4 flex-row items-center justify-between border border-gray-200 dark:border-gray-800 active:opacity-70"
             >
               <View className="flex-row items-center flex-1">
                 <View className="w-12 h-12 rounded-2xl bg-indigo-50 items-center justify-center mr-4 overflow-hidden border border-indigo-100">

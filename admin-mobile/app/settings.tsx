@@ -38,7 +38,7 @@ export default function SettingsScreen() {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: isDark ? '#000000' : '#F2F2F7' }}
+      className="flex-1 bg-transparent"
     >
       <Stack.Screen 
         options={{
@@ -61,7 +61,7 @@ export default function SettingsScreen() {
       <ScrollView className="flex-1 px-4 py-6" contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="gap-y-6">
           
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-[#0A0A0A] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Appearance</Text>
             <View className="flex-row items-center justify-between">
               <Text className="text-[15px] text-gray-700 dark:text-gray-300">Dark Mode</Text>
@@ -71,7 +71,7 @@ export default function SettingsScreen() {
                   setIsDark(val);
                   const newTheme = val ? 'dark' : 'light';
                   setColorScheme(newTheme);
-                  Appearance.setColorScheme(newTheme);
+                  if (Appearance.setColorScheme) Appearance.setColorScheme(newTheme);
                   import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
                     AsyncStorage.setItem('app_theme', newTheme);
                   });
@@ -81,7 +81,7 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-[#0A0A0A] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Store Information</Text>
             <Input
               label="Store Name"
@@ -103,7 +103,7 @@ export default function SettingsScreen() {
             />
           </View>
 
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-[#0A0A0A] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Currency & Taxes</Text>
             <View className="flex-row gap-4">
               <View className="flex-1">
@@ -143,7 +143,7 @@ export default function SettingsScreen() {
             )}
           </View>
 
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-[#0A0A0A] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Payment Gateways</Text>
             <Input
               label="Stripe Public Key"
@@ -158,7 +158,7 @@ export default function SettingsScreen() {
             </View>
           </View>
 
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-[#0A0A0A] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Email Server (SMTP)</Text>
             <Input
               label="SMTP Host"

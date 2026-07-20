@@ -33,7 +33,7 @@ export default function SecurityScreen() {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: '#F2F2F7' }}
+      className="flex-1 bg-transparent"
     >
       <Stack.Screen 
         options={{
@@ -56,7 +56,7 @@ export default function SecurityScreen() {
       <ScrollView className="flex-1 px-4 py-6" contentContainerStyle={{ paddingBottom: 100 }}>
         <View className="gap-y-6">
           
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-[#0A0A0A] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Access Controls</Text>
             
             <View className="flex-row items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-4 mb-2">
@@ -88,7 +88,7 @@ export default function SecurityScreen() {
             </View>
           </View>
 
-          <View className="bg-white dark:bg-gray-900 rounded-3xl p-5 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none gap-y-4">
+          <View className="bg-white dark:bg-[#0A0A0A] rounded-3xl p-5 border border-gray-200 dark:border-gray-800 gap-y-4">
             <Text className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1">Change Password</Text>
             
             <View className="bg-amber-50 rounded-xl p-3 border border-amber-100 mb-2">

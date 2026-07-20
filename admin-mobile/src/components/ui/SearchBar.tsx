@@ -20,7 +20,7 @@ export function SearchBar({
   const { colorScheme } = useColorScheme();
   return (
     <View className="flex-row items-center gap-4 mb-4">
-      <View className="flex-1 flex-row items-center bg-white dark:bg-gray-900 rounded-3xl h-14 px-4 shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none">
+      <View className="flex-1 flex-row items-center bg-white dark:bg-gray-900 rounded-3xl h-14 px-4 border border-gray-200 dark:border-gray-800">
         <Search size={20} color="#8E8E93" className="mr-3" />
         <TextInput
           className="flex-1 text-[16px] text-gray-900 dark:text-white h-full"
@@ -37,7 +37,7 @@ export function SearchBar({
       </View>
       {onFilterPress && (
         <TouchableOpacity 
-          className="w-14 h-14 bg-white dark:bg-gray-900 rounded-3xl items-center justify-center shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none active:opacity-70"
+          className="w-14 h-14 bg-white dark:bg-gray-900 rounded-3xl items-center justify-center border border-gray-200 dark:border-gray-800 active:opacity-70"
           onPress={onFilterPress}
         >
           <SlidersHorizontal size={20} color={colorScheme === 'dark' ? '#FFFFFF' : '#111827'} />

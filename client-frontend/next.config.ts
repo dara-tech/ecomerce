@@ -28,10 +28,16 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const backend =
       process.env.BACKEND_PROXY_URL || 'http://107.175.91.211/ecomerce/api';
+    const backendBase = backend.endsWith('/api') ? backend.slice(0, -4) : backend;
+    
     return [
       {
         source: '/api/:path*',
         destination: `${backend}/:path*`,
+      },
+      {
+        source: '/socket.io/:path*',
+        destination: `${backendBase}/socket.io/:path*`,
       },
     ];
   },

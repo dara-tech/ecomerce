@@ -33,7 +33,7 @@ export default function PaymentsScreen() {
   }, []);
 
   return (
-    <View className="flex-1 bg-system-bg dark:bg-black">
+    <View className="flex-1 bg-transparent">
       <Stack.Screen 
         options={{
           headerShown: true,
@@ -53,7 +53,7 @@ export default function PaymentsScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={({ item }) => (
-            <View className="mb-4 bg-white dark:bg-gray-900 rounded-3xl p-4 flex-row items-center shadow-sm shadow-gray-20 dark:shadow-none0 dark:shadow-none">
+            <View className="mb-4 bg-white dark:bg-gray-900 rounded-3xl p-4 flex-row items-center border border-gray-200 dark:border-gray-800">
               <View className="w-12 h-12 rounded-2xl bg-amber-50 items-center justify-center mr-4">
                 <CreditCard size={24} color="#F59E0B" />
               </View>
